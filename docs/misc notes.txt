@@ -1,0 +1,117 @@
+##HEADER L2c##
+
+0x0->0xd seems to be unique to each section
+Field1[0x00-0x03]	#total length of section not including itself
+Field2[0x04-0x07]	#possible magic number to identify section?
+Field3[0x08-0x0b] 	#this isn't working. (2 + 18 + 12 + len(compressed_data))
+Field4[0x0c-0x0f]	#length of uncompressed data (why twice?)
+
+[0x10-0x1f] 		#another magic number? numbers? shared between all sections and all files.
+33 AA FB 57 99 FA 04 10 01 00 02 00 80 00 00 01
+
+Field5[0x20-0x23]	#length of compressed data
+Field6[0x24-0x27]	#length of uncompressed data
+Field7[0x28-0x2b]	#custom adler32 checksum of compressed data
+
+##Footer L5##
+01 00 00 00 54
+
+DAT_0298a780 ##CONTAINS LANGUAGE STRUCT##
+
+struct LanguageEntry {
+    uint32_t language_index;    // Language ID
+    uint32_t hash_checksum;     // Hash/checksum value
+};
+
+struct LanguageEntry language_table[] = {
+    {0x00000000, 0x480ED55E},  // [0]  Unknown/Header
+    {0x01000000, 0xB597CC50},  // [1]  English
+    {0x02000000, 0x90CC0F3C},  // [2]  French
+    {0x03000000, 0x81605748},  // [3]  Spanish
+    {0x04000000, 0x7B357543},  // [4]  Polish
+    {0x05000000, 0x6F424E31},  // [5]  German
+    {0x06000000, 0xA1B2D787},  // [6]  (Reserved/Unused)
+    {0x07000000, 0x393123C6},  // [7]  Hungarian
+    {0x08000000, 0x7AFCF62B},  // [8]  Italian
+    {0x09000000, 0xF849E0B1},  // [9]  Japanese
+    {0x0A000000, 0x30316A2C},  // [10] Czech
+    {0x0B000000, 0x0DCB2F02},  // [11] Korean
+    {0x0C000000, 0xC0642997},  // [12] Russian
+    {0x0D000000, 0x3134CDDB},  // [13] Dutch
+    {0x0E000000, 0x1C030BCE},  // [14] Danish
+    {0x0F000000, 0x1C90AD69},  // [15] Norwegian
+    {0x10000000, 0x9D166FCF},  // [16] Swedish
+    {0x11000000, 0x3F0E4112},  // [17] Portuguese
+    {0x12000000, 0xDCD2A3CD},  // [18] Turkish
+    {0x13000000, 0x4409CD43},  // [19] SimplifiedChinese
+    {0x14000000, 0x87DA38CF},  // [20] TraditionalChinese
+    {0x15000000, 0x85B73887}   // [21] Unknown/Extra
+};
+
+lm m ACBSP
+
+==NO BREAK==
+FUN_01b2e130	#Structure Initializer with Parent Tracking :Purpose: Initializes a structure with multiple parameters and parent relationship tracking
+FUN_01bde7c0	#Massive Structure Deserializer :Purpose: Deserializes a very large structure (400+ bytes) from a binary buffer
+FUN_01be02f0	#Deserialization Wrapper :Purpose: Wrapper that calls the massive deserializer for the structure at param_1 + 8
+FUN_01af6920	#Polymorphic Deserialization Dispatcher :Purpose: Reads type byte and dispatches to appropriate deserialization handler
+
+==BREAK==
+FUN_01b8e140	#LZSS Compression Engine :Purpose: Core LZSS compression algorithm implementation (lazy-matching variant)
+FUN_01b8e5a0	#Compression Wrapper
+FUN_01afe160	#Compression Wrapper with Fixed Buffer Sizes :Purpose: Wrapper that calls main compression with standard 4KB buffer sizes
+FUN_01afdba0	#Main Compression Function with Verification :Purpose: Primary compression routine with optional round-trip verification
+FUN_01b8e5d0	#LZSS/LZ77 decompression function :Purpose: decompresses data that was compressed using a dictionary-based compression algorithm.
+FUN_0046d710	#Section 1 initializer
+FUN_0046d160	#Section 1 Writer/Serializer :Purpose: Builds and writes Section 1 of the OPTIONS file (primary savegame data)
+FUN_0046d430	#Section 1 Reader and Validator :Purpose: Reads and validates Section 1 from OPTIONS file during load (as documented in your spec)
+FUN_01ab97a0	#Binary Tree/Heap Insertion for Memory Management :Purpose: Inserts a memory block into a segregated free list or binary tree structure
+FUN_01b7a1d0	#Magic Bytes Validator :Purpose: Validates section header magic bytes (as documented in your spec)
+FUN_01b7a310	#Magic Bytes Writer :Purpose: Writes the universal 16-byte magic pattern to section headers (as documented in your spec)
+FUN_0046d8b0	#Dynamic Array Append (8-byte entries) :Purpose: Appends an 8-byte structure to a dynamic array with automatic growth
+FUN_01afd600	#Header Processor with Magic Validation :Purpose: Validates and processes section header data with optional decompression
+FUN_01712930	#Profile Data Serializer/Deserializer :Purpose: Serializes or deserializes "AssassinGlobalProfileData" structure
+FUN_0046e0a0	#Dirty Flag Manager with Save Trigger :Purpose: Manages dirty/modified flags and conditionally triggers save operations
+FUN_0046d980	#Save Orchestrator / Dirty Flag Processor :Purpose: Main save coordinator that processes dirty flags and dispatches to appropriate save operations
+FUN_005e3960 	#Object Pre-Save Callback Iterator :Purpose: Calls vtable function 0x20 on all registered save objects
+FUN_005e39a0	#Object Save Callback Iterator (Conditional) :Purpose: Calls vtable function 0x1C on all registered save objects if flag is set
+FUN_0046dcc0	#Game State Object Constructor :Purpose: Constructs and initializes the main game state/save system object
+FUN_005e4970	#OPTIONS File Writer :Purpose: Writes the OPTIONS file to disk (thin wrapper)
+DAT_02a5e0f4	#Global Memory Manager Vtable Pointer :This is a pointer to the memory management system's vtable. It's used throughout for allocations/deallocations but not directly related to OPTIONS file writing.
+FUN_005e4950	#Assassin.sav File Writer :Purpose: Writes the "assassin.sav" file (different from OPTIONS)
+FUN_005e4c20	#Assassin.sav Reader/Loader :Purpose: Reads the "assassin.sav" file
+FUN_01baa240	#AES Decryption Round Function :Purpose: Performs AES block cipher decryption rounds
+FUN_005e4c40	#OPTIONS File Reader :Purpose: Reads the OPTIONS file from disk
+FUN_005e4b10	#Generic File Reader :Purpose: Reads any file from the SAVES directory into a buffer
+FUN_005e4860	#Low-Level File Writer :Purpose: Writes data buffer to a file in the SAVES directory
+FUN_009ca2f0	#OPTIONS File Reader (duplicate) - this reads OPTIONS from disk.
+FUN_01712ec0	#AssassinGlobalProfileData Constructor :Purpose: Constructs AssassinGlobalProfileData object
+FUN_017130a0	#AssassinGlobalProfileData Destructor :Purpose: Destructs AssassinGlobalProfileData object
+FUN_01710540	#Section 3 Destructor
+FUN_017106e0	#Section 3 Constructor
+FUN_01710b90	#Section 3 Destructor with Dealloc
+FUN_01b0a740	#Complex Object Serialization Dispatcher :Purpose: Generic serialization framework with type checking and conditional processing
+FUN_01b17ea0	#No-Op Callback Stub :Purpose: Empty function that does nothing
+FUN_01b09620	#Conditional Field Setter :Purpose: Sets a field based on state flag
+FUN_01b0a460	#Complex Value Serialization with Type Metadata :Purpose: Serializes values with extensive type checking and conditional processing
+FUN_01b7b000	#Compression with Checksum Calculation :Purpose: Compresses data and calculates checksum
+FUN_01b074a0	#Plain Data Block Writer :Purpose: Writes a plain data block if flag is set
+FUN_01b08ce0	#Object Metadata Serializer :Purpose: Serializes object metadata (version info, class IDs, names, etc.)
+FUN_01b49610	#Serialization Stack Manager :Purpose: Manages serialization depth tracking and calls appropriate vtable cleanup functions
+FUN_004b41b0	#Player Stats Manager Initializer :Purpose: Initializes player statistics tracking and online services integration
+FUN_00a20600	#Reward Code Handler :Purpose: Processes reward/unlock codes (ACBREWARD02-07) and sets achievement flags
+FUN_01712ca0	#Section 2 Writer :Purpose: Writes Section 2 (AssassinGlobalProfileData) to the buffer structure
+FUN_01712db0	#Section 2 Reader/Validator :Purpose: Reads and validates Section 2 (AssassinGlobalProfileData) from buffer
+FUN_017108e0	#Section 3 Writer :Purpose: Writes Section 3 to the buffer structure
+FUN_017109e0	#Section 3 Reader/Validator :Purpose: Reads and validates Section 3 from buffer
+FUN_013ce5c0	#factory/constructor function :Purpose: Creates a new object or initializes an existing one, then copies data from a source object.
+
+PTR_FUN_0253df30	#Section 2 vtable
+PTR_FUN_0253de0c	#Section 3 vtable
+s_AssassinGlobalProfileData_0253df10	#vtable for "AssassinGlobalProfileData"
+DAT_02a21734		#profile object
+
+dispatchers
+FUN_01c48fa0	#Indexed Vtable Function Call (DAT_02a5e0f4) :Purpose: Calls a function from a vtable with indexed offset calculation
+FUN_01b48fb0	#Conditional Vtable Dispatcher :Purpose: Conditionally calls vtable functions based on state flags
+FUN_01b7a200	#Compression Dispatcher with Optional Callback :Purpose: Routes compression requests through a function pointer table, with optional two-pass processing

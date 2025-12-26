@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test/debug output
+*.log
+test_*.bin
+*_test.bin
+*_fixed.bin
+*_compare.bin
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+# Claude Code
+.claude/
