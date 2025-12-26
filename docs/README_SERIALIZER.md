@@ -6,13 +6,13 @@ A complete, self-sufficient tool for recreating Assassin's Creed Brotherhood OPT
 
 ```bash
 # Basic usage
-python3 options_serializer.py section1.bin section2.bin section3.bin -o OUTPUT.bin
+python3 options_serializer_pc.py section1.bin section2.bin section3.bin -o OUTPUT.bin
 
 # With validation
-python3 options_serializer.py section1.bin section2.bin section3.bin -o OUTPUT.bin --validate
+python3 options_serializer_pc.py section1.bin section2.bin section3.bin -o OUTPUT.bin --validate
 
 # Using wildcards
-python3 options_serializer.py game_uncompressed_*.bin -o OPTIONS.bin --validate
+python3 options_serializer_pc.py game_uncompressed_*.bin -o OPTIONS.bin --validate
 ```
 
 ## Features
@@ -81,7 +81,7 @@ All sections share this 16-byte pattern:
 
 ### Example 1: Create OPTIONS from existing decompressed sections
 ```bash
-python3 options_serializer.py \
+python3 options_serializer_pc.py \
   references/OPTIONS.WINDBGTRACE/game_uncompressed_1.bin \
   references/OPTIONS.WINDBGTRACE/game_uncompressed_2.bin \
   references/OPTIONS.WINDBGTRACE/game_uncompressed_3.bin \
@@ -90,7 +90,7 @@ python3 options_serializer.py \
 
 ### Example 2: Create and validate
 ```bash
-python3 options_serializer.py \
+python3 options_serializer_pc.py \
   section1.bin section2.bin section3.bin \
   -o OPTIONS.bin \
   --validate
@@ -99,13 +99,13 @@ python3 options_serializer.py \
 ### Example 3: Full workflow (decompress → modify → recompress)
 ```bash
 # 1. Decompress original
-python3 lzss_decompressor_final.py original_OPTIONS.bin
+python3 lzss_decompressor_pc.py original_OPTIONS.bin
 
 # 2. Modify the decompressed sections (edit game_uncompressed_*.bin)
 # ... make your changes ...
 
 # 3. Recompress into new OPTIONS file
-python3 options_serializer.py \
+python3 options_serializer_pc.py \
   game_uncompressed_1.bin \
   game_uncompressed_2.bin \
   game_uncompressed_3.bin \
@@ -224,8 +224,8 @@ This will:
 
 ## Files
 
-- `options_serializer.py` - The main serializer script (self-contained)
-- `lzss_decompressor_final.py` - Decompressor (needed for validation)
+- `options_serializer_pc.py` - The main serializer script (self-contained)
+- `lzss_decompressor_pc.py` - Decompressor (needed for validation)
 - `test_roundtrip.sh` - Comprehensive round-trip test
 - `SERIALIZER_ANALYSIS.md` - Detailed technical analysis
 

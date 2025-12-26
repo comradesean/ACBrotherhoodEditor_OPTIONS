@@ -485,23 +485,23 @@ def main():
     Main entry point for command-line usage
 
     Usage:
-        python lzss_decompressor_final.py OPTIONS.bin        # Decompress all sections
-        python lzss_decompressor_final.py OPTIONS.bin 2      # Decompress only section 2
+        python lzss_decompressor_pc.py OPTIONS.bin        # Decompress all sections
+        python lzss_decompressor_pc.py OPTIONS.bin 2      # Decompress only section 2
     """
     if len(sys.argv) < 2 or sys.argv[1] in ['-h', '--help', 'help']:
         print("LZSS Decompressor for AC Brotherhood OPTIONS Files")
         print("=" * 70)
         print()
         print("Usage:")
-        print("  python lzss_decompressor_final.py <OPTIONS_FILE> [SECTION]")
+        print("  python lzss_decompressor_pc.py <OPTIONS_FILE> [SECTION]")
         print()
         print("Arguments:")
         print("  OPTIONS_FILE    Path to OPTIONS.bin file")
         print("  SECTION         Optional: Section number (1, 2, or 3)")
         print()
         print("Examples:")
-        print("  python lzss_decompressor_final.py OPTIONS.bin        # All sections")
-        print("  python lzss_decompressor_final.py OPTIONS.bin 2      # Section 2 only")
+        print("  python lzss_decompressor_pc.py OPTIONS.bin        # All sections")
+        print("  python lzss_decompressor_pc.py OPTIONS.bin 2      # Section 2 only")
         print()
         print("Output files:")
         print("  game_uncompressed_1.bin - Section 1 decompressed data")

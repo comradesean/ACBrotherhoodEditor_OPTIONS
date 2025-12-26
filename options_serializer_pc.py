@@ -29,7 +29,7 @@ Footer (5 bytes):
   01 00 00 00 54
 
 Usage:
-    python options_serializer.py section1.bin section2.bin section3.bin -o OPTIONS.bin
+    python options_serializer_pc.py section1.bin section2.bin section3.bin -o OPTIONS.bin
 """
 
 import sys
@@ -495,7 +495,7 @@ def validate_options_file(options_file, original_sections):
     print("=" * 70)
 
     # Import decompression functions
-    from lzss_decompressor_final import LZSSDecompressor, find_sections
+    from lzss_decompressor_pc import LZSSDecompressor, find_sections
 
     # Read OPTIONS file
     with open(options_file, 'rb') as f:
@@ -568,8 +568,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python options_serializer.py sec1.bin sec2.bin sec3.bin -o OPTIONS.bin
-  python options_serializer.py game_uncompressed_*.bin -o OPTIONS.bin --validate
+  python options_serializer_pc.py sec1.bin sec2.bin sec3.bin -o OPTIONS.bin
+  python options_serializer_pc.py game_uncompressed_*.bin -o OPTIONS.bin --validate
         """
     )
 
@@ -627,7 +627,7 @@ Examples:
 
         except ImportError:
             print("\nWARNING: Could not import decompressor for validation")
-            print("Make sure lzss_decompressor_final.py is in the same directory")
+            print("Make sure lzss_decompressor_pc.py is in the same directory")
 
     return 0
 
