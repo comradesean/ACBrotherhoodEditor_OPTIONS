@@ -1,6 +1,6 @@
 # Assassin's Creed Brotherhood OPTIONS File Format Specification
 
-**Document Version:** 1.0
+**Document Version:** 2.0
 **Date:** 2025-12-27
 **Status:** Formal Technical Specification
 **Research Method:** WinDbg Time-Travel Debugging + Ghidra Decompilation + 24-File Differential Analysis
@@ -217,21 +217,59 @@ header.uncompressed_size_1 = read_uint32_le(buffer + 0x0C);  /* Little-endian */
 
 **Class Name:** Unknown (minimal Ghidra coverage)
 
-#### 4.1.1 Known Fields
+#### 4.1.1 Header Region (0x00-0x17)
 
 | Offset | Size | Type | Field Name | Value | Confidence |
 |--------|------|------|------------|-------|------------|
 | 0x00-0x09 | 10 | bytes | Zero Padding | `0x00` | PROVEN |
-| 0x51 | 1 | byte | System Flag | 0x02-0x06 | MEDIUM |
-| 0xA6-0xAD | 8 | string | Identifier | "Options" | PROVEN |
+| 0x0A-0x0D | 4 | hash | Section Hash | `0xBDBE3B52` | PROVEN |
+| 0x0E-0x0F | 2 | flags | Platform Flags | PC=`0x050C`, PS3=`0x0508` | HIGH |
+| 0x10-0x13 | 4 | value | Unknown | Varies | LOW |
+| 0x14-0x17 | 4 | type | Type Indicator | `0x00010000` | MEDIUM |
 
-#### 4.1.2 "Options" String Location
+#### 4.1.2 Property Record Structure
+
+Section 1 contains **12 property records** starting at offset 0x18, each 18 bytes:
+
+```c
+typedef struct {
+    uint32_t value;        /* +0x00: Property value (LE) */
+    uint8_t  unknown;      /* +0x04: Usually 0x00 */
+    uint8_t  type_marker;  /* +0x05: 0x0B = property marker */
+    uint32_t unknown2;     /* +0x06: Variable data */
+    uint32_t hash;         /* +0x0A: Content identifier hash */
+    uint32_t padding;      /* +0x0E: Usually zeros */
+} Section1_PropertyRecord;
+```
+
+**Known Records:**
+- Record 1 (0x18): Value = Field0 (0x16) - self-referential
+- Record 2 (0x2A): Value = Field1 (0xFEDBAC) - self-referential
+
+The self-referential pattern may be used for integrity validation.
+
+#### 4.1.3 Profile State Flag
+
+| Offset | Size | Type | Field Name | Value | Confidence |
+|--------|------|------|------------|-------|------------|
+| 0x51 | 1 | byte | Profile State Flag | 0x02 (base), 0x06 (all rewards) | HIGH |
+
+This is the **only byte that differs** between base game and all-rewards-unlocked OPTIONS files for the same platform/language.
+
+#### 4.1.4 "Options" String Location
 
 The ASCII string "Options" appears at offset 0xA6-0xAD in the decompressed Section 1 data:
 
 ```
 0xA6: 4F 70 74 69 6F 6E 73 00  "Options\0"
 ```
+
+#### 4.1.5 PC vs PS3 Size Difference
+
+| Platform | Size | Field2 | Notes |
+|----------|------|--------|-------|
+| PC | 283 bytes | 0xC5 | Standard |
+| PS3 | 289 bytes | 0xC6 | +6 bytes (unknown purpose) |
 
 ### 4.2 Section 2: Game Settings
 
@@ -360,10 +398,14 @@ _Static_assert(sizeof(UnlockRecord) == 18, "UnlockRecord must be 18 bytes");
 |--------|------|------|-------------|
 | 0x291 | Templar Lair 1 | `0x00788F42` | Trajan's Market |
 | 0x2A3 | Templar Lair 2 | `0x006FF456` | Tivoli Aqueduct |
+| 0x2B5 | Unknown #1 | `0x000B953B` | Discovered via differential analysis |
+| 0x2C7 | Unknown #2 | `0x001854EC` | Discovered via differential analysis |
 | 0x2D9 | Uplay Reward 1 | `0x0021D9D0` | Florentine Noble Attire |
 | 0x2EB | Uplay Reward 2 | `0x0036A2C4` | Armor of Altair |
 | 0x2FD | Uplay Reward 3 | `0x0052C3A9` | Altair's Robes |
 | 0x30F | Uplay Reward 4 | `0x000E8D04` | Hellequin MP Character |
+
+**Note:** Unknown records #1 and #2 were discovered through 21-file language differential analysis. Hashes do not match known Uplay or DLC content - possibly beta/cut content or region-specific unlocks.
 
 #### 4.2.4 Costume Bitfield (Offset 0x369)
 
@@ -423,30 +465,61 @@ typedef struct {
 
 **Class Name:** `AssassinSingleProfileData` (address 0x0253ddec in executable)
 
-#### 4.3.1 C Structure Definition
+#### 4.3.1 Header Region (0x00-0x17)
+
+| Offset | Size | Type | Field Name | Value | Confidence |
+|--------|------|------|------------|-------|------------|
+| 0x00-0x09 | 10 | bytes | Zero Padding | `0x00` | PROVEN |
+| 0x0A-0x0D | 4 | hash | Section Hash | `0xC9876D66` | HIGH |
+| 0x0E-0x0F | 2 | flags | Platform Flags | PC=`0x050C`, PS3=`0x0508` | HIGH |
+| 0x10-0x13 | 4 | value | Unknown | Varies | LOW |
+| 0x14-0x17 | 4 | type | Type Indicator | `0x00010000` | MEDIUM |
+
+#### 4.3.2 C Structure Definition
 
 ```c
 typedef struct {
+    /* Header region */
     uint8_t  zero_padding[10];       /* 0x00-0x09: Zero padding */
-    uint8_t  reserved1[67];          /* 0x0A-0x4C: Unknown */
+    uint32_t section_hash;           /* 0x0A-0x0D: 0xC9876D66 */
+    uint16_t platform_flags;         /* 0x0E-0x0F: PC=0x050C, PS3=0x0508 */
+    uint8_t  reserved0[8];           /* 0x10-0x17: Unknown */
+
+    /* Property records region (uses same 18-byte structure as Section 1) */
+    uint8_t  reserved1[53];          /* 0x18-0x4C: Unknown */
     uint8_t  marker_0x4d;            /* 0x4D: 0x0B (constant marker) */
     uint8_t  uplay_gun_upgrade;      /* 0x4E: Boolean - 30-point Uplay reward */
     uint8_t  marker_0x4f;            /* 0x4F: 0x0E (constant marker) */
     uint8_t  reserved2[48];          /* 0x50-0x7F: Unknown */
-    uint8_t  achievement_header[4];  /* 0x80-0x83: 00 09 00 0B (structure header: 0x0B is type marker used throughout section) */
+
+    /* Achievement region - PC ONLY */
+    uint8_t  achievement_header[4];  /* 0x80-0x83: 00 09 00 0B */
     uint8_t  achievements[7];        /* 0x84-0x8A: 53-bit achievement bitfield */
     uint8_t  padding_0x8b;           /* 0x8B: 0x00 */
     uint32_t marker_0x8c;            /* 0x8C-0x8F: 0x0000000E */
-    uint32_t hash_constant;          /* 0x90-0x93: 0x6F88B05B */
+    uint32_t progress_hash;          /* 0x90-0x93: 0x6F88B05B */
     uint8_t  reserved3[8];           /* 0x94-0x9B: Unknown */
     uint8_t  marker_0x9c;            /* 0x9C: 0x0B (constant marker) */
     uint8_t  dlc_sync_flag;          /* 0x9D: Boolean - DLC synchronization */
     uint8_t  reserved4[2];           /* 0x9E-0x9F: Padding */
-    /* PC has additional 43 bytes here */
+    /* PC has additional bytes here */
 } Section3_GameProgress;
 ```
 
-#### 4.3.2 Achievement Bitfield (0x84-0x8A)
+#### 4.3.3 PC vs PS3 Size Difference (43 bytes)
+
+| Platform | Size | Achievement Storage | Explanation |
+|----------|------|---------------------|-------------|
+| PC | 162 bytes | Embedded 7-byte bitfield at 0x84-0x8A | 53 achievements stored locally |
+| PS3 | 119 bytes | **No embedded bitfield** | PSN Trophy system handles achievements externally |
+
+The **43-byte difference** is explained by:
+1. PC embeds achievement bitfield (7 bytes) plus surrounding structure/markers (~36 bytes overhead)
+2. PS3 relies on PlayStation Network Trophy API for achievement tracking
+3. PS3 Section 3 stores only cross-platform progress data (Uplay rewards, DLC sync)
+4. DLC Sync Flag on PS3 is at offset 0x5A (instead of PC's 0x9D)
+
+#### 4.3.4 Achievement Bitfield (0x84-0x8A, PC Only)
 
 The achievement bitfield uses 53 bits across 7 bytes. All achievements unlocked: `FF FF FF FF FF FF 1F`
 
@@ -665,18 +738,31 @@ typedef struct {
 | 0x13 | Simplified Chinese | `0x43CD0944` | `4409CD43` |
 | 0x14 | Traditional Chinese | `0xCF38DA87` | `87DA38CF` |
 
-### 6.2 Content Hashes
+### 6.2 Section Identification Hashes
+
+All sections share a common header pattern with a section-specific hash at offset 0x0A:
+
+| Section | Hash at 0x0A | Platform Flags at 0x0E | Purpose |
+|---------|--------------|------------------------|---------|
+| Section 1 | `0xBDBE3B52` | PC=0x050C, PS3=0x0508 | System/Profile type identifier |
+| Section 2 | `0x305AE1A8` | PC=0x050C, PS3=0x0508 | Game Settings type identifier |
+| Section 3 | `0xC9876D66` | PC=0x050C, PS3=0x0508 | Game Progress type identifier |
+
+**Note:** Hash at Section 3 offset 0x90 (`0x6F88B05B`) is part of the progress/achievement structure, not the section header.
+
+### 6.3 Content Hashes
 
 | Hash | Content |
 |------|---------|
 | `0x00788F42` | Templar Lair: Trajan's Market |
 | `0x006FF456` | Templar Lair: Tivoli Aqueduct |
+| `0x000B953B` | Unknown Unlock #1 (discovered via differential) |
+| `0x001854EC` | Unknown Unlock #2 (discovered via differential) |
 | `0x0021D9D0` | Florentine Noble Attire |
 | `0x0036A2C4` | Armor of Altair |
 | `0x0052C3A9` | Altair's Robes |
 | `0x000E8D04` | Hellequin MP Character |
-| `0x305AE1A8` | Section 2 identifier |
-| `0x6F88B05B` | Section 3 constant |
+| `0x6F88B05B` | Section 3 progress/achievement constant |
 
 ---
 
@@ -957,15 +1043,20 @@ Header starts 0x10 bytes before this pattern.
 ## Document Metadata
 
 **Created:** 2025-12-27
+**Last Updated:** 2025-12-27
 **Author:** Generated from reverse engineering documentation
+**Version History:**
+- v1.0: Initial specification
+- v2.0: Added Section 1 property record structure (12 records), Section identification hashes (0x0A-0x0D), Platform flags (0x0E-0x0F), 2 unknown unlock records in Section 2, PC vs PS3 Section 3 size difference explanation (PSN Trophy system)
+
 **Sources:**
 - WinDbg Time-Travel Debugging traces
 - Ghidra decompilation of ACBSP.exe
-- 24-file differential analysis
+- 24-file differential analysis (21 language variants + 3 reward states)
 - Binary comparison of PC and PS3 save files
 
 **Related Documents:**
-- `OPTIONS_FIELD_REFERENCE.md` - Consolidated field mappings
+- `OPTIONS_FIELD_REFERENCE.md` - Consolidated field mappings (v3.0)
 - `LZSS_LOGIC_FLOW_ANALYSIS.md` - Compression algorithm details
 - `PS3_OPTIONS_FORMAT.md` - PS3-specific documentation
 - `ACB_OPTIONS_Header_Complete_Specification.md` - Header structure details
