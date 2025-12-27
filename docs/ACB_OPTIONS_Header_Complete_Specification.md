@@ -70,7 +70,7 @@ The OPTIONS file is a multi-section binary format used by Assassin's Creed Broth
 │   Data:   Variable (compressed)             │
 ├─────────────────────────────────────────────┤
 │ FOOTER: 5 bytes                             │
-│   Format: 01 00 00 00 54                    │
+│   Format: 01 00 00 00 XX (XX = network interface count, variable) │
 └─────────────────────────────────────────────┘
 ```
 
@@ -1211,45 +1211,39 @@ At the end of the OPTIONS file, after all three sections, there is a 5-byte foot
 
 ```
 Offset: [End of Section 3 data]
-Bytes:  01 00 00 00 54
+Bytes:  01 00 00 00 XX
 Size:   5 bytes
 ```
+
+**Note:** The 5th byte (XX) is NOT fixed. It contains the network interface count from the system when the save was created. See `ACB_OPTIONS_Footer_Complete_Specification.md` for the complete analysis.
 
 ### Footer Breakdown
 
 ```
 ┌────────┬──────────────┬─────────────────────────────┐
-│ Offset │ Value        │ Possible Meaning            │
+│ Offset │ Value        │ Meaning                     │
 ├────────┼──────────────┼─────────────────────────────┤
-│ +0x00  │ 0x01         │ Version/type marker?        │
-│ +0x01  │ 0x00 0x00    │ Padding?                    │
-│ +0x03  │ 0x00         │ Reserved?                   │
-│ +0x04  │ 0x54 ('T')   │ Terminator/marker?          │
+│ +0x00  │ 0x01         │ Footer signature            │
+│ +0x01  │ 0x00 0x00    │ Padding                     │
+│ +0x03  │ 0x00         │ Reserved                    │
+│ +0x04  │ 0x00-0xFF    │ Network interface count     │
 └────────┴──────────────┴─────────────────────────────┘
 ```
 
 ### Footer Analysis
 
-**Observed in Research:**
-- Always present at file end
-- Always the same 5 bytes: `01 00 00 00 54`
-- Appears after Section 3 compressed data
-- Not referenced by any header field
-
-**Possible Interpretations:**
-
-1. **File Terminator:** Magic marker indicating end of file
-2. **Version Marker:** File format version (0x01)
-3. **Checksum/CRC:** Simple validation byte (0x54)
-4. **Alignment Padding:** Padding to align file to boundary
-5. **Reserved Field:** Future use/backward compatibility
+**Solved - See `ACB_OPTIONS_Footer_Complete_Specification.md` for full details:**
+- The 5th byte contains the count of network interfaces on the system
+- Value varies by system (e.g., 0x0C = 12 interfaces, 0x54 = 84 interfaces)
+- Collected by Ubisoft's Quazal/NEX infrastructure for telemetry
+- Has no impact on save file validity (game does not validate this value)
 
 ### Footer Hex Dump Example
 
 ```
 ...
 [Section 3 compressed data ends]
-0x3FC  01 00 00 00 54                                   Footer
+0x3FC  01 00 00 00 0C                                   Footer (12 network interfaces)
 0x401  [EOF]
 
 Total file size: 1025 bytes (0x401)
@@ -1257,24 +1251,14 @@ Total file size: 1025 bytes (0x401)
 
 ### Research Status
 
-**Status:** ❓ **UNKNOWN / LOW PRIORITY**
+**Status:** SOLVED
 
-The footer has not been reverse-engineered as it does not appear to be critical for:
-- File reading/writing
-- Validation
-- Decompression
-- Game functionality
+The footer has been fully reverse-engineered. See `ACB_OPTIONS_Footer_Complete_Specification.md` for complete details including:
+- WinDbg Time-Travel Debugging trace
+- Ghidra function analysis
+- Quazal/NEX network infrastructure integration
 
-The game may:
-- Ignore the footer entirely
-- Use it for quick validation (sanity check)
-- Write it for backward compatibility
-- Use it for debugging/tooling
-
-**Recommendation:** The footer can be safely included when writing OPTIONS files by copying the byte sequence `01 00 00 00 54`. Further reverse engineering is not critical unless:
-- File validation fails without correct footer
-- Game exhibits errors related to file format
-- Tools need to validate file integrity
+**Recommendation:** When writing OPTIONS files, use `01 00 00 00 XX` where XX can be any value (0x00 to 0xFF). The game does not validate this byte. For compatibility, using the original file's footer value or a sensible default like `0x01` is recommended.
 
 ---
 
