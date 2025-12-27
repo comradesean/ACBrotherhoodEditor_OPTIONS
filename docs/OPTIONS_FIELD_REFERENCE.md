@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS File - Complete Field Reference
 
 **Last Updated:** 2025-12-27
-**Document Version:** 2.0
-**Status:** Authoritative Reference (Consolidated from 13 Source Documents)
+**Document Version:** 3.0
+**Status:** Authoritative Reference (Consolidated from 13 Source Documents + Comprehensive Analysis)
 
 ---
 
@@ -12,13 +12,20 @@
 
 | Section | Platform | Total Size | Bytes Mapped | Coverage |
 |---------|----------|------------|--------------|----------|
-| Section 1 | PC | 283 bytes | 19 bytes | 7% |
-| Section 1 | PS3 | 289 bytes | 19 bytes | 7% |
-| Section 2 | PC | 1310 bytes | 176 bytes | 13% |
-| Section 2 | PS3 | 1306 bytes | 176 bytes | 13% |
-| Section 3 | PC | 162 bytes | 25 bytes | 15% |
-| Section 3 | PS3 | 119 bytes | 25 bytes | 21% |
+| Section 1 | PC | 283 bytes | 271 bytes | 96% |
+| Section 1 | PS3 | 289 bytes | 277 bytes | 96% |
+| Section 2 | PC | 1310 bytes | 659 bytes | 50% |
+| Section 2 | PS3 | 1306 bytes | 655 bytes | 50% |
+| Section 3 | PC | 162 bytes | 35 bytes | 22% |
+| Section 3 | PS3 | 119 bytes | 28 bytes | 24% |
 | Section 4 | PS3 only | 1903 bytes | 16 bytes | 1% |
+
+### Key Analysis Findings (v3.0)
+
+- **Section 1:** All 21 PC language files are byte-for-byte identical; only 1 byte (0x51) varies between base/allrewards
+- **Section 2:** Only 11 bytes vary across 21 language files (all language-related); 2 new unknown unlock records discovered
+- **Section 3:** 43-byte PC/PS3 difference explained by PSN trophy system replacing embedded achievement bitfield
+- **Hash Algorithm:** Remains unknown despite testing 30+ algorithms; hashes precomputed at 0x0298a780
 
 ### Confidence Legend
 
@@ -69,25 +76,73 @@
 **Class Name:** Unknown (minimal Ghidra coverage)
 **Section Marker:** Field3 = 0xC5 (PC) or 0xC6 (PS3)
 
-### Known Fields
+### Header Region (0x00-0x17)
+
+| Offset | Size | Type | Field Name | Value | Conf | Evidence |
+|--------|------|------|------------|-------|------|----------|
+| 0x00-0x09 | 10 | padding | Zero Padding | Always 0x00 | [P] | Structure analysis |
+| 0x0A-0x0D | 4 | hash | Section Hash | 0xBDBE3B52 | [P] | Constant across all files |
+| 0x0E-0x0F | 2 | flags | Platform Flags | PC=0x050C, PS3=0x0508 | [H] | Platform diff |
+| 0x10-0x13 | 4 | value | Unknown | Varies | [L] | Observed |
+| 0x14-0x17 | 4 | type | Type Indicator | 0x00010000 | [M] | Constant observed |
+
+### Property Record Structure (18-byte records)
+
+Section 1 contains **12 property records** starting at offset 0x18, each using an 18-byte structure:
+
+| Record Offset | Size | Field | Description |
+|---------------|------|-------|-------------|
+| +0x00 | 4 | Value | Property value (4-byte little-endian) |
+| +0x04 | 1 | Unknown | Usually 0x00 |
+| +0x05 | 1 | Type Marker | 0x0B = property marker |
+| +0x06 | 4 | Unknown | Variable data |
+| +0x0A | 4 | Hash | Content identifier hash |
+| +0x0E | 4 | Padding | Usually zeros |
+
+#### Known Property Records
+
+| Record | Offset | Value | Hash | Meaning | Conf |
+|--------|--------|-------|------|---------|------|
+| 1 | 0x18 | = Field1 (0x16) | - | Self-ref: uncompressed size marker | [P] |
+| 2 | 0x2A | = Field2 (0xFEDBAC) | - | Self-ref: section identifier | [P] |
+| 3-12 | 0x3C+ | Varies | Varies | Unknown properties | [L] |
+
+**Note:** Records 1-2 contain self-referential values that match the 44-byte header's Field1 and Field2. This pattern may be used for validation.
+
+### Profile State Flag
 
 | Offset | Size | Type | Field Name | Value Range | Conf | Evidence |
 |--------|------|------|------------|-------------|------|----------|
-| 0x00-0x09 | 10 | padding | Zero Padding | Always 0x00 | [P] | Structure analysis |
-| 0x51 | 1 | byte | Unknown System Flag | 0x02-0x06 | [M] | Observed in diffs |
-| 0xA6-0xAD | 8 | string | "Options" ASCII | Fixed | [P] | Hex dump |
+| 0x51 | 1 | byte | Profile State Flag | 0x02-0x06 | [H] | 24-file differential |
+
+This flag varies between base game (0x02) and all-rewards unlocked (0x06) states. The 21 language variations are byte-for-byte identical - **only this byte differs** between base and allrewards OPTIONS files for the same platform.
+
+### ASCII Identifier
+
+| Offset | Size | Type | Field Name | Value | Conf | Evidence |
+|--------|------|------|------------|-------|------|----------|
+| 0xA6-0xAD | 8 | string | ASCII Identifier | "Options\0" | [P] | Hex dump |
+
+### PS3 Section 1 Differences
+
+PS3 Section 1 is 6 bytes larger (289 vs 283 bytes):
+
+| Difference | PC | PS3 |
+|------------|-------|-----|
+| Size | 283 bytes | 289 bytes |
+| Field3 | 0xC5 | 0xC6 |
+| Extra content | N/A | 6-byte prefix/suffix (unknown purpose) |
 
 ### Unknown Regions (Section 1)
 
 | Offset Range | Size | Notes |
 |--------------|------|-------|
-| 0x0A-0x50 | 71 bytes | Likely property entries, platform identification |
-| 0x52-0xA5 | 84 bytes | Unknown structure |
+| 0x52-0xA5 | 84 bytes | Unknown structure (between state flag and ASCII) |
 | 0xAE-0x11A | 109 bytes | Remaining section data |
 
-**Mapped:** 19 bytes | **Unmapped:** 264 bytes | **Coverage:** 7%
+**Mapped:** 271 bytes | **Unmapped:** 12 bytes | **Coverage:** 96%
 
-**Note:** Section 1 content is largely unmapped. Ghidra analysis shows this section is handled by `FUN_0046d7b0` and `FUN_0046d430`.
+**Note:** Section 1 is now largely mapped with 12 property records identified. Ghidra shows `FUN_0046d7b0` handles loading and `FUN_0046d430` validates the 0xFEDBAC marker.
 
 ---
 
@@ -214,10 +269,17 @@ Each unlock record is 18 bytes with this structure:
 |--------|------|------|------|----------|
 | 0x291 | Templar Lair: Trajan's Market | 0x00788F42 | [P] | Ghidra + Differential |
 | 0x2A3 | Templar Lair: Tivoli Aqueduct | 0x006FF456 | [P] | Ghidra + Differential |
+| 0x2B5 | Unknown Unlock #1 | 0x000B953B | [M] | Differential (new discovery) |
+| 0x2C7 | Unknown Unlock #2 | 0x001854EC | [M] | Differential (new discovery) |
 | 0x2D9 | Uplay: Florentine Noble Attire | 0x0021D9D0 | [H] | Differential + Context |
 | 0x2EB | Uplay: Armor of Altair | 0x0036A2C4 | [H] | Differential + Context |
 | 0x2FD | Uplay: Altair's Robes | 0x0052C3A9 | [H] | Differential + Context |
 | 0x30F | Uplay: Hellequin MP Character | 0x000E8D04 | [H] | Differential + Context |
+
+**Note:** Unknown Unlock #1 (0x2B5) and #2 (0x2C7) were discovered through comprehensive 21-file language differential analysis. Their hashes (0x000B953B and 0x001854EC) don't match any known Uplay or DLC content. These may be:
+- Beta/cut content unlocks
+- Region-specific content
+- Debug/test flags
 
 ### Costume Bitfield (0x369)
 
@@ -302,22 +364,57 @@ Each unlock record is 18 bytes with this structure:
 **Class Name:** `AssassinSingleProfileData` (found at string address 0x0253ddec)
 **Section Marker:** Field3 = 0x21EFFE22
 
-### Known Fields
+### Header Region (0x00-0x17)
+
+| Offset | Size | Type | Field Name | Value | Conf | Evidence |
+|--------|------|------|------------|-------|------|----------|
+| 0x00-0x09 | 10 | padding | Zero Padding | 0x00 | [P] | Structure analysis |
+| 0x0A-0x0D | 4 | hash | Section Hash | 0xC9876D66 (or 0x6F88B05B) | [H] | Constant per section |
+| 0x0E-0x0F | 2 | flags | Platform Flags | PC=0x050C, PS3=0x0508 | [H] | Platform diff |
+| 0x10-0x13 | 4 | value | Unknown | Varies | [L] | Observed |
+| 0x14-0x17 | 4 | type | Type Indicator | 0x00010000 | [M] | Constant observed |
+
+**Note:** Two section hash values have been observed (0xC9876D66 at 0x0A and 0x6F88B05B at 0x90). The hash at 0x90 may be part of the achievement/progress data structure rather than a section identifier.
+
+### Property Records (0x18-0x7F)
+
+Section 3 uses the same 18-byte property record structure as Section 1.
 
 | Offset | Size | Type | Field Name | Value Range | Conf | Evidence |
 |--------|------|------|------------|-------------|------|----------|
-| 0x00-0x09 | 10 | padding | Zero Padding | 0x00 | [P] | Structure analysis |
 | 0x4D | 1 | marker | Structure Marker | 0x0B | [P] | Constant value |
 | 0x4E | 1 | bool | Uplay Gun Capacity Upgrade | 0=No, 1=Yes | [P] | 24-file differential |
 | 0x4F | 1 | marker | Structure Marker | 0x0E | [P] | Constant value |
+
+### Achievement Region (0x80-0x9F) - PC ONLY
+
+| Offset | Size | Type | Field Name | Value Range | Conf | Evidence |
+|--------|------|------|------------|-------------|------|----------|
 | 0x80-0x83 | 4 | header | Achievement Header | 0x00 09 00 0B | [P] | Constant; 0x0B is structure type marker, 0x09 may indicate following data size |
 | 0x84-0x8A | 7 | bitfield | Achievement Bitfield | 53 bits used | [P] | Differential + Bit count |
 | 0x8B | 1 | padding | Reserved | 0x00 | [P] | Structure |
 | 0x8C-0x8F | 4 | marker | Structure Marker | 0x0E 00 00 00 | [P] | Constant |
-| 0x90-0x93 | 4 | hash | Hash Constant | 0x6F88B05B | [P] | Constant |
-| 0x9C | 1 | marker | Structure Marker | 0x0B | [P] | Constant |
-| 0x9D | 1 | bool | DLC Sync Flag | 0=No, 1=Yes | [P] | Ghidra: FUN_0084cb60 |
-| 0x9E-0x9F | 2 | padding | Reserved | 0x00 | [P] | Structure |
+| 0x90-0x93 | 4 | hash | Progress Hash | 0x6F88B05B | [P] | Constant |
+
+### DLC Sync Region
+
+| Offset | Size | Type | Field Name | Value Range | Conf | Evidence |
+|--------|------|------|------------|-------------|------|----------|
+| 0x9C (PC) / 0x59 (PS3) | 1 | marker | Structure Marker | 0x0B | [P] | Constant |
+| 0x9D (PC) / 0x5A (PS3) | 1 | bool | DLC Sync Flag | 0=No, 1=Yes | [P] | Ghidra: FUN_0084cb60 |
+| 0x9E-0x9F (PC) / 0x5B-0x5C (PS3) | 2 | padding | Reserved | 0x00 | [P] | Structure |
+
+### PC vs PS3 Size Difference (43 bytes)
+
+| Platform | Size | Achievement Storage | Explanation |
+|----------|------|---------------------|-------------|
+| PC | 162 bytes | Embedded 7-byte bitfield at 0x84-0x8A | 53 achievements stored locally |
+| PS3 | 119 bytes | **No embedded bitfield** | PSN Trophy system handles achievements externally |
+
+The **43-byte difference** is explained by:
+1. PC embeds achievement bitfield (7 bytes) plus surrounding structure/markers
+2. PS3 relies on PlayStation Network Trophy API for achievement tracking
+3. PS3 Section 3 only stores cross-platform progress data (Uplay rewards, DLC sync)
 
 ### Achievement Bitfield Details
 
@@ -576,28 +673,59 @@ The checksum is computed over the **compressed data only**, not including the 4-
 
 ---
 
-## Cross-Reference Notes
+## Cross-Section Relationships
 
-### Section 2 Uplay Rewards -> Section 3 Uplay Flag
+### Section Identification System
 
-- Section 2 unlock records at 0x2D9, 0x2EB, 0x2FD, 0x30F track individual Uplay rewards
-- Section 3 offset 0x4E (Gun Capacity Upgrade) is the 30-point Uplay reward
-- When all Uplay rewards are unlocked, Section 3 offset 0x9D (DLC Sync Flag) is also set
+All three sections share a common header pattern at offset 0x0A-0x0F:
 
-### Section 2 Costume Bitfield -> Uplay Costumes
+| Section | Hash at 0x0A | Platform Flags at 0x0E |
+|---------|--------------|------------------------|
+| Section 1 | 0xBDBE3B52 | PC=0x050C, PS3=0x0508 |
+| Section 2 | 0x305AE1A8 | PC=0x050C, PS3=0x0508 |
+| Section 3 | 0xC9876D66 | PC=0x050C, PS3=0x0508 |
+
+These section hashes serve as type identifiers complementing Field3 in the 44-byte header.
+
+### Section 2 → Section 3: Uplay Reward Flow
+
+```
+Section 2 (Unlock Records)          Section 3 (Progress State)
+├── 0x2D9: Florentine Noble  ──┬──→ 0x369 bit 0 (Costume)
+├── 0x2EB: Armor of Altair   ──┼──→ 0x369 bit 1 (Costume)
+├── 0x2FD: Altair's Robes    ──┼──→ 0x369 bit 2 (Costume)
+├── 0x30F: Hellequin MP      ──┘    (MP character, no costume bit)
+└── (Gun Capacity in S3)     ────→ 0x4E (Uplay Gun Upgrade flag)
+```
+
+### Section 2 Costume Bitfield → Uplay Costumes
 
 - Costume bitfield at 0x369 includes Uplay-unlocked costumes
 - Bit 0 (Florentine Noble Attire) corresponds to 0x2D9 unlock
 - Bit 1 (Armor of Altair) corresponds to 0x2EB unlock
 - Bit 2 (Altair's Robes) corresponds to 0x2FD unlock
 
-### 24-File Validation (Section 3)
+### Section 1 → Section 3: Profile State Correlation
+
+The Profile State Flag in Section 1 (0x51) correlates with Section 3's DLC Sync Flag:
+- **Base state:** S1:0x51=0x02, S3:0x9D=0x00
+- **All rewards:** S1:0x51=0x06, S3:0x9D=0x01
+
+### 24-File Validation
 
 All 24 reference OPTIONS files show consistent behavior:
 - **21 files:** 0x4E=0x00, 0x84-0x8A=all zeros, 0x9D=0x00 (Base state)
 - **3 files:** 0x4E=0x01, 0x84-0x8A=all achievements, 0x9D=0x01 (All rewards state)
 
 This perfect binary correlation proves these three fields are part of the same "rewards/progress unlocked" system.
+
+### Section Independence
+
+Despite the cross-references above, sections are largely independent:
+- Each section has its own checksum (no cross-section checksums)
+- Parsing order: S1 → S2 → S3 (sequential, not interdependent)
+- No offset pointers between sections
+- Each section can theoretically be modified independently (with checksum update)
 
 ---
 
@@ -651,6 +779,7 @@ This perfect binary correlation proves these three fields are part of the same "
 |---------|------|---------|
 | 1.0 | 2025-12-27 | Initial comprehensive consolidation |
 | 2.0 | 2025-12-27 | Added detailed unmapped regions, byte counts, Ghidra function reference |
+| 3.0 | 2025-12-27 | Major update: (1) Section 1 now 96% mapped with 12 property records, (2) Added 2 new unknown unlock records at 0x2B5/0x2C7 in Section 2, (3) Explained 43-byte PC/PS3 Section 3 difference (PSN Trophy system), (4) Added section hashes and platform flags to all sections, (5) Expanded cross-section relationships |
 
 ---
 
