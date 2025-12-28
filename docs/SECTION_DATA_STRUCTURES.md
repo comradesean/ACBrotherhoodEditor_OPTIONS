@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Section Data Structures
 
-**Document Version:** 1.0
+**Document Version:** 1.2
 **Date:** 2025-12-27
-**Status:** Complete C Structure Definitions
+**Status:** Complete C Structure Definitions (Phase 1 + Phase 2 Updates)
 
 This document provides complete C structure definitions for all decompressed section data in the AC Brotherhood OPTIONS file format.
 
@@ -93,7 +93,19 @@ typedef struct {
     uint8_t  trailing_data[109];      /* 0xAE-0x11A */
 } Section1_SystemProfile;
 
-/* PS3 version is 6 bytes larger (289 bytes) - extra bytes location unknown */
+/* PS3 Section 1 Prefix - 6 bytes at offset 0x00 before main structure */
+typedef struct {
+    uint8_t      marker;          /* 0x00: 0x01 - Version/type marker */
+    OPTIONS_Hash section_hash;    /* 0x01-0x04: 0xBDBE3B52 (duplicate of main hash) */
+    uint8_t      unknown;         /* 0x05: 0x03 - Unknown field */
+} PS3_Section1_Prefix;
+
+_Static_assert(sizeof(PS3_Section1_Prefix) == 6, "PS3_Section1_Prefix must be 6 bytes");
+
+/* PS3 Section 1: 6-byte prefix + 283-byte main structure = 289 bytes total
+ * After the prefix, PS3 data aligns perfectly with PC data.
+ * The section hash appears twice: once in prefix (0x01) and again at main offset 0x0A.
+ */
 ```
 
 ---
@@ -102,10 +114,53 @@ typedef struct {
 
 **Uncompressed Size:** 1310 bytes (PC) / 1306 bytes (PS3)
 
+### Property Record Structure (18 bytes) - Phase 2 Discovery
+
+Section 2 uses 18-byte property records for ALL settings. The "17-byte reserved" gaps between settings are actually the trailing portion of these records:
+
+```c
+/* Section 2 Property Record - 18 bytes
+ * Each setting in Section 2 follows this structure.
+ * The value byte is at the START, followed by type and hash.
+ */
+typedef struct {
+    uint8_t      value;           /* +0x00: Setting value (bool, byte, or float LSB) */
+    uint8_t      type_marker;     /* +0x01: 0x0E=standard, 0x11=alt, 0x15=special */
+    uint8_t      padding[3];      /* +0x02-0x04: Always zeros */
+    OPTIONS_Hash property_hash;   /* +0x05-0x08: Property identifier hash (LE) */
+    uint8_t      zero_pad[8];     /* +0x09-0x10: Zero padding */
+    uint8_t      next_marker;     /* +0x11: 0x0B = next record start marker */
+} Section2_PropertyRecord;
+
+_Static_assert(sizeof(Section2_PropertyRecord) == 18, "Section2_PropertyRecord must be 18 bytes");
+
+/* Type Markers:
+ * 0x0E (14): Standard property/setting (most common)
+ * 0x11 (17): Alternative type (floats, nested structures)
+ * 0x15 (21): Special records (language-related)
+ * 0x17 (23): Unique structure (possibly keyboard bindings)
+ */
+```
+
+### Known Property Hashes (Section 2)
+
+| Offset | Hash | Purpose |
+|--------|------|---------|
+| 0x13B | 0xA15FACF2 | Invert 3P X axis |
+| 0x14D | 0xC36B150F | Invert 3P Y axis |
+| 0x15F | 0x9CCE0247 | Invert 1P X axis |
+| 0x171 | 0x56932719 | Invert 1P Y axis |
+| 0x183 | 0x962BD533 | Action Camera Frequency |
+| 0x195 | 0x7ED0EABB | Brightness |
+| 0x1A7 | 0xDE6CD4AB | Blood toggle |
+| 0x1EF | 0x039BEE69 | HUD: Health Meter |
+| 0x237 | 0x761E3CE0 | HUD: Mini-Map |
+| 0x291 | 0x788F42CC | Templar Lair: Trajan Market |
+
 ### Unlock Record Structure (18 bytes)
 
 ```c
-/* Unlock Record - 18 bytes */
+/* Unlock Record - 18 bytes (variant of Property Record for unlock tracking) */
 typedef struct {
     uint8_t      marker;          /* +0x00: 0x0B (structure marker) */
     OPTIONS_Bool unlock_flag;     /* +0x01: 0x00=locked, 0x01=unlocked */
@@ -264,6 +319,26 @@ typedef struct {
 /* All achievements unlocked: FF FF FF FF FF FF 1F */
 ```
 
+### Section 3 Property Record Structure
+
+Section 3 uses a different property record layout than Section 1:
+
+```c
+/* Section 3 Property Record - 18 bytes
+ * Note: Hash is at START (+0x00), not at +0x0A like Section 1
+ */
+typedef struct {
+    OPTIONS_Hash hash;            /* +0x00: Content identifier hash */
+    uint8_t      padding1[8];     /* +0x04: Zero padding */
+    uint8_t      marker;          /* +0x0C: 0x0B structure marker */
+    uint8_t      flag;            /* +0x0D: Value/flag byte */
+    uint8_t      type;            /* +0x0E: Type marker (0x0E) */
+    uint8_t      padding2[3];     /* +0x0F: Zero padding to 18 bytes */
+} Section3_PropertyRecord;
+
+_Static_assert(sizeof(Section3_PropertyRecord) == 18, "Section3_PropertyRecord must be 18 bytes");
+```
+
 ### Complete Section 3 Structure (PC)
 
 ```c
@@ -275,12 +350,35 @@ typedef struct {
     uint16_t     platform_flags;          /* 0x0E-0x0F: PC=0x050C */
     uint8_t      reserved1[8];            /* 0x10-0x17 */
 
-    /* Property records region */
-    uint8_t      reserved2[53];           /* 0x18-0x4C */
+    /* Property records region (0x18-0x4C) - 3 records identified */
+    /* Record 1: 0x18-0x29 */
+    OPTIONS_Hash record1_hash;            /* 0x1A: 0xBF4C2013 */
+    uint8_t      record1_data[14];        /* 0x1E-0x2B */
+
+    /* Record 2: 0x2C-0x3D */
+    OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 */
+    uint8_t      record2_data[14];        /* 0x33-0x40 */
+
+    /* Record 3: 0x3E-0x4F (overlaps with Uplay marker) */
+    OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 */
+    uint8_t      record3_data[10];        /* 0x45-0x4E */
+
     uint8_t      marker_0x4d;             /* 0x4D: 0x0B (constant) */
     OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: 30-point Uplay reward */
     uint8_t      marker_0x4f;             /* 0x4F: 0x0E (constant) */
-    uint8_t      reserved3[48];           /* 0x50-0x7F */
+
+    /* Pre-achievement region (0x50-0x7F) - 2 more records */
+    /* Record 4: 0x50-0x61 */
+    OPTIONS_Hash record4_hash;            /* 0x53: 0x5B95F10B (both platforms) */
+    uint8_t      record4_data[14];        /* 0x57-0x64 */
+
+    /* Record 5: 0x62-0x73 */
+    OPTIONS_Hash record5_hash;            /* 0x65: 0x2A4E8A90 (both platforms) */
+    uint8_t      record5_data[14];        /* 0x69-0x76 */
+
+    /* Record 6: 0x74-0x7F (PC only, partial) */
+    OPTIONS_Hash record6_hash;            /* 0x77: 0x496F8780 (PC only) */
+    uint8_t      record6_data[8];         /* 0x7B-0x7F */
 
     /* Achievement region - PC ONLY */
     uint8_t      achievement_header[4];   /* 0x80-0x83: 00 09 00 0B */
@@ -304,6 +402,7 @@ typedef struct {
  * PS3 is 43 bytes smaller because:
  * 1. No embedded achievement bitfield (PSN Trophy API handles this)
  * 2. DLC sync flag at 0x5A instead of 0x9D
+ * 3. Record 6 (0x496F8780) and achievement region omitted
  */
 typedef struct {
     /* Common header (0x00-0x17) */
@@ -312,16 +411,31 @@ typedef struct {
     uint16_t     platform_flags;          /* 0x0E-0x0F: PS3=0x0508 */
     uint8_t      reserved1[8];            /* 0x10-0x17 */
 
-    /* Property records region */
-    uint8_t      reserved2[53];           /* 0x18-0x4C */
+    /* Property records region (0x18-0x4C) - same as PC */
+    OPTIONS_Hash record1_hash;            /* 0x1A: 0xBF4C2013 */
+    uint8_t      record1_data[14];        /* 0x1E-0x2B */
+    OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 */
+    uint8_t      record2_data[14];        /* 0x33-0x40 */
+    OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 */
+    uint8_t      record3_data[10];        /* 0x45-0x4E */
+
     uint8_t      marker_0x4d;             /* 0x4D: 0x0B (constant) */
     OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: 30-point Uplay reward */
     uint8_t      marker_0x4f;             /* 0x4F: 0x0E (constant) */
-    uint8_t      reserved3[10];           /* 0x50-0x59 */
+
+    /* Shared records region (0x50-0x76) */
+    OPTIONS_Hash record4_hash;            /* 0x53: 0x5B95F10B (same as PC) */
+    uint8_t      record4_data[14];        /* 0x57-0x64 */
+    OPTIONS_Hash record5_hash;            /* 0x65: 0x2A4E8A90 (same as PC) */
+    uint8_t      record5_data[8];         /* 0x69-0x70 */
+
+    /* Platform-specific differences */
+    uint8_t      ps3_flag_0x60;           /* 0x60: 0x01 (PC has 0x00) */
+    uint8_t      ps3_type_0x73;           /* 0x73: 0x00 (PC has 0x15) */
 
     /* DLC sync region - different offset than PC */
     OPTIONS_Bool dlc_sync_flag;           /* 0x5A */
-    uint8_t      reserved4[36];           /* 0x5B-0x76 */
+    uint8_t      trailing_data[28];       /* 0x5B-0x76 */
 } Section3_GameProgress_PS3;
 ```
 
