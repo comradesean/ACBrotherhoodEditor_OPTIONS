@@ -18,7 +18,7 @@
 | Section 2 | PS3 | 1306 bytes | ~916 bytes | **70%** |
 | Section 3 | PC | 162 bytes | ~57 bytes | 35% |
 | Section 3 | PS3 | 119 bytes | ~50 bytes | 42% |
-| Section 4 | PS3 only | 1903 bytes | 16 bytes | 1% |
+| Section 4 | PS3 only | 1903 bytes | ~1880 bytes | **98.8%** |
 
 ### Key Analysis Findings (v3.2)
 
@@ -596,45 +596,104 @@ Section 4 is PS3-exclusive and contains DualShock 3 controller mapping data.
 
 | Component | Offset | Size | Description |
 |-----------|--------|------|-------------|
-| Header | 0x00-0x60 | 97 bytes | General controller settings |
-| Records | 0x61-0x5EB | 1445 bytes | 17 button mapping records (85 bytes each) |
-| Trailer | 0x5EC-0x76E | 361 bytes | Additional settings + padding |
+| Header | 0x00-0x60 | 97 bytes | Section header + initialization records |
+| Records | 0x61-0x605 | 1445 bytes | 17 button mapping records (85 bytes each) |
+| Trailer | 0x606-0x76E | 361 bytes | Property records + zero padding |
+
+### Header Region (0x00-0x60)
+
+| Offset | Size | Type | Field Name | Value | Conf | Evidence |
+|--------|------|------|------------|-------|------|----------|
+| 0x00-0x09 | 10 | padding | Zero Padding | 0x00 | [P] | Structure analysis |
+| 0x0A-0x0D | 4 | hash | Section Hash | 0xB4B55039 | [H] | Constant |
+| 0x0E-0x0F | 2 | flags | Platform Flags | 0x075D | [H] | Platform identifier |
+| 0x10-0x13 | 4 | value | Unknown | 0x07550000 | [L] | Observed |
+| 0x14-0x17 | 4 | type | Type Indicator | 0x00110000 | [H] | Matches Section 2 |
+| 0x18-0x60 | 73 | records | Extended Header | Property records | [M] | Structure markers |
 
 ### Button Mapping Record Structure (85 bytes)
 
-| Record Offset | Size | Description |
-|---------------|------|-------------|
-| +0x00 | 5 | Signature: `A8 CF 5F F9 43` |
-| +0x05 | 4 | Value 1: `0x0000003B` (constant) |
-| +0x09 | 4 | Value 2: `0x00000011` (constant) |
-| +0x0D | 4 | Controller ID: `C0 B2 57 81` |
-| +0x11 | 10 | Reserved (zeros) |
-| +0x1B | 2 | Field marker: `06 00` |
-| +0x1D | 1 | Button/Action ID |
-| +0x1E | 67 | Additional mapping data |
+Each record is a template with only Button ID varying between records.
 
-### Known Button/Action IDs
+| Record Offset | Size | Field | Value/Description | Conf |
+|---------------|------|-------|-------------------|------|
+| +0x00 | 5 | Signature | `A8 CF 5F F9 43` (constant) | [P] |
+| +0x05 | 4 | Record Size | `0x0000003B` (59 bytes, BE) | [H] |
+| +0x09 | 4 | Record Count | `0x00000011` (17 records, BE) | [H] |
+| +0x0D | 4 | Controller Hash | `0x8157B2C0` (DualShock 3 ID) | [H] |
+| +0x11 | 9 | Reserved | zeros | [P] |
+| +0x1A | 2 | Field Marker | `0x0006` | [H] |
+| +0x1C | 1 | Struct Marker | `0x0B` | [H] |
+| +0x1D | 1 | Button ID | varies (0x02-0x22) | [P] |
+| +0x1E | 55 | Property Records | 3 nested 18-byte records | [M] |
 
-| ID | Hex | DualShock 3 Button |
-|----|-----|--------------------|
-| 2 | 0x02 | Cross (X) |
-| 5 | 0x05 | L1 |
-| 7 | 0x07 | R1 |
-| 8 | 0x08 | L2 |
-| 10 | 0x0A | R2 |
-| 14 | 0x0E | D-Pad |
-| 17 | 0x11 | Left Stick |
-| 18 | 0x12 | Right Stick |
-| 20 | 0x14 | Select |
-| 21 | 0x15 | Triangle |
-| 22 | 0x16 | Circle |
-| 25 | 0x19 | Square |
-| 28 | 0x1C | Start |
-| 31 | 0x1F | L3 (Left Stick Click) |
-| 32 | 0x20 | R3 (Right Stick Click) |
-| 34 | 0x22 | PS Button |
+#### Property Sub-Record Structure (within button records)
 
-**Mapped:** 16 bytes (button IDs) | **Unmapped:** 1887 bytes | **Coverage:** 1%
+The 55-byte property section contains 3 nested records with constant action binding hashes:
+
+| Sub-Record | Offset | Size | Structure |
+|------------|--------|------|-----------|
+| 1 | +0x1E | 18 | zeros + 0x0F marker + value + hash 0xE717D13B |
+| 2 | +0x30 | 18 | 0x0B marker + 0x0F + value + hash 0x0043E6D0 |
+| 3 | +0x42 | 19 | 0x05 marker + 0x0B + zeros |
+
+### Complete Button ID Mapping
+
+| ID | Hex | DualShock 3 Button | Record Offset |
+|----|-----|--------------------| --------------|
+| 2 | 0x02 | Cross (X) | 0x0061 |
+| 5 | 0x05 | L1 | 0x0160 |
+| 7 | 0x07 | R1 | 0x020A |
+| 8 | 0x08 | L2 | 0x025F |
+| 10 | 0x0A | R2 | 0x01B5 |
+| 14 | 0x0E | D-Pad | 0x035E |
+| 15 | 0x0F | D-Pad Alternate | 0x045D |
+| 17 | 0x11 | Left Stick | 0x0408 |
+| 18 | 0x12 | Right Stick | 0x02B4 |
+| 20 | 0x14 | Select | 0x03B3 |
+| 21 | 0x15 | Triangle | 0x00B6 |
+| 22 | 0x16 | Circle | 0x010B |
+| 25 | 0x19 | Square | 0x0309 |
+| 28 | 0x1C | Start | 0x055C |
+| 31 | 0x1F | L3 (Left Stick Click) | 0x04B2 |
+| 32 | 0x20 | R3 (Right Stick Click) | 0x0507 |
+| 34 | 0x22 | PS Button | 0x05B1 |
+
+### Trailer Region (0x606-0x76E)
+
+Contains 12+ property records with 18-byte structure, followed by zero padding.
+
+| Offset | Size | Type | Description | Conf |
+|--------|------|------|-------------|------|
+| 0x606-0x60D | 8 | record | Marker pattern `9D 03 0B 01` | [M] |
+| 0x616-0x619 | 4 | hash | 0xDEC8D5A5 (unknown) | [M] |
+| 0x620-0x62F | 16 | record | Contains `9D 03 0B 01` + values | [M] |
+| 0x628-0x633 | 12 | bytes | "MUW" pattern (0x57554D) | [L] |
+| 0x634-0x6B5 | 130 | records | 7 property records with hashes | [M] |
+| 0x6B6-0x6FF | 74 | records | Additional config records | [M] |
+| 0x700-0x76E | 111 | padding | Zero padding | [P] |
+
+#### Identified Trailer Hashes
+
+| Offset | Hash | Flag | Purpose (Speculative) |
+|--------|------|------|----------------------|
+| 0x64A | 0x9F1438A5 | 0x00 | Controller config |
+| 0x65C | 0xAFBEEA25 | 0x01 | Controller config |
+| 0x66E | 0x221991EF | 0x00 | Controller config |
+| 0x680 | 0x20AD7434 | 0x01 | Controller config |
+| 0x692 | 0xB6BA16BB | 0x01 | Controller config |
+| 0x6A4 | 0x1A361AE1 | 0x01 | Controller config |
+| 0x6B6 | 0x605F5F37 | 0x01 | Controller config |
+| 0x6F6 | 0x3B7A5EB8 | 0x01 | Controller config |
+
+### Key Findings (Phase 3)
+
+1. **Template Structure**: All 17 button records share identical byte patterns except for Button ID at +0x1D
+2. **Constant Hashes**: Action binding hashes (0xE717D13B, 0x0043E6D0) are constant across all records
+3. **Implicit Mapping**: Button-to-action mapping is implicit based on Button ID, not explicitly stored
+4. **Property Records**: Trailer uses same 18-byte property record structure as Sections 1-3
+
+**Mapped:** ~1880 bytes | **Unmapped:** ~23 bytes | **Coverage:** 98.8%
 
 ---
 

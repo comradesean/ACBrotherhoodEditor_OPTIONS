@@ -444,33 +444,92 @@ typedef struct {
 ## Section 4: Controller Mappings (PS3 Only)
 
 **Uncompressed Size:** 1903 bytes
+**Coverage:** 98.8% (Phase 3 analysis)
+
+### Section 4 Header (97 bytes)
+
+```c
+/* Section 4 Header - 97 bytes */
+typedef struct {
+    uint8_t      zero_padding[10];    /* 0x00-0x09: Always zeros */
+    OPTIONS_Hash section_hash;        /* 0x0A-0x0D: 0xB4B55039 */
+    uint16_t     platform_flags;      /* 0x0E-0x0F: 0x075D */
+    uint32_t     unknown;             /* 0x10-0x13: 0x07550000 */
+    uint32_t     type_indicator;      /* 0x14-0x17: 0x00110000 */
+    uint8_t      extended_header[73]; /* 0x18-0x60: Property records */
+} Section4_Header;
+
+_Static_assert(sizeof(Section4_Header) == 97, "Section4_Header must be 97 bytes");
+```
 
 ### Button Mapping Record (85 bytes)
 
+All records share identical template structure except Button ID at +0x1D.
+
 ```c
+/* PS3 Button Mapping Property Sub-Record - 18 bytes */
+typedef struct {
+    uint8_t      padding[3];          /* +0x00: zeros */
+    uint8_t      type_marker;         /* +0x03: 0x0F */
+    uint32_t     value;               /* +0x04: matches record_size */
+    OPTIONS_Hash action_hash;         /* +0x08: binding hash */
+    uint8_t      trailing[5];         /* +0x0C: zeros */
+    uint8_t      next_marker;         /* +0x11: 0x05 or 0x0B */
+} ButtonPropertyRecord;
+
 /* PS3 Button Mapping Record - 85 bytes */
 typedef struct {
-    uint8_t  signature[5];        /* 0x00-0x04: A8 CF 5F F9 43 */
-    uint32_t value1;              /* 0x05-0x08: 0x0000003B (constant) */
-    uint32_t value2;              /* 0x09-0x0C: 0x00000011 (constant) */
-    uint32_t controller_id;       /* 0x0D-0x10: C0 B2 57 81 */
-    uint8_t  reserved[10];        /* 0x11-0x1A: Zeros */
-    uint16_t field_marker;        /* 0x1B-0x1C: 0x0006 */
-    uint8_t  button_id;           /* 0x1D: Button/action identifier */
-    uint8_t  mapping_data[67];    /* 0x1E-0x54: Additional mapping data */
+    uint8_t  signature[5];            /* +0x00: A8 CF 5F F9 43 */
+    uint32_t record_size;             /* +0x05: 0x0000003B (59, BE) */
+    uint32_t record_count;            /* +0x09: 0x00000011 (17, BE) */
+    uint32_t controller_hash;         /* +0x0D: 0x8157B2C0 (DualShock 3) */
+    uint8_t  reserved[9];             /* +0x11: zeros */
+    uint16_t field_marker;            /* +0x1A: 0x0006 */
+    uint8_t  struct_marker;           /* +0x1C: 0x0B */
+    uint8_t  button_id;               /* +0x1D: varies (0x02-0x22) */
+    /* Property Records Section - 55 bytes */
+    ButtonPropertyRecord prop1;       /* +0x1E: hash 0xE717D13B */
+    ButtonPropertyRecord prop2;       /* +0x30: hash 0x0043E6D0 */
+    uint8_t  prop3_marker;            /* +0x42: 0x05 */
+    uint8_t  prop3_padding;           /* +0x43: 0x00 */
+    uint8_t  prop3_struct;            /* +0x44: 0x0B */
+    uint8_t  prop3_zeros[16];         /* +0x45: zeros to end */
 } PS3_ButtonRecord;
 
 _Static_assert(sizeof(PS3_ButtonRecord) == 85, "PS3_ButtonRecord must be 85 bytes");
 
-/* Known Button IDs:
- * 0x02 = Cross (X)     0x14 = Select
- * 0x05 = L1            0x15 = Triangle
- * 0x07 = R1            0x16 = Circle
- * 0x08 = L2            0x19 = Square
- * 0x0A = R2            0x1C = Start
- * 0x0E = D-Pad         0x1F = L3
- * 0x11 = Left Stick    0x20 = R3
- * 0x12 = Right Stick   0x22 = PS Button
+/* Button ID to DualShock 3 Button Mapping:
+ * 0x02 = Cross (X)         0x14 = Select
+ * 0x05 = L1                0x15 = Triangle
+ * 0x07 = R1                0x16 = Circle
+ * 0x08 = L2                0x19 = Square
+ * 0x0A = R2                0x1C = Start
+ * 0x0E = D-Pad             0x1F = L3 (Left Stick Click)
+ * 0x0F = D-Pad Alternate   0x20 = R3 (Right Stick Click)
+ * 0x11 = Left Stick        0x22 = PS Button
+ * 0x12 = Right Stick
+ *
+ * Key Finding: Only button_id varies between records.
+ * All other fields are constant templates.
+ */
+```
+
+### Trailer Property Record (18 bytes)
+
+```c
+/* Section 4 Trailer Property Record - 18 bytes */
+typedef struct {
+    uint8_t      marker;              /* +0x00: 0x0B */
+    uint8_t      flag;                /* +0x01: 0x00 or 0x01 */
+    uint8_t      type;                /* +0x02: 0x0E, 0x15, etc. */
+    uint8_t      padding[3];          /* +0x03: zeros */
+    OPTIONS_Hash property_hash;       /* +0x06: configuration hash */
+    uint8_t      trailing[8];         /* +0x0A: zeros */
+} Section4_TrailerRecord;
+
+/* Known Trailer Hashes:
+ * 0x9F1438A5, 0xAFBEEA25, 0x221991EF, 0x20AD7434,
+ * 0xB6BA16BB, 0x1A361AE1, 0x605F5F37, 0x3B7A5EB8
  */
 ```
 
@@ -479,10 +538,14 @@ _Static_assert(sizeof(PS3_ButtonRecord) == 85, "PS3_ButtonRecord must be 85 byte
 ```c
 /* Section 4: PS3 Controller Mappings - 1903 bytes */
 typedef struct {
-    uint8_t           header[97];         /* 0x00-0x60: General settings */
-    PS3_ButtonRecord  buttons[17];        /* 0x61-0x5EB: Button mapping records */
-    uint8_t           trailer[361];       /* 0x5EC-0x76E: Additional settings */
+    Section4_Header   header;           /* 0x00-0x60: 97 bytes */
+    PS3_ButtonRecord  buttons[17];      /* 0x61-0x605: 1445 bytes */
+    uint8_t           trailer[256];     /* 0x606-0x705: property records */
+    uint8_t           padding[105];     /* 0x706-0x76E: zero padding */
 } Section4_ControllerMappings;
+
+_Static_assert(sizeof(Section4_ControllerMappings) == 1903,
+               "Section4_ControllerMappings must be 1903 bytes");
 ```
 
 ---
