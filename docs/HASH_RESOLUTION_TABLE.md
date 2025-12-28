@@ -1,9 +1,9 @@
 # AC Brotherhood OPTIONS - Hash Resolution Table
 
-**Document Version:** 1.0
+**Document Version:** 1.2
 **Date:** 2025-12-27
-**Status:** Comprehensive Hash Reference with Algorithm Analysis
-**Research Method:** Ghidra Decompilation, Differential Analysis, Algorithm Testing
+**Status:** Comprehensive Hash Reference with Algorithm Analysis (Phase 1 + Phase 2 Updates)
+**Research Method:** Ghidra Decompilation, Differential Analysis, Algorithm Testing, Binary Analysis
 
 ---
 
@@ -40,7 +40,7 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 | Storage Location | Static table at `0x0298a780` in executable |
 | Algorithm | **UNKNOWN** - Precomputed values, not runtime-generated |
 | Algorithms Tested | 30+ without successful match |
-| Total Unique Hashes | 28+ identified |
+| Total Unique Hashes | **91+ identified** (57 new in Phase 2) |
 
 ### Hash Resolution Status
 
@@ -49,6 +49,8 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 | Section Identification | 3 | 3 (100%) | 0 |
 | Language | 20 | 20 (100%) | 0 |
 | Content Unlocks | 8 | 6 (75%) | 2 |
+| Section 2 Property Records | 57 | 24 (42%) | 33 |
+| Section 3 Property Records | 6 | 0 (0%) | 6 |
 | Progress/Internal | 1 | 0 (0%) | 1 |
 
 ---
@@ -270,6 +272,79 @@ typedef struct {
 
 ---
 
+## 5.5 Section 2 Property Hashes (Phase 2 Discovery)
+
+Phase 2 analysis discovered that Section 2 uses 18-byte property records, each containing a unique 4-byte hash at offset +0x05. **57 unique property hashes** were identified.
+
+### 5.5.1 Mapped Property Hashes (24 total)
+
+| Offset | Hash | Purpose | Type |
+|--------|------|---------|------|
+| 0x13B | 0xA15FACF2 | Invert 3P X axis | 0x0E |
+| 0x14D | 0xC36B150F | Invert 3P Y axis | 0x0E |
+| 0x15F | 0x9CCE0247 | Invert 1P X axis | 0x0E |
+| 0x171 | 0x56932719 | Invert 1P Y axis | 0x0E |
+| 0x183 | 0x962BD533 | Action Camera Frequency | 0x0E |
+| 0x195 | 0x7ED0EABB | Brightness | 0x0E |
+| 0x1A7 | 0xDE6CD4AB | Blood toggle | 0x0E |
+| 0x1B9 | 0xED915BD4 | Flying Machine Invert | 0x0E |
+| 0x1CB | 0xF20B5679 | Cannon Invert X | 0x0E |
+| 0x1DD | 0xC9762625 | Cannon Invert Y | 0x0E |
+| 0x1EF | 0x039BEE69 | HUD: Health Meter | 0x0E |
+| 0x201 | 0x0E04FA13 | HUD: Controls | 0x0E |
+| 0x213 | 0xF3ED28F7 | HUD: Updates | 0x0E |
+| 0x225 | 0xA3C6D1B9 | HUD: Weapon | 0x0E |
+| 0x237 | 0x761E3CE0 | HUD: Mini-Map | 0x0E |
+| 0x249 | 0x12F43A92 | HUD: Money | 0x0E |
+| 0x26D | 0x40EF7C8B | HUD: SSI | 0x0E |
+| 0x27F | 0x41027E09 | HUD: Tutorial | 0x0E |
+| 0x291 | 0x788F42CC | Templar Lair: Trajan Market | 0x0E |
+| 0x2A3 | 0x6FF4568F | Templar Lair: Tivoli Aqueduct | 0x0E |
+| 0x2D9 | 0x21D9D09F | Uplay: Florentine Noble | 0x0E |
+| 0x2EB | 0x36A2C4DC | Uplay: Armor of Altair | 0x0E |
+| 0x2FD | 0x52C3A915 | Uplay: Altair Robes | 0x0E |
+| 0x30F | 0x0E8D040F | Uplay: Hellequin | 0x0E |
+
+### 5.5.2 Unmapped Property Hashes (33 total)
+
+Located in the post-costume region (0x36A-0x515), these remain unresolved:
+
+| Offset | Hash | Type | Notes |
+|--------|------|------|-------|
+| 0x3D8 | 0x11854ADA | 0x0E | Unknown |
+| 0x3EA | 0x7ACF45C6 | 0x11 | Unknown |
+| 0x3FF | 0xF44B5195 | 0x11 | Unknown |
+| 0x414 | 0x5DEBF8DE | 0x11 | Unknown |
+| 0x426 | 0xD92D49F7 | 0x17 | Type 0x17 - possibly keyboard bindings |
+| 0x444 | 0x000C0C40 | 0x0E | Low hash - possible MP setting |
+| 0x456 | 0x11A757F6 | 0x0E | Unknown |
+| 0x468 | 0x2F4ACE81 | 0x0E | Unknown |
+| 0x47A | 0xD4C878C7 | 0x11 | Unknown |
+| 0x493 | 0x528947F4 | 0x0E | Unknown |
+| 0x4A5 | 0x886B92CC | 0x0E | PS3 Toggle A |
+| 0x4B7 | 0x49F3B683 | 0x0E | PS3 Toggle B |
+| 0x4C9 | 0x707E8A46 | 0x0E | PS3 Toggle C |
+| 0x4DB | 0x67059E05 | 0x0E | PS3 Toggle D |
+| 0x4ED | 0x0364F3CC | 0x0E | PS3 Toggle E |
+
+*Note: Additional hashes exist in the 0x36A-0x3D7 and other regions but were not fully enumerated.*
+
+### 5.5.3 Property Hash Structure
+
+```c
+/* Section 2 Property Record - 18 bytes */
+typedef struct {
+    uint8_t      value;           /* +0x00: Setting value */
+    uint8_t      type_marker;     /* +0x01: 0x0E, 0x11, 0x15, or 0x17 */
+    uint8_t      padding[3];      /* +0x02-0x04: Zeros */
+    OPTIONS_Hash property_hash;   /* +0x05-0x08: Property ID (LE) */
+    uint8_t      zero_pad[8];     /* +0x09-0x10: Padding */
+    uint8_t      next_marker;     /* +0x11: 0x0B */
+} Section2_PropertyRecord;
+```
+
+---
+
 ## 6. Unknown Hashes
 
 ### 6.1 Unknown Content Hashes
@@ -294,7 +369,24 @@ Two content hashes discovered via 21-file differential analysis remain unresolve
 | Discovery Method | 21-file language differential analysis |
 | Potential Meanings | Beta/cut content, region-specific DLC, debug flag |
 
-### 6.2 Progress Hash
+### 6.2 Section 3 Property Record Hashes (Phase 1 Discovery)
+
+Six new hashes were discovered in Section 3's property record region through binary analysis:
+
+| Offset | Hash Value | Platform | Purpose | Status |
+|--------|------------|----------|---------|--------|
+| 0x1A | `0xBF4C2013` | Both | Property Record 1 | Unresolved |
+| 0x2F | `0x3B546966` | Both | Property Record 2 | Unresolved |
+| 0x41 | `0x4DBC7DA7` | Both | Property Record 3 | Unresolved |
+| 0x53 | `0x5B95F10B` | Both | Property Record 4 | Unresolved |
+| 0x65 | `0x2A4E8A90` | Both | Property Record 5 | Unresolved |
+| 0x77 | `0x496F8780` | PC only | Property Record 6 | Unresolved |
+
+**Context:** These hashes are part of the Section 3 property record structure. Unlike Section 1 records where the hash is at +0x0A, Section 3 records have the hash at the START (+0x00) of each record.
+
+**Note:** Record 6 (0x496F8780) is PC-only - PS3 Section 3 omits this record and the subsequent achievement region.
+
+### 6.3 Progress Hash
 
 #### Hash: `0x6F88B05B`
 

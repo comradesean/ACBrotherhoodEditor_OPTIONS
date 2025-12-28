@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS File - Complete Field Reference
 
 **Last Updated:** 2025-12-27
-**Document Version:** 3.0
-**Status:** Authoritative Reference (Consolidated from 13 Source Documents + Comprehensive Analysis)
+**Document Version:** 3.2
+**Status:** Authoritative Reference (Consolidated from 13 Source Documents + Phase 1 & 2 Analysis)
 
 ---
 
@@ -13,18 +13,21 @@
 | Section | Platform | Total Size | Bytes Mapped | Coverage |
 |---------|----------|------------|--------------|----------|
 | Section 1 | PC | 283 bytes | 271 bytes | 96% |
-| Section 1 | PS3 | 289 bytes | 277 bytes | 96% |
-| Section 2 | PC | 1310 bytes | 659 bytes | 50% |
-| Section 2 | PS3 | 1306 bytes | 655 bytes | 50% |
-| Section 3 | PC | 162 bytes | 35 bytes | 22% |
-| Section 3 | PS3 | 119 bytes | 28 bytes | 24% |
+| Section 1 | PS3 | 289 bytes | 283 bytes | 98% |
+| Section 2 | PC | 1310 bytes | ~920 bytes | **70%** |
+| Section 2 | PS3 | 1306 bytes | ~916 bytes | **70%** |
+| Section 3 | PC | 162 bytes | ~57 bytes | 35% |
+| Section 3 | PS3 | 119 bytes | ~50 bytes | 42% |
 | Section 4 | PS3 only | 1903 bytes | 16 bytes | 1% |
 
-### Key Analysis Findings (v3.0)
+### Key Analysis Findings (v3.2)
 
 - **Section 1:** All 21 PC language files are byte-for-byte identical; only 1 byte (0x51) varies between base/allrewards
-- **Section 2:** Only 11 bytes vary across 21 language files (all language-related); 2 new unknown unlock records discovered
+- **Section 1 PS3:** Extra 6 bytes are a PREFIX at offset 0x00 containing duplicate section hash (Phase 1 discovery)
+- **Section 2:** 17-byte "gaps" between settings are property record structure (Phase 2 discovery)
+- **Section 2:** 57 unique property hashes identified, 24 mapped to known settings (Phase 2 discovery)
 - **Section 3:** 43-byte PC/PS3 difference explained by PSN trophy system replacing embedded achievement bitfield
+- **Section 3:** 6 property record hashes identified at 0x1A, 0x2F, 0x41, 0x53, 0x65, 0x77 (Phase 1 discovery)
 - **Hash Algorithm:** Remains unknown despite testing 30+ algorithms; hashes precomputed at 0x0298a780
 
 ### Confidence Legend
@@ -125,13 +128,21 @@ This flag varies between base game (0x02) and all-rewards unlocked (0x06) states
 
 ### PS3 Section 1 Differences
 
-PS3 Section 1 is 6 bytes larger (289 vs 283 bytes):
+PS3 Section 1 is 6 bytes larger (289 vs 283 bytes). The extra bytes are a **PREFIX** at offset 0x00:
+
+| Offset | Size | Value | Description |
+|--------|------|-------|-------------|
+| 0x00 | 1 | 0x01 | Version/type marker |
+| 0x01-0x04 | 4 | 0xBDBE3B52 | Section hash (duplicate) |
+| 0x05 | 1 | 0x03 | Unknown field |
+
+After this 6-byte prefix, PS3 data aligns perfectly with PC data. The section hash appears twice: once in the prefix and again at offset 0x10 (relative to prefix start).
 
 | Difference | PC | PS3 |
 |------------|-------|-----|
 | Size | 283 bytes | 289 bytes |
 | Field3 | 0xC5 | 0xC6 |
-| Extra content | N/A | 6-byte prefix/suffix (unknown purpose) |
+| Extra content | N/A | 6-byte prefix: `01 52 3B BE BD 03` |
 
 ### Unknown Regions (Section 1)
 
@@ -322,39 +333,62 @@ Each unlock record is 18 bytes with this structure:
 | 0x4FF | 1 | bool | PS3 Toggle E | [L] | PC=0, PS3=1 |
 | 0x500 | 1 | byte | Platform ID | [M] | PC=0x16, PS3=0x12 |
 
-### Unmapped Regions (Section 2)
+### Property Record Structure (Phase 2 Discovery)
+
+The 17-byte "gaps" between settings are NOT unmapped - they are the **trailing portion of 18-byte property records**. Each setting in Section 2 follows this structure:
+
+```
+18-byte Property Record:
++0x00: Value byte (setting value)
++0x01: Type marker (0x0E=standard, 0x11=alt, 0x15=special, 0x17=unique)
++0x02-0x04: Zero padding
++0x05-0x08: Property hash (4 bytes, LE) - unique identifier
++0x09-0x10: Zero padding + flags
++0x11: Next marker (0x0B)
+```
+
+**57 property records identified** in Section 2, each with a unique hash.
+
+### Known Property Hashes (Section 2)
+
+| Offset | Hash | Purpose | Conf |
+|--------|------|---------|------|
+| 0x13B | 0xA15FACF2 | Invert 3P X axis | [H] |
+| 0x14D | 0xC36B150F | Invert 3P Y axis | [H] |
+| 0x15F | 0x9CCE0247 | Invert 1P X axis | [H] |
+| 0x171 | 0x56932719 | Invert 1P Y axis | [H] |
+| 0x183 | 0x962BD533 | Action Camera Frequency | [H] |
+| 0x195 | 0x7ED0EABB | Brightness | [H] |
+| 0x1A7 | 0xDE6CD4AB | Blood toggle | [H] |
+| 0x1B9 | 0xED915BD4 | Flying Machine Invert | [H] |
+| 0x1CB | 0xF20B5679 | Cannon Invert X | [H] |
+| 0x1DD | 0xC9762625 | Cannon Invert Y | [H] |
+| 0x1EF | 0x039BEE69 | HUD: Health Meter | [H] |
+| 0x201 | 0x0E04FA13 | HUD: Controls | [H] |
+| 0x213 | 0xF3ED28F7 | HUD: Updates | [H] |
+| 0x225 | 0xA3C6D1B9 | HUD: Weapon | [H] |
+| 0x237 | 0x761E3CE0 | HUD: Mini-Map | [H] |
+| 0x249 | 0x12F43A92 | HUD: Money | [H] |
+| 0x26D | 0x40EF7C8B | HUD: SSI | [H] |
+| 0x27F | 0x41027E09 | HUD: Tutorial | [H] |
+| 0x291 | 0x788F42CC | Templar Lair: Trajan Market | [H] |
+| 0x2A3 | 0x6FF4568F | Templar Lair: Tivoli Aqueduct | [H] |
+| 0x2D9 | 0x21D9D09F | Uplay: Florentine Noble | [H] |
+| 0x2EB | 0x36A2C4DC | Uplay: Armor of Altair | [H] |
+| 0x2FD | 0x52C3A915 | Uplay: Altair Robes | [H] |
+| 0x30F | 0x0E8D040F | Uplay: Hellequin | [H] |
+
+### Remaining Unmapped Regions (Section 2)
 
 | Offset Range | Size | Notes |
 |--------------|------|-------|
 | 0x10-0x13 | 4 bytes | Between platform flags and type |
-| 0x18-0x62 | 75 bytes | Pre-subtitle region |
-| 0x64-0x74 | 17 bytes | Between subtitle toggle and language flag |
-| 0x76-0x8D | 24 bytes | Between language flag and audio hash |
-| 0x96-0xA6 | 17 bytes | Between audio and subtitle language |
-| 0xAF-0xBF | 17 bytes | Between language and audio volume |
-| 0xC4-0xD4 | 17 bytes | Between music and voice volume |
-| 0xD9-0xE9 | 17 bytes | Between voice and SFX volume |
-| 0xEE-0xFE | 17 bytes | Between SFX and vibration |
-| 0x100-0x110 | 17 bytes | Pre-sensitivity region |
-| 0x115-0x125 | 17 bytes | Between X and Y sensitivity |
-| 0x12A-0x13A | 17 bytes | Pre-3P invert X region |
-| 0x13C-0x14C | 17 bytes | Between 3P invert X and Y |
-| 0x14E-0x15E | 17 bytes | Between 3P invert Y and 1P invert X |
-| 0x160-0x170 | 17 bytes | Between 1P invert X and Y |
-| 0x172-0x182 | 17 bytes | Pre-action camera region |
-| 0x184-0x194 | 17 bytes | Between action camera and brightness |
-| 0x196-0x1A6 | 17 bytes | Between brightness and blood |
-| 0x1A8-0x1B8 | 17 bytes | Between blood and flying machine |
-| 0x1BA-0x1CA | 17 bytes | Between flying machine and cannon X |
-| 0x1CC-0x1DC | 17 bytes | Between cannon X and Y |
-| 0x1DE-0x1EE | 17 bytes | Pre-HUD region |
-| 0x280-0x290 | 17 bytes | Between tutorial and templar lairs |
-| 0x2A4-0x2D8 | 53 bytes | Between templar lair 2 and uplay reward 1 |
-| 0x321-0x368 | 72 bytes | Between hellequin and costume bitfield |
-| 0x36A-0x515 | 428 bytes | Post-costume, pre-DLC flags |
-| 0x51A-0x51D | 4 bytes | Post-DLC flags padding |
+| 0x18-0x62 | 75 bytes | Initialization records (4 records, structure identified) |
+| 0x36A-0x3D7 | 110 bytes | Complex nested structure with 0x571396CE pattern |
+| 0x426-0x43D | 24 bytes | Type 0x17 marker region (possibly keyboard bindings) |
+| 0x444-0x4A4 | 97 bytes | Additional property records (hashes identified, purposes unknown) |
 
-**Mapped:** 176 bytes | **Unmapped:** 1134 bytes | **Coverage:** 13%
+**Mapped:** ~920 bytes | **Unmapped:** ~390 bytes | **Coverage:** ~70%
 
 ---
 
@@ -378,13 +412,34 @@ Each unlock record is 18 bytes with this structure:
 
 ### Property Records (0x18-0x7F)
 
-Section 3 uses the same 18-byte property record structure as Section 1.
+Section 3 uses a different property record structure than Section 1. The hash appears at the START of each record (+0x00), not at +0x0A.
+
+#### Identified Property Records
+
+| Record | Offset | Hash | Platform | Conf | Evidence |
+|--------|--------|------|----------|------|----------|
+| 1 | 0x1A | 0xBF4C2013 | Both | [H] | Binary analysis |
+| 2 | 0x2F | 0x3B546966 | Both | [H] | Binary analysis |
+| 3 | 0x41 | 0x4DBC7DA7 | Both | [H] | Binary analysis |
+| 4 | 0x53 | 0x5B95F10B | Both | [H] | Binary analysis |
+| 5 | 0x65 | 0x2A4E8A90 | Both | [H] | Binary analysis |
+| 6 | 0x77 | 0x496F8780 | PC only | [H] | Binary analysis |
+
+#### Known Markers
 
 | Offset | Size | Type | Field Name | Value Range | Conf | Evidence |
 |--------|------|------|------------|-------------|------|----------|
 | 0x4D | 1 | marker | Structure Marker | 0x0B | [P] | Constant value |
 | 0x4E | 1 | bool | Uplay Gun Capacity Upgrade | 0=No, 1=Yes | [P] | 24-file differential |
 | 0x4F | 1 | marker | Structure Marker | 0x0E | [P] | Constant value |
+
+#### PC vs PS3 Differences in Pre-Achievement Region
+
+| Offset | PC Value | PS3 Value | Notes |
+|--------|----------|-----------|-------|
+| 0x60 | 0x00 | 0x01 | Flag after 0x0B marker |
+| 0x73 | 0x15 | 0x00 | Type marker difference |
+| 0x77+ | Record 6 hash | N/A | PC only - PS3 lacks this record |
 
 ### Achievement Region (0x80-0x9F) - PC ONLY
 
@@ -514,12 +569,19 @@ The achievement bitfield spans 7 bytes (0x84-0x8A), storing 53 achievement flags
 
 | Offset Range | Size | Notes |
 |--------------|------|-------|
-| 0x0A-0x4C | 67 bytes | Pre-Uplay reward region |
-| 0x50-0x7F | 48 bytes | Between Uplay flag and achievement header |
+| 0x18-0x19 | 2 bytes | Pre-record 1 |
+| 0x1E-0x2E | 17 bytes | Between record 1 and 2 data |
+| 0x33-0x40 | 14 bytes | Record 2 data |
+| 0x45-0x4C | 8 bytes | Record 3 data (pre-marker) |
+| 0x57-0x64 | 14 bytes | Record 4 data |
+| 0x69-0x76 | 14 bytes | Record 5 data |
+| 0x7B-0x7F | 5 bytes | Record 6 data (PC only) |
 | 0x94-0x9B | 8 bytes | Between hash and DLC sync region |
-| 0xA0-0xA1 | 2 bytes (PC) | Post-DLC sync (PC has 43 more bytes than PS3) |
+| 0xA0-0xA1 | 2 bytes (PC) | Post-DLC sync |
 
-**Mapped:** 25 bytes | **Unmapped:** 137 bytes (PC) / 94 bytes (PS3) | **Coverage:** 15% (PC) / 21% (PS3)
+**Mapped:** ~57 bytes (PC) / ~50 bytes (PS3) | **Coverage:** ~35% (PC) / ~42% (PS3)
+
+**Note:** 6 property record hashes identified in Phase 1 analysis, significantly improving Section 3 coverage.
 
 ---
 
