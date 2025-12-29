@@ -1,0 +1,90 @@
+{
+  "_metadata": {
+    "description": "Index of table_ids split files",
+    "generated_at": "2025-12-28T23:40:40.435857",
+    "total_type_tables": 10220
+  },
+  "files": {
+    "00-1F": {
+      "file": "table_ids_00-1F.json",
+      "range_start": "0x00",
+      "range_end": "0x1F",
+      "table_count": 6203,
+      "entry_count": 13124
+    },
+    "20-3F": {
+      "file": "table_ids_20-3F.json",
+      "range_start": "0x20",
+      "range_end": "0x3F",
+      "table_count": 6664,
+      "entry_count": 14072
+    },
+    "40-5F": {
+      "file": "table_ids_40-5F.json",
+      "range_start": "0x40",
+      "range_end": "0x5F",
+      "table_count": 6851,
+      "entry_count": 14361
+    },
+    "60-7F": {
+      "file": "table_ids_60-7F.json",
+      "range_start": "0x60",
+      "range_end": "0x7F",
+      "table_count": 6690,
+      "entry_count": 14121
+    },
+    "80-FF": {
+      "file": "table_ids_80-FF.json",
+      "range_start": "0x80",
+      "range_end": "0xFF",
+      "table_count": 8913,
+      "entry_count": 31055
+    },
+    "shared": {
+      "file": "table_ids_shared.json",
+      "target_table_ids_count": 4,
+      "type_descriptors_count": 100,
+      "deserializer_analysis_count": 5,
+      "table_id_comparisons_count": 40
+    },
+    "type_descriptors": {
+      "file": "type_descriptors.json",
+      "description": "Complete type descriptor registry from memory analysis",
+      "table_ids_found_count": 62,
+      "type_descriptors_count": 8208,
+      "source": "compact_type_registry.json (archived)"
+    }
+  },
+  "ranges": [
+    {
+      "name": "00-1F",
+      "start": "0x00",
+      "end": "0x1F",
+      "file": "table_ids_00-1F.json"
+    },
+    {
+      "name": "20-3F",
+      "start": "0x20",
+      "end": "0x3F",
+      "file": "table_ids_20-3F.json"
+    },
+    {
+      "name": "40-5F",
+      "start": "0x40",
+      "end": "0x5F",
+      "file": "table_ids_40-5F.json"
+    },
+    {
+      "name": "60-7F",
+      "start": "0x60",
+      "end": "0x7F",
+      "file": "table_ids_60-7F.json"
+    },
+    {
+      "name": "80-FF",
+      "start": "0x80",
+      "end": "0xFF",
+      "file": "table_ids_80-FF.json"
+    }
+  ]
+}

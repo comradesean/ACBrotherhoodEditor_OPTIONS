@@ -1,0 +1,417 @@
+{
+  "serializer_analysis": {
+    "function_va": "0x005E3560",
+    "function_offset": 1976672,
+    "hex_dump": "  005E3560: 55 8B EC 53 56 8B 75 08 8B 46 04 57 8B F9 89 7E   U..SV.u..F.W...~\n  005E3570: 1C 80 78 04 00 75 31 6A 01 6A 00 57 B9 7C 24 A6   ..x..u1j.j.W.|$.\n  005E3580: 02 E8 3A 8D 51 01 57 B9 7C 24 A6 02 8B D8 E8 0D   ..:.Q.W.|$......\n  005E3590: 83 51 01 50 53 68 52 3B BE BD 6A 00 68 08 14 3F   .Q.PShR;..j.h..?\n  005E35A0: 02 8B CE E8 78 68 52 01 8B 5E 20 56 8B CF C7 46   ....xhR..^ V...F\n  005E35B0: 20 00 00 00 00 E8 D6 49 53 01 89 5E 20 8B 0D 54    ......IS..^ ..T\n  005E35C0: CF 7E 02 51 8D 57 10 52 8B CE E8 21 6C 52 01 A1   .~.Q.W.R...!lR..\n  005E35D0: 58 CF 7E 02 50 8D 4F 14 51 8B CE E8 10 6C 52 01   X.~.P.O.Q....lR.\n  005E35E0: 8B 15 5C CF 7E 02 52 8D 47 18 50 8B CE E8 FE 6B   ..\\.~.R.G.P....k\n  005E35F0: 52 01 8B 0D 60 CF 7E 02 51 8D 57 1C 52 8B CE E8   R...`.~.Q.W.R...\n  005E3600: EC 6B 52 01 A1 64 CF 7E 02 50 8D 4F 20 51 8B CE   .kR..d.~.P.O Q..\n  005E3610: E8 DB 6B 52 01 8B 15 68 CF 7E 02 52 8D 47 49 50   ..kR...h.~.R.GIP\n  005E3620: 8B CE E8 29 60 52 01 8B 0D 6C CF 7E 02 51 8D 57   ...)`R...l.~.Q.W\n  005E3630: 24 52 8B CE E8 47 63 52 01 A1 70 CF 7E 02 50 8D   $R...GcR..p.~.P.\n  005E3640: 4F 28 51 68 47 3E B6 FB 8B CE E8 51 63 52 01 8B   O(QhG>.....QcR..\n  005E3650: 15 74 CF 7E 02 52 8D 47 2C 50 68 A0 CB DA 5F 8B   .t.~.R.G,Ph..._.",
+    "type_hashes_found": [
+      {
+        "offset": 54,
+        "va": "0x005E3596",
+        "hash": "0xBDBE3B52",
+        "type": "SaveGame"
+      }
+    ]
+  },
+  "property_cluster": {
+    "start_va": "0x027ECDC0",
+    "end_va": "0x027ED000",
+    "hex_dump": "  027ECDC0: 00 00 00 00 00 00 07 00 00 00 50 00 00 00 00 00   ..........P.....\n  027ECDD0: 00 00 00 00 00 00 00 00 01 00 00 02 6B 1F C7 F5   ............k...\n  027ECDE0: 00 00 00 00 00 00 07 00 00 00 60 00 00 00 00 00   ..........`.....\n  027ECDF0: 00 00 00 00 00 00 00 00 01 00 00 02 D2 21 66 BB   .............!f.\n  027ECE00: 00 00 00 00 00 00 07 00 00 00 70 00 00 00 00 00   ..........p.....\n  027ECE10: 00 00 00 00 00 00 00 00 01 00 00 02 76 08 55 28   ............v.U(\n  027ECE20: 00 00 00 00 00 00 07 00 00 00 80 00 00 00 00 00   ................\n  027ECE30: 00 00 00 00 00 00 00 00 01 00 00 02 E4 2B 03 34   .............+.4\n  027ECE40: 00 00 00 00 00 00 00 00 00 00 24 01 00 00 00 00   ..........$.....\n  027ECE50: 00 00 00 00 00 00 00 00 01 00 00 02 67 50 BD 78   ............gP.x\n  027ECE60: 00 00 00 00 00 00 1A 00 00 00 90 00 00 00 00 00   ................\n  027ECE70: 00 00 00 00 00 00 00 00 01 00 00 02 C2 FC 11 71   ...............q\n  027ECE80: 47 3E B6 FB 00 00 12 00 00 00 A0 00 00 00 00 00   G>..............\n  027ECE90: 00 00 00 00 00 00 00 00 01 00 00 02 95 8E 44 6C   ..............Dl\n  027ECEA0: A0 CB DA 5F 00 00 12 00 00 00 B0 00 00 00 00 00   ..._............\n  027ECEB0: 00 00 00 00 00 00 00 00 01 00 00 02 32 C4 76 EB   ............2.v.\n  027ECEC0: 00 00 00 00 00 00 07 00 00 00 C0 00 00 00 00 00   ................\n  027ECED0: 00 00 00 00 00 00 00 00 01 00 00 02 2B 13 F5 28   ............+..(\n  027ECEE0: 00 00 00 00 00 00 07 00 00 00 D0 00 00 00 00 00   ................\n  027ECEF0: 00 00 00 00 00 00 00 00 01 00 00 02 1B 19 00 8C   ................\n  027ECF00: 00 00 00 00 00 00 07 00 00 00 E0 00 00 00 00 00   ................\n  027ECF10: 00 00 00 00 00 00 00 00 00 02 00 00 71 69 62 1F   ............qib.\n  027ECF20: 86 6F 80 B7 00 00 1D 0A 00 00 F0 00 00 00 00 00   .o..............\n  027ECF30: 00 00 00 00 00 00 00 00 B8 CC 7E 02 D8 CC 7E 02   ..........~...~.\n  027ECF40: F8 CC 7E 02 18 CD 7E 02 38 CD 7E 02 58 CD 7E 02   ..~...~.8.~.X.~.\n  027ECF50: 78 CD 7E 02 98 CD 7E 02 B8 CD 7E 02 D8 CD 7E 02   x.~...~...~...~.\n  027ECF60: F8 CD 7E 02 18 CE 7E 02 38 CE 7E 02 58 CE 7E 02   ..~...~.8.~.X.~.\n  027ECF70: 78 CE 7E 02 98 CE 7E 02 B8 CE 7E 02 D8 CE 7E 02   x.~...~...~...~.\n  027ECF80: F8 CE 7E 02 18 CF 7E 02 B8 CF 7E 02 90 CF 7E 02   ..~...~...~...~.\n  027ECF90: 01 00 00 02 13 20 4C BF 00 00 00 00 00 00 07 00   ..... L.........\n  027ECFA0: 00 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00   ................\n  027ECFB0: 08 D0 7E 02 00 00 00 00 B8 CC 7E 02 00 00 00 00   ..~.......~.....\n  027ECFC0: 08 14 3F 02 7D 60 96 BB 52 3B BE BD 5C 00 00 00   ..?.}`..R;..\\...\n  027ECFD0: 03 00 00 00 4C 00 00 00 00 00 00 00 00 00 00 00   ....L...........\n  027ECFE0: FF 7F FF 7F 60 3F 5E 00 00 00 00 00 00 00 00 00   ....`?^.........\n  027ECFF0: 00 00 00 00 00 00 00 00 00 00 00 00 30 34 5E 00   ............04^.",
+    "entries": [
+      {
+        "va": "0x027ECDFC",
+        "property_hash": "0xBB6621D2",
+        "prev_dword": "0x02000001",
+        "next_dword": "0x00000000",
+        "next_next": "0x00070000"
+      },
+      {
+        "va": "0x027ECE1C",
+        "property_hash": "0x28550876",
+        "prev_dword": "0x02000001",
+        "next_dword": "0x00000000",
+        "next_next": "0x00070000"
+      },
+      {
+        "va": "0x027ECE7C",
+        "property_hash": "0x7111FCC2",
+        "prev_dword": "0x02000001",
+        "next_dword": "0xFBB63E47",
+        "next_next": "0x00120000"
+      },
+      {
+        "va": "0x027ECE9C",
+        "property_hash": "0x6C448E95",
+        "prev_dword": "0x02000001",
+        "next_dword": "0x5FDACBA0",
+        "next_next": "0x00120000"
+      },
+      {
+        "va": "0x027ECEBC",
+        "property_hash": "0xEB76C432",
+        "prev_dword": "0x02000001",
+        "next_dword": "0x00000000",
+        "next_next": "0x00070000"
+      },
+      {
+        "va": "0x027ECEDC",
+        "property_hash": "0x28F5132B",
+        "prev_dword": "0x02000001",
+        "next_dword": "0x00000000",
+        "next_next": "0x00070000"
+      },
+      {
+        "va": "0x027ECEFC",
+        "property_hash": "0x8C00191B",
+        "prev_dword": "0x02000001",
+        "next_dword": "0x00000000",
+        "next_next": "0x00070000"
+      }
+    ]
+  },
+  "descriptor_table_scan": {
+    "region": "0x027E0000 - 0x027F0000",
+    "type_hash_locations": [
+      {
+        "va": "0x027E05E4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E0638",
+        "hash": "0xBDBE3B52",
+        "type": "SaveGame"
+      },
+      {
+        "va": "0x027E0658",
+        "hash": "0xBDBE3B52",
+        "type": "SaveGame"
+      },
+      {
+        "va": "0x027E0764",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E0E40",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E0F74",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E10D0",
+        "hash": "0x84A80CC2",
+        "type": "MissionHistory"
+      },
+      {
+        "va": "0x027E147C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E1B94",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E1C34",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E1EB4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2654",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E275C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E27AC",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2884",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2A14",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2A8C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2B4C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2C34",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2CF8",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2E84",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2F14",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2F60",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E2F80",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E3800",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E3B8C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E40DC",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E4530",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E463C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E4934",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E4C9C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E54E4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E5664",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E63E4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E816C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E83FC",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E8C34",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E9C94",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027E9CEC",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EA084",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EB01C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EC524",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EC8D8",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EC8FC",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ECA94",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ECAE4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ECB3C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ECBFC",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ECC74",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ECFC4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ECFC8",
+        "hash": "0xBDBE3B52",
+        "type": "SaveGame"
+      },
+      {
+        "va": "0x027ED21C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ED3A4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027ED6B4",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EDD94",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EE004",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EE5CC",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      },
+      {
+        "va": "0x027EE5D0",
+        "hash": "0x84A80CC2",
+        "type": "MissionHistory"
+      },
+      {
+        "va": "0x027EE66C",
+        "hash": "0xBB96607D",
+        "type": "ManagedObject"
+      }
+    ]
+  },
+  "data_section_analysis": {
+    "SaveGame .data #1": {
+      "target_va": "0x027E0638",
+      "hex_dump": "  027E05F8: 00 00 00 00 00 00 00 00 FF 7F FF 7F F0 6C 46 00   .............lF.\n  027E0608: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................\n  027E0618: 00 00 00 00 C0 5D 46 00 30 65 41 00 2D 00 01 08   .....]F.0eA.-...\n  027E0628: 01 00 00 00 9A 99 19 3F 00 00 00 00 E9 1E DE 87   .......?........\n  027E0638: 52 3B BE BD 00 00 1C 00 00 00 F0 05 00 00 00 00   R;..............\n  027E0648: 00 00 00 00 00 00 00 00 00 00 00 00 A0 EF 03 28   ...............(\n  027E0658: 52 3B BE BD 00 00 1C 00 00 00 00 06 00 00 00 00   R;..............\n  027E0668: 00 00 00 00 00 00 00 00 00 00 00 00 64 D8 7D CE   ............d.}.\n  027E0678: 00 00 00 00 00 00 00 00 00 00 10 06 00 00 00 00   ................\n  027E0688: 00 00 00 00 00 00 00 00 00 00 00 00 04 CD 0C F4   ................\n  027E0698: 00 00 00 00 00 00 00 00 00 00 14 06 00 00 00 00   ................\n  027E06A8: 00 00 00 00 00 00 00 00 01 00 00 00 74 0F CD EF   ............t..."
+    },
+    "SaveGame .data #3 (near property cluster)": {
+      "target_va": "0x027ECFC8",
+      "hex_dump": "  027ECF88: B8 CF 7E 02 90 CF 7E 02 01 00 00 02 13 20 4C BF   ..~...~...... L.\n  027ECF98: 00 00 00 00 00 00 07 00 00 00 10 00 00 00 00 00   ................\n  027ECFA8: 00 00 00 00 00 00 00 00 08 D0 7E 02 00 00 00 00   ..........~.....\n  027ECFB8: B8 CC 7E 02 00 00 00 00 08 14 3F 02 7D 60 96 BB   ..~.......?.}`..\n  027ECFC8: 52 3B BE BD 5C 00 00 00 03 00 00 00 4C 00 00 00   R;..\\.......L...\n  027ECFD8: 00 00 00 00 00 00 00 00 FF 7F FF 7F 60 3F 5E 00   ............`?^.\n  027ECFE8: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................\n  027ECFF8: 00 00 00 00 30 34 5E 00 30 65 41 00 14 00 00 04   ....04^.0eA.....\n  027ED008: 90 CF 7E 02 00 00 00 00 F4 13 3F 02 02 00 00 00   ..~.......?.....\n  027ED018: 86 6F 80 B7 18 00 00 00 06 00 00 00 08 00 00 00   .o..............\n  027ED028: 00 00 00 00 00 00 00 00 FF 7F FF 7F 00 00 00 00   ................\n  027ED038: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00   ................"
+    },
+    "GameState .data #1": {
+      "target_va": "0x0283BCD8",
+      "hex_dump": "  0283BC98: CD CC CC 3D 5C 8F C2 3E 00 00 80 40 00 00 A0 40   ...=\\..>...@...@\n  0283BCA8: 00 00 80 40 00 00 80 3E CD CC 4C 3F 00 00 A0 3F   ...@...>..L?...?\n  0283BCB8: 66 66 66 3F 00 00 A0 3F 00 00 E0 3F 00 00 A0 BF   fff?...?...?....\n  0283BCC8: 00 00 40 40 00 00 00 00 00 00 00 00 D3 2C DB 0E   ..@@.........,..\n  0283BCD8: F1 F8 D6 94 00 00 13 00 00 00 40 00 00 00 00 00   ..........@.....\n  0283BCE8: 00 00 00 00 00 00 00 00 00 00 00 00 2B 4B 00 3A   ............+K.:\n  0283BCF8: F1 F8 D6 94 00 00 13 00 00 00 60 12 00 00 00 00   ..........`.....\n  0283BD08: 00 00 00 00 00 00 00 00 00 00 00 00 38 48 CD 1E   ............8H..\n  0283BD18: 27 DF 72 3A 00 00 13 00 00 00 80 24 00 00 00 00   '.r:.......$....\n  0283BD28: 00 00 00 00 00 00 00 00 00 00 00 00 A5 A6 E7 4E   ...............N\n  0283BD38: 27 DF 72 3A 00 00 13 00 00 00 10 26 00 00 00 00   '.r:.......&....\n  0283BD48: 00 00 00 00 00 00 00 00 00 00 00 00 5D 5C C1 0D   ............]\\.."
+    },
+    "SaveGame .data #4": {
+      "target_va": "0x0283BDD8",
+      "hex_dump": "  0283BD98: 66 6D 87 C9 00 00 13 00 00 00 20 3C 00 00 00 00   fm........ <....\n  0283BDA8: 00 00 00 00 00 00 00 00 00 00 00 00 E1 7C 5E 4B   .............|^K\n  0283BDB8: 39 50 B5 B4 00 00 13 00 00 00 C0 3C 00 00 00 00   9P.........<....\n  0283BDC8: 00 00 00 00 00 00 00 00 00 00 00 00 E8 41 D6 9E   .............A..\n  0283BDD8: 52 3B BE BD 00 00 1D 0E 00 00 50 3D 00 00 00 00   R;........P=....\n  0283BDE8: 00 00 00 00 00 00 00 00 00 00 00 00 62 6D A8 2D   ............bm.-\n  0283BDF8: 52 3B BE BD 00 00 1C 00 00 00 70 3D 00 00 00 00   R;........p=....\n  0283BE08: 00 00 00 00 00 00 00 00 80 00 00 08 47 68 FB 92   ............Gh..\n  0283BE18: 00 00 00 00 00 00 07 00 00 00 80 3D 00 00 00 00   ...........=....\n  0283BE28: 00 00 00 00 00 00 00 00 80 00 00 08 BA 24 37 59   .............$7Y\n  0283BE38: 00 00 00 00 00 00 07 00 00 00 90 3D 00 00 00 00   ...........=....\n  0283BE48: 00 00 00 00 00 00 00 00 D0 BC 83 02 F0 BC 83 02   ................"
+    }
+  },
+  "pointer_analysis": {
+    "SaveGame .data #1": {
+      "va": "0x027E0638",
+      "values": [
+        "0x00000000",
+        "0x87DE1EE9",
+        "0xBDBE3B52",
+        "0x001C0000",
+        "0x05F00000",
+        "0x00000000",
+        "0x00000000",
+        "0x00000000"
+      ]
+    },
+    "SaveGame .data #2": {
+      "va": "0x027E0658",
+      "values": [
+        "0x00000000",
+        "0x2803EFA0",
+        "0xBDBE3B52",
+        "0x001C0000",
+        "0x06000000",
+        "0x00000000",
+        "0x00000000",
+        "0x00000000"
+      ]
+    }
+  }
+}
