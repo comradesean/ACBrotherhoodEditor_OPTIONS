@@ -124,9 +124,23 @@ TABLE_ID_TO_TYPE = {
 SERIALIZER_ADDRESSES = {
     # Type System Functions
     "TypeTableLookup":          0x01AEAF70,  # Looks up type descriptor by table ID
-    "SerializeTypeReference":   0x00427530,  # Deserializes a typed reference
+    "SerializeTypeReference":   0x00427530,  # Deserializes a typed reference (dual-mode: direct/indirect)
     "SerializeWithCustomFunc":  0x004274A0,  # Serializes with custom function pointer
     "SubObjectSerializer":      0x004268A0,  # Dispatches SubObject serialization
+    "TypeRefIndirectHandler":   0x01AF6420,  # TYPE_REF indirect handler wrapper
+    "TypeResolutionWithLookup": 0x01AE9390,  # Type resolution with descriptor chain lookup
+    "TreeMapLookup":            0x01B1EEB0,  # Looks up entry by key in tree map
+    "AssignmentHelper":         0x004253E0,  # Assignment helper for type handles
+    "CleanupDestructor":        0x0041DC10,  # Cleanup/destructor for type handles
+
+    # Deserialization System Functions (discovered via WinDbg TTD)
+    "ObjectCreatorByTableID":   0x01AEB020,  # Creates/retrieves object instance by table ID
+    "BufferDeserializer":       0x01AF6A40,  # Buffer reader with prefix dispatch (0x00/0x01/else)
+    "ObjectInitWithLookup":     0x01AF2BB0,  # Object initialization via FUN_01AEAF70
+    "DeserializationEntry1":    0x01AEF890,  # Higher-level deserialization entry point
+    "DeserializationEntry2":    0x01AEF9D0,  # Alternative deserialization entry point
+    "PassThroughWrapper":       0x01AF0490,  # Pass-through wrapper in deser chain
+    "GeneratedFullDeserializer":0x00421110,  # Generated deserializer for full format (Blocks 2/4)
 
     # Serializer Helper Functions
     "SerializeBasicValue":      0x01B0A1F0,  # Serializes 4-byte basic types

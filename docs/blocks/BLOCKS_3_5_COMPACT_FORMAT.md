@@ -4,6 +4,10 @@
 
 Blocks 3 and 5 in AC Brotherhood SAV files use a compact binary format for serializing game object properties. Unlike Blocks 2 and 4 which use LZSS compression with raw type hashes, these blocks use table ID lookup for type resolution, resulting in more compact property references.
 
+### Deserializer
+
+These blocks use the **Raw deserializer** (`FUN_01712660` at Ghidra VA `0x01712660`). Unlike the CAFE00, 11FACE11, and 21EFFE22 format handlers which validate an 8-byte header, the Raw deserializer performs no header check and copies the block data directly for processing. This is consistent with Blocks 3 and 5 being uncompressed and having no format magic.
+
 ## Block Characteristics
 
 | Property | Block 3 | Block 5 |
@@ -276,6 +280,8 @@ Based on structural analysis:
 | Type encoding | Raw 4-byte hashes | 1-byte table IDs |
 | Property encoding | Offset-based | Index-based |
 | Size | 32KB each (decompressed) | 7.9KB / 6.3KB |
+| Format deserializer | CAFE00 (`FUN_01711ab0`) | Raw (`FUN_01712660`) |
+| Inner header | 8-byte (type + magic) | None |
 
 ## Implementation Notes
 

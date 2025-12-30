@@ -915,9 +915,14 @@ struct OPTIONS {
 | Address | Name | Description |
 |---------|------|-------------|
 | `0x01AEAF70` | Type Table Lookup | Looks up type descriptor by table ID |
-| `0x00427530` | Serialize Type Reference | Deserializes a typed reference |
+| `0x00427530` | Serialize Type Reference | Deserializes a typed reference (dual-mode: direct/indirect) |
 | `0x004274a0` | Serialize With Custom Func | Serializes with custom function pointer |
 | `0x004268A0` | SubObject Serializer | Dispatches SubObject serialization |
+| `0x01AF6420` | TYPE_REF Indirect Handler | Wrapper for indirect type resolution via descriptor chain |
+| `0x01AE9390` | Type Resolution with Lookup | Resolves type through descriptor chain lookup |
+| `0x01B1EEB0` | Tree Map Lookup | Looks up entry by key in tree map structure |
+| `0x004253E0` | Assignment Helper | Helper function for type assignment |
+| `0x0041DC10` | Cleanup/Destructor | Cleanup function for type handles |
 
 ### Serializer Helper Functions
 
@@ -958,6 +963,387 @@ struct OPTIONS {
 | `0x00426930` | 391 | Primary PropertyReference serializer |
 | `0x00449360` | 41 | Secondary PropertyReference serialization |
 | `0x016F5E40` | 26 | PropertyReference-specific handler |
+
+### SaveGame I/O System
+
+These functions handle the file-level operations for reading/writing SAV and OPTIONS files. They are separate from content deserialization.
+
+#### SaveGame I/O Address Table
+
+| Function | Ghidra VA | Purpose |
+|----------|-----------|---------|
+| FUN_0046dcc0 | 0x0046dcc0 | SaveGameManager constructor |
+| FUN_0046dea0 | 0x0046dea0 | SaveGameManager caller 1 |
+| FUN_0046df80 | 0x0046df80 | SaveGameManager caller 2 |
+| FUN_0046f6b0 | 0x0046f6b0 | SaveGameManager caller 3 |
+| FUN_005e49d0 | 0x005e49d0 | SaveGame I/O factory |
+| FUN_009ca3e0 | 0x009ca3e0 | SaveGame I/O constructor |
+| FUN_005e4b10 | 0x005e4b10 | SaveGameWriter::ReadFile (raw I/O) |
+| FUN_005e4860 | 0x005e4860 | SaveGameWriter::WriteFile (raw I/O) |
+
+#### SaveGame I/O Vtable Methods (0x02411f30)
+
+| Slot | Address | Method |
+|------|---------|--------|
+| 0 | 0x009ca550 | **Destructor** - cleans up array, frees memory |
+| 1 | 0x009ca250 | **WriteSavegame** - writes ACBROTHERHOODSAVEGAME{slot}. |
+| 2 | 0x009ca290 | **ReadSavegame** - reads ACBROTHERHOODSAVEGAME{slot}. |
+| 3 | 0x009ca2d0 | **WriteOptions** - writes OPTIONS file |
+| 4 | 0x009ca2f0 | **ReadOptions** - reads OPTIONS file |
+| 5 | 0x009ca430 | Stub - returns false |
+| 6 | 0x009ca440 | Stub - returns true |
+| 7 | 0x009ca450 | Stub - empty |
+| 8 | 0x009ca310 | **DeleteSavegame** - deletes save file + cleanup |
+| 9 | 0x005e4990 | **CheckAssassinSav** - checks if assassin.sav exists |
+| 10 | 0x009ca460 | Stub - returns true |
+| 11 | 0x009ca470 | Stub - returns 0 |
+| 12-15 | 0x009ca480-4b0 | Stubs - empty |
+
+**Important:** `FUN_005e4b10` (ReadFile) is a pure I/O function that reads raw bytes from disk. It is NOT a deserializer. The actual block parsing and content deserialization happens in separate functions after the file is loaded.
+
+---
+
+### Deserialization System Functions
+
+These functions were identified through WinDbg time-travel debugging during SAV file loading. They form the core deserialization pipeline for both full format (Blocks 2/4) and compact format (Blocks 3/5).
+
+#### Address Conversion Table
+
+| Function | Ghidra VA | Runtime VA (Base=0xF30000) | WinDbg Offset |
+|----------|-----------|----------------------------|---------------|
+| FUN_01AEAF70 | 0x01AEAF70 | 0x0261AF70 | ACBSP+0x16EAF70 |
+| FUN_01AEB020 | 0x01AEB020 | 0x0261B020 | ACBSP+0x16EB020 |
+| FUN_01AEF890 | 0x01AEF890 | 0x0261F890 | ACBSP+0x16EF890 |
+| FUN_01AEF9D0 | 0x01AEF9D0 | 0x0261F9D0 | ACBSP+0x16EF9D0 |
+| FUN_01AF0490 | 0x01AF0490 | 0x02620490 | ACBSP+0x16F0490 |
+| FUN_01AF2BB0 | 0x01AF2BB0 | 0x02622BB0 | ACBSP+0x16F2BB0 |
+| FUN_01AF6A40 | 0x01AF6A40 | 0x02626A40 | ACBSP+0x16F6A40 |
+| FUN_00421110 | 0x00421110 | 0x00F51110 | ACBSP+0x21110 |
+| FUN_00427530 | 0x00427530 | 0x00F57530 | ACBSP+0x27530 |
+
+**Note:** Runtime VA = Ghidra VA + 0x00B30000 (when module base is 0x00F30000)
+
+---
+
+#### FUN_01AF6A40 - Buffer Deserializer with Prefix Dispatch
+
+**Address:** `0x01AF6A40` (Ghidra VA)
+
+**Purpose:** Reads serialized data from a buffer and dispatches based on the first byte prefix. This is a key function for reading typed object references from the stream.
+
+**Signature:**
+```c
+void __thiscall FUN_01af6a40(int param_1, undefined4 type_hash, int* output_ptr, undefined4 callback_ptr);
+```
+
+**Parameters:**
+- `param_1` (ECX): Context object with buffer state
+  - `param_1[5]` = Current read position
+  - `param_1[6]` = End of buffer position
+- `type_hash`: Type hash for validation
+- `output_ptr`: Where to store the result
+- `callback_ptr`: Callback function pointer
+
+**Dispatch Logic:**
+```c
+cVar8 = *(char *)param_1[5];  // Read first byte
+param_1[5] = param_1[5] + 1;  // Advance position
+
+if (cVar8 == '\0') {          // Case 0x00: Direct object reference
+    uVar5 = *(undefined4 *)param_1[5];  // Read 4-byte value
+    param_1[5] = param_1[5] + 4;
+    iVar10 = FUN_01aeb020(uVar5, 0);     // Create/get object by ID
+    // ... handle callback
+}
+else if (cVar8 == '\x01') {   // Case 0x01: Indirect reference
+    uVar5 = *(undefined4 *)param_1[5];  // Read 4-byte value
+    param_1[5] = param_1[5] + 4;
+    FUN_01af6420(param_1, uVar5, output_ptr);  // Indirect lookup
+}
+else {                        // Case else: Direct assignment
+    // Direct value handling
+}
+```
+
+**Cross-References:** 400+ callers throughout the codebase
+
+**Purpose:** Central dispatcher for reading object references. The three cases handle:
+- `0x00`: Object by numeric ID (calls FUN_01AEB020)
+- `0x01`: Object by type chain (calls FUN_01AF6420)
+- `else`: Direct inline value
+
+---
+
+#### FUN_01AEB020 - Table ID Object Creator/Retriever
+
+**Address:** `0x01AEB020` (Ghidra VA)
+
+**Purpose:** Creates or retrieves an object instance by its table ID. This is the primary function for instantiating typed objects during deserialization.
+
+**Signature:**
+```c
+int __thiscall FUN_01aeb020(int this, int table_id, int flags);
+```
+
+**Parameters:**
+- `table_id`: Type table identifier (0x00-0x67 for compact types)
+- `flags`: Usually 0
+
+**Return Value:** Pointer to the object instance
+
+**Cross-References:** 400+ callers, including:
+- Graphics initialization (FUN_01C50A00)
+- Save deserialization
+- World object creation
+
+**Observed Table IDs (from WinDbg trace):**
+```
+0x08, 0x09, 0x20, 0x21, 0x24, 0x25, 0x26, 0x2e, 0x2f, 0x30, 0x31, 0x32,
+0x46, 0x48, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f
+```
+
+---
+
+#### FUN_01AF2BB0 - Object Initialization with Table ID Lookup
+
+**Address:** `0x01AF2BB0` (Ghidra VA)
+
+**Purpose:** Initializes an object using type table lookup. Directly calls FUN_01AEAF70 to resolve the type descriptor.
+
+**Key Call:**
+```asm
+PUSH 0                      ; param_3 = 0
+PUSH dword ptr [EBP+0x14]   ; param_2 = table_id
+CALL FUN_01aeaf70           ; Type table lookup
+```
+
+**Called From:**
+- `FUN_01AEF890`
+- `FUN_01AEF9D0`
+
+**Observed Table IDs (from WinDbg trace):**
+```
+9, 8, 20, 21, 26, 4a, 4b, 4c, 4d, 4e, 4f, 2f, 30, 32, 31, 48, 46, 24, 25
+```
+
+---
+
+#### FUN_01AEF890 - Caller Chain Entry Point
+
+**Address:** `0x01AEF890` (Ghidra VA)
+
+**Purpose:** Higher-level caller that invokes FUN_01AF2BB0 with table ID parameters.
+
+**Stack Parameters (at call site):**
+- `[ESP+0x14]`: Large hash values (0x034ba988, 0x073ef8c8, 0x088ef728, etc.)
+- These appear to be runtime object addresses, not type hashes
+
+**Call Chain:**
+```
+FUN_01AEF890
+    → FUN_01AF2BB0
+        → FUN_01AEAF70 (type table lookup)
+```
+
+---
+
+#### FUN_01AEF9D0 - Alternative Caller Path
+
+**Address:** `0x01AEF9D0` (Ghidra VA)
+
+**Purpose:** Alternative entry point that also calls FUN_01AF2BB0. Used for different initialization contexts.
+
+---
+
+#### FUN_01AF0490 - Pass-Through Wrapper
+
+**Address:** `0x01AF0490` (Ghidra VA)
+
+**Purpose:** Simple wrapper/forwarding function in the deserialization chain.
+
+---
+
+#### FUN_00421110 - Generated Full Format Deserializer
+
+**Address:** `0x00421110` (Ghidra VA)
+
+**Purpose:** Deserializer for full format types (Blocks 2/4). Contains hardcoded type hashes and calls multiple serialization helpers.
+
+**Hardcoded Type Hashes:**
+```c
+FUN_01af6a40(0xC76018E2, *(int *)(param_1 + 0x2c) + uVar8 * 4, PTR_DAT_027de5a4);
+FUN_00427530(0xC69A7F31, param_1 + 0x44, PTR_DAT_027de5bc);  // TYPE_REF
+FUN_004274a0(0xF0734B6A, FUN_00519350, ...);                  // Custom serializer
+```
+
+**Type Hashes Used:**
+| Hash | Purpose |
+|------|---------|
+| `0xC76018E2` | Property type 1 |
+| `0x97FCF21E` | Property type 2 |
+| `0x7C00F6AF` | Property type 3 |
+| `0xC69A7F31` | TYPE_REF property |
+| `0xF0734B6A` | Custom serialized property |
+
+**Function Calls:**
+- `FUN_01af6a40` - Buffer deserializer
+- `FUN_00427530` - TYPE_REF serializer
+- `FUN_004274a0` - Custom function serializer
+- `FUN_01af6d30` - Additional deserializer
+
+**Note:** This is a FULL FORMAT deserializer for Blocks 2/4, NOT the compact format deserializer (08 03 prefix) for Blocks 3/5.
+
+---
+
+### Deserialization Call Chain Summary
+
+```
+                    Full Format (Blocks 2/4)
+                    ========================
+
+FUN_00421110 (Generated Deserializer)
+    |
+    +-- FUN_01af6a40 (Buffer Deserializer)
+    |       |
+    |       +-- Case 0x00: FUN_01aeb020 (Object by ID)
+    |       |       |
+    |       |       +-- FUN_01aeaf70 (Type Table Lookup)
+    |       |
+    |       +-- Case 0x01: FUN_01af6420 (Indirect)
+    |               |
+    |               +-- FUN_01ae9390 (Type Resolution)
+    |                       |
+    |                       +-- FUN_01aeaf70 (Type Table Lookup)
+    |
+    +-- FUN_00427530 (TYPE_REF Serializer)
+    |       |
+    |       +-- Direct: FUN_01aeaf70
+    |       +-- Indirect: FUN_01af6420
+    |
+    +-- FUN_004274a0 (Custom Function Serializer)
+
+
+                    Object Initialization Path
+                    ==========================
+
+FUN_01AEF890 / FUN_01AEF9D0 (Entry Points)
+    |
+    +-- FUN_01AF2BB0 (Object Init)
+            |
+            +-- FUN_01AEAF70 (Type Table Lookup)
+
+
+                    Compact Format (Blocks 3/5)
+                    ===========================
+
+[NOT YET IDENTIFIED]
+    |
+    +-- Reads 08 03 prefix
+    +-- Reads table_id (1 byte)
+    +-- Reads property_index (1 byte)
+    +-- FUN_01AEAF70 (Type Table Lookup)
+    +-- Property dispatch
+```
+
+---
+
+### TYPE_REF Helper Functions
+
+The TYPE_REF serialization system uses multiple helper functions for indirect type resolution. These functions form a chain that resolves type references through descriptor lookups.
+
+#### FUN_01AF6420 - TYPE_REF Indirect Handler
+
+**Address:** `0x01AF6420` (ACBSP+0x1AF6420)
+
+**Purpose:** Wrapper function for indirect type resolution via descriptor chain lookup
+
+**Called From:**
+- `FUN_00427530` (TYPE_REF serializer) at `0x004275FF`
+- `FUN_00449F60` at `0x0044A040`
+
+**Implementation:**
+```c
+void __thiscall FUN_01af6420(int param_1, undefined4 param_2, undefined4 param_3)
+{
+  // Calls FUN_01ae9390 with parameters from descriptor chain
+  FUN_01ae9390(param_3, param_2, *(int *)(param_1 + 4) + 0x2c, &DAT_02a62454, 0);
+  return;
+}
+```
+
+**Parameters:**
+- `param_1` (ECX): Context pointer with descriptor chain reference
+- `param_2`: Secondary identifier
+- `param_3`: Type identifier
+
+**Key Data:**
+- `DAT_02a62454`: Global data reference used in lookup
+
+---
+
+#### FUN_01AE9390 - Type Resolution with Lookup
+
+**Address:** `0x01AE9390` (ACBSP+0x1AE9390)
+
+**Purpose:** Resolves type by looking up in descriptor chain, then calls type table lookup
+
+**Called From:**
+- `FUN_01af61d0`
+- `FUN_01af6420` (TYPE_REF indirect handler)
+
+**Key Function Calls:**
+- `FUN_01b1eeb0` - Lookup by key in tree map
+- `FUN_01aeaf70` - Type table lookup (called at `0x01ae942c`)
+- `FUN_004253e0` - Assignment helper
+- `FUN_0041dc10` - Cleanup/destructor
+
+**Call Flow:**
+```
+FUN_01ae9390
+    |
+    +-> FUN_01b1eeb0  (tree map lookup by key)
+    |
+    +-> FUN_01aeaf70  (type table lookup - at 0x01ae942c)
+    |
+    +-> FUN_004253e0  (assignment helper)
+    |
+    +-> FUN_0041dc10  (cleanup)
+```
+
+---
+
+#### TYPE_REF Dual Encoding Mode
+
+The TYPE_REF function (`FUN_00427530` at `0x00427530`) has **TWO encoding modes** based on the first byte in the stream:
+
+| First Byte | Path | Function Chain |
+|------------|------|----------------|
+| `0x00` | Direct lookup | `FUN_01aeaf70` directly |
+| `!= 0x00` | Indirect lookup | `FUN_01af6420` → `FUN_01ae9390` → `FUN_01aeaf70` |
+
+**Binary Format in Stream:**
+```
+Direct Mode:
+  [00] [4-byte type hash]  -> Direct type hash lookup via FUN_01aeaf70
+
+Indirect Mode:
+  [XX] [4-byte hash] (where XX != 0)  -> Indirect lookup via descriptor chain
+```
+
+**Example:**
+```
+Stream: 00 47 3E B6 FB
+  -> Mode: 0x00 (direct)
+  -> Hash: 0xFBB63E47 (World type)
+  -> Calls: FUN_01aeaf70(0xFBB63E47, 0)
+
+Stream: 01 19 ED EB 0D
+  -> Mode: 0x01 (indirect)
+  -> Hash: 0x0DEBED19 (CompactType_5E)
+  -> Calls: FUN_01af6420(...) -> FUN_01ae9390(...) -> FUN_01aeaf70(...)
+```
+
+---
 
 ### Type Table Lookup (FUN_01AEAF70) - Detailed Analysis
 
@@ -1250,6 +1636,23 @@ Example from SAV data:
 ---
 
 ## Key Addresses Reference
+
+### Deserialization Function Addresses
+
+| Address | Function | Purpose |
+|---------|----------|---------|
+| `0x01AEAF70` | FUN_01AEAF70 | Type table lookup (primary) |
+| `0x01AEB020` | FUN_01AEB020 | Object creator by table ID |
+| `0x01AEF890` | FUN_01AEF890 | Deserialization entry point |
+| `0x01AEF9D0` | FUN_01AEF9D0 | Alternative entry point |
+| `0x01AF0490` | FUN_01AF0490 | Pass-through wrapper |
+| `0x01AF2BB0` | FUN_01AF2BB0 | Object init with type lookup |
+| `0x01AF6A40` | FUN_01AF6A40 | Buffer deserializer (prefix dispatch) |
+| `0x01AF6420` | FUN_01AF6420 | TYPE_REF indirect handler |
+| `0x01AE9390` | FUN_01AE9390 | Type resolution with lookup |
+| `0x00421110` | FUN_00421110 | Generated full format deserializer |
+| `0x00427530` | FUN_00427530 | TYPE_REF serializer |
+| `0x004274A0` | FUN_004274A0 | Custom function serializer |
 
 ### Type Descriptor Locations
 

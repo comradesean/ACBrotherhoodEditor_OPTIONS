@@ -626,11 +626,33 @@ The compact format uses a 4-byte encoding pattern:
 - **Table ID (byte 2)**: Type index (0x20-0x90 range observed) - resolved via `FUN_01AEAF70`
 - **Property Index (byte 3)**: Property within the type
 
-##### Serialization Flag
+##### Serialization Flag and TYPE_REF Encoding
 
 The first byte after type resolution indicates the serialization mode:
-- **0x00**: Type by table ID (next 4 bytes are the ID)
-- **Non-zero**: Inline type data follows
+- **0x00**: Direct type lookup - Type by table ID (next 4 bytes are the ID), resolved via `FUN_01aeaf70` directly
+- **Non-zero**: Indirect type lookup - Resolves through descriptor chain via `FUN_01af6420` → `FUN_01ae9390` → `FUN_01aeaf70`
+
+**TYPE_REF Dual Encoding Mode:**
+
+The TYPE_REF serializer (`FUN_00427530` at `0x00427530`) implements two encoding paths:
+
+| First Byte | Path | Function Chain |
+|------------|------|----------------|
+| `0x00` | Direct lookup | `FUN_01aeaf70(type_hash, 0)` |
+| `!= 0x00` | Indirect lookup | `FUN_01af6420` → `FUN_01ae9390` → `FUN_01aeaf70` |
+
+**Binary Format:**
+```
+Direct:   [00] [4-byte type hash]  -> FUN_01aeaf70 lookup
+Indirect: [XX] [4-byte hash]       -> Descriptor chain lookup (XX != 0)
+```
+
+**Helper Functions:**
+- `FUN_01AF6420` (0x01AF6420): TYPE_REF indirect handler wrapper
+- `FUN_01AE9390` (0x01AE9390): Type resolution with descriptor chain lookup
+- `FUN_01B1EEB0`: Tree map lookup by key
+- `FUN_004253E0`: Assignment helper
+- `FUN_0041DC10`: Cleanup/destructor
 
 ##### Block 3 Primary Pattern
 
@@ -786,10 +808,63 @@ The same LZSS compressor is used for **both OPTIONS and SAV files**. Confirmed v
 | `+0x178E140` | `0x01B8E140` | Compression entry point |
 | `+0x178E0A0` | `0x01B8E0A0` | Match finder function |
 | `+0x178E463` | `0x01B8E463` | Long match encoding |
+| `+0x0046D430` | `0x0046D430` | **SAV Block Parser** - main block iteration |
 
 **Note:** Runtime addresses vary with ASLR. Use offset from module base:
 - If ACBSP loads at `0x00F30000`: compressor is at `0x026BE140`
 - If ACBSP loads at `0x00AB0000`: compressor is at `0x0223E140`
+
+### Block Parser Function (FUN_0046d430)
+
+The main SAV block parsing function at Ghidra VA `0x0046d430`:
+
+**Header Validation:**
+- Validates SAV file header at offsets 0x00 and 0x04:
+  - `magic1 = 0x16` (constant)
+  - `magic2 = 0xFEDBAC` (constant)
+- Reads total data size from offset 0x08
+- Block data starts at offset 0x0C
+
+**Block Iteration:**
+- Block object array pointer: SaveSlot+0x3C
+- Block count: SaveSlot+0x42 (masked with 0x3FFF)
+- Each block prefixed with 4-byte size field
+- Dispatches to format-specific deserializer via vtable[10]
+
+**SaveSlot Structure (partial):**
+
+| Offset | Size | Purpose |
+|--------|------|---------|
+| +0x3C | 4 | Block object array pointer |
+| +0x42 | 2 | Block count (& 0x3FFF mask) |
+| +0x44 | 6 | Various flags |
+
+Block objects are 0x488 bytes each.
+
+### Block Format Deserializers (8-byte Inner Headers)
+
+After LZSS decompression (for compressed blocks), the decompressed data has an 8-byte inner header that identifies the format:
+
+| Format | Type (offset 0) | Magic (offset 4) | Ghidra VA | Used By |
+|--------|-----------------|------------------|-----------|---------|
+| **CAFE00** | 0x00000001 | 0x00CAFE00 | 0x01711ab0 | Block 2, Block 4 |
+| **11FACE11** | 0x00000003 | 0x11FACE11 | 0x01712db0 | OPTIONS Section 2 |
+| **21EFFE22** | 0x00000000 | 0x21EFFE22 | 0x017109e0 | OPTIONS Section 3 |
+| **Raw** | N/A | None | 0x01712660 | Block 3, Block 5 |
+
+**Cross-reference with OPTIONS file:**
+- OPTIONS Section 2 uses the same 11FACE11 magic (Field3 in 44-byte header)
+- OPTIONS Section 3 uses the same 21EFFE22 magic (Field3 in 44-byte header)
+- These magics identify the serialization format after the outer LZSS layer
+
+**Deserializer Common Pattern:**
+
+All format handlers follow the same pattern:
+1. Validate 8-byte header (type field + magic field)
+2. Skip header, setup inner deserializer via `FUN_00425360`
+3. Create object via `FUN_01afd600`
+4. Call vtable[3] on created object to deserialize contents
+5. Cleanup
 
 ### CAFE00 Handler (Block 2 Serializer)
 
@@ -825,6 +900,109 @@ The same LZSS compressor is used for **both OPTIONS and SAV files**. Confirmed v
 | "SaveGameData" | 0x0249EC82 |
 | "SaveGameComponent" | 0x023FB218 |
 | "ProfileData" | 0x0253DDFA |
+| "ACBROTHERHOODSAVEGAME" | 0x02411ecc |
+| "OPTIONS" | 0x023f14e8 |
+| "save:SAVES" | 0x023f1474 |
+
+### SaveGame I/O System
+
+The game uses a layered architecture for save file operations:
+
+1. **SaveGameManager** - High-level orchestration
+2. **SaveGame I/O Class** - File read/write/delete operations
+3. **Block Deserializers** - Type-specific content parsing (CAFE00 handler, etc.)
+
+#### SaveGameManager Class
+
+**Constructor:** `FUN_0046dcc0` (Ghidra VA)
+
+Creates a ~0x360 byte object containing:
+- Multiple vtables for different interfaces
+- Sub-objects at offsets 0x188, 0x19c, 0x1b0, 0x1c4, 0x1d8, 0x1ec, 0x200, 0x214, 0x228, 0x23c, 0x250, 0x264
+- SaveGame I/O object pointer at offset 0x28c
+
+**Callers:** `FUN_0046dea0`, `FUN_0046df80`, `FUN_0046f6b0` - Main save system entry points
+
+#### SaveGame I/O Class
+
+**Factory:** `FUN_005e49d0` - Allocates 0x18 bytes, calls constructor
+**Constructor:** `FUN_009ca3e0` - Initializes vtable at 0x02411f30
+
+#### SaveGame I/O Vtable (0x02411f30)
+
+| Slot | Address | Method | Purpose |
+|------|---------|--------|---------|
+| 0 | `0x009ca550` | **Destructor** | Cleans up array at +0x4, frees memory |
+| 1 | `0x009ca250` | **WriteSavegame** | Writes `ACBROTHERHOODSAVEGAME{slot}.` via WriteFile |
+| 2 | `0x009ca290` | **ReadSavegame** | Reads `ACBROTHERHOODSAVEGAME{slot}.` via ReadFile |
+| 3 | `0x009ca2d0` | **WriteOptions** | Writes `OPTIONS` via WriteFile |
+| 4 | `0x009ca2f0` | **ReadOptions** | Reads `OPTIONS` via ReadFile |
+| 5 | `0x009ca430` | Stub | Returns false (`XOR AL,AL`) |
+| 6 | `0x009ca440` | Stub | Returns true (`MOV AL,1`) |
+| 7 | `0x009ca450` | Stub | Empty (`RET`) |
+| 8 | `0x009ca310` | **DeleteSavegame** | Calls `DeleteFileW` + cleanup loop |
+| 9 | `0x005e4990` | **CheckAssassinSav** | Checks if `assassin.sav` exists |
+| 10 | `0x009ca460` | Stub | Returns true |
+| 11 | `0x009ca470` | Stub | Returns 0 |
+| 12 | `0x009ca480` | Stub | Empty |
+| 13 | `0x009ca490` | Stub | Empty (pops 4 bytes) |
+| 14 | `0x009ca4a0` | Stub | Empty |
+| 15 | `0x009ca4b0` | Stub | Empty |
+
+#### File I/O Functions (Low-Level)
+
+| Function | Purpose |
+|----------|---------|
+| `FUN_005e4b10` | **SaveGameWriter::ReadFile** - Raw disk read into buffer |
+| `FUN_005e4860` | **SaveGameWriter::WriteFile** - Raw disk write from buffer |
+
+**Important:** These are pure I/O utility functions. They read/write raw bytes from/to disk. The actual SAV block structure parsing and content deserialization happens in separate functions AFTER the raw file is loaded into memory.
+
+#### Deserialization Flow (Complete)
+
+```
+SaveGameManager callers (0046dea0, 0046df80, 0046f6b0)
+    |
+    +-- FUN_0046dcc0 (SaveGameManager constructor)
+            |
+            +-- FUN_005e49d0 (Create SaveGame I/O object)
+                    |
+                    +-- FUN_009ca3e0 (Initialize vtable)
+                            |
+                            +-- Vtable slot 2: FUN_009ca290 (ReadSavegame)
+                                    |
+                                    +-- FUN_005e4b10 (Raw file read)
+                                            |
+                                            v
+                                    [Raw SAV data in memory]
+                                            |
+                                    FUN_0046d430 (Block Parser) <-- IDENTIFIED
+                                            |
+                                    +-- vtable[10] dispatch per block:
+                                        +-- FUN_01711ab0 (CAFE00 - Blocks 2, 4)
+                                        +-- FUN_01712db0 (11FACE11)
+                                        +-- FUN_017109e0 (21EFFE22)
+                                        +-- FUN_01712660 (Raw - Blocks 3, 5)
+```
+
+**RESOLVED:** The block parser function has been identified as `FUN_0046d430`. See "Block Parser Function" section below for details.
+
+#### Serialization Framework (TLS-based)
+
+The engine uses a generic Thread Local Storage (TLS) based serialization system:
+
+| Function | Purpose |
+|----------|---------|
+| `FUN_01b18000` | Creates 8-byte serialization context, links to manager |
+| `FUN_01b02320` | TLS context manager - accesses slot pool at `TLS[0x18] + index * 0xF0` |
+| `FUN_01b021d0` | Empty stub (actual work done via virtual dispatch) |
+| `FUN_01b042c0` | Low-level context linking |
+
+The serialization context object (8 bytes) has vtable `0x0041d5d0` (`PTR_FUN_023e5bb0`).
+
+#### Investigation Status
+
+**COMPLETE:** The SAV loading system has been fully traced. The block parser (`FUN_0046d430`) and all format-specific deserializers have been identified.
 
 ### Property Hashes Found in Block 1
 
@@ -879,10 +1057,15 @@ The compact format in Blocks 3 and 5 uses a **Type Descriptor Table** system for
 
 #### Serialization Functions
 
-| Function | Signature | Purpose |
-|----------|-----------|---------|
-| `FUN_00427530` | `(type_hash, object_offset, type_descriptor_ptr)` | Serialize type reference |
-| `FUN_004274a0` | `(type_hash, serializer_func, object_offset, type_descriptor_ptr)` | Serialize with custom function |
+| Function | Address | Signature | Purpose |
+|----------|---------|-----------|---------|
+| `FUN_00427530` | 0x00427530 | `(type_hash, object_offset, type_descriptor_ptr)` | Serialize type reference (dual-mode: direct/indirect) |
+| `FUN_004274a0` | 0x004274A0 | `(type_hash, serializer_func, object_offset, type_descriptor_ptr)` | Serialize with custom function |
+| `FUN_01af6420` | 0x01AF6420 | `(param_1, param_2, param_3)` | TYPE_REF indirect handler wrapper |
+| `FUN_01ae9390` | 0x01AE9390 | `(param_3, param_2, descriptor_offset, global_ref, 0)` | Type resolution with descriptor chain lookup |
+| `FUN_01b1eeb0` | 0x01B1EEB0 | `(tree_map, key, flags)` | Tree map lookup by key |
+| `FUN_004253e0` | 0x004253E0 | `(...)` | Assignment helper for type handles |
+| `FUN_0041dc10` | 0x0041DC10 | `(...)` | Cleanup/destructor for type handles |
 
 #### World Object Serializer
 
