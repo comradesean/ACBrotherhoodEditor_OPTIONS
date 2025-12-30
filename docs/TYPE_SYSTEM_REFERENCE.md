@@ -181,6 +181,19 @@ CommonParent (0x7E42F87F) - ROOT (0 properties, 786 code refs)
 | `0xF49BFD86` | CompactType_4F | 61 | CommonParent | 22 props | 0x4F |
 | `0xFC6EDE2A` | CompactType_3B | 1 | CommonParent | 22 props | 0x3B |
 
+### PropertyDataObject Structure
+
+Runtime structure used by PropertyData handlers (16 bytes):
+
+```c
+struct PropertyDataObject {
+    void* vtable;      // +0x00: 0x025561ec -> 0x01b71d70
+    byte  flags;       // +0x04: (param << 2) | 1
+    uint  PackedInfo;  // +0x08
+    uint  ObjectID;    // +0x0C
+};
+```
+
 ---
 
 ## Detailed Type Specifications

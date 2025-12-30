@@ -563,6 +563,13 @@ The PropertyData handler checks the version byte at the start of the data:
 
 Since Blocks 3 and 5 start with version byte `0x01`, they are handled by the Version 1 handlers.
 
+**FUN_01b70450 Field Reading Sequence:**
+
+`FUN_01b70450` reads three fields via vtable dispatch to populate a PropertyDataObject:
+1. "PackedInfo" via vtable[38] → stored at +0x08
+2. "ObjectID" via vtable[39] → stored at +0x0C
+3. "PropertyID" via vtable[33] → stored at +0x04
+
 **Previous Understanding (Partially Incorrect):**
 - The Raw deserializer (`FUN_01712660`) was previously thought to handle these blocks
 - TTD tracing confirmed this is NOT the entry point for Blocks 3/5
