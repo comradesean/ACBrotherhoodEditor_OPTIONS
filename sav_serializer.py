@@ -289,32 +289,39 @@ def build_block1_header(compressed_data: bytes, uncompressed_size: int) -> bytes
     return header
 
 
-def build_block2_header(compressed_data: bytes, uncompressed_size: int, remaining_file_size: int) -> bytes:
+def build_block2_header(compressed_data: bytes, uncompressed_size: int, remaining_file_size: int,
+                        field4: int = None) -> bytes:
     """
     Build 44-byte header for Block 2.
 
-    Field1 = remaining_file_size - 4 (verified from documentation)
-    Field4 = (remaining_block_count << 16) + (2 * uncompressed_size - OVERHEAD)
+    Field1 = remaining_file_size - 4
+    Field4 = Complex encoding (see below)
 
-    Field4 encoding:
-      - High 16 bits: Number of blocks remaining after Block 2 (always 3: blocks 3,4,5)
-      - Low 16 bits: (2 * uncompressed_size) - OVERHEAD
-      - OVERHEAD = 3558 for 32KB blocks (verified for standard saves)
+    Field4 encoding (PARTIALLY UNDERSTOOD):
+      - High 16 bits: region_count / 2 (number of regions in Blocks 3-5, divided by 2)
+      - Low 16 bits: Unknown formula - varies between saves, no clear pattern found
+
+    Observed values:
+      - FRESH.SAV:  0x0003F1D6 (high=3, low=61910) - 6 regions
+      - CAPE_0%.SAV: 0x0003F21A (high=3, low=61978) - 6 regions
+      - CAPE_100%.SAV: 0x0008AC49 (high=8, low=44105) - 16 regions
+
+    IMPORTANT: When modifying saves, preserve the original Field4 value unless
+    you are adding/removing regions. The low 16 bits cannot be reliably calculated.
+
+    Args:
+        field4: If provided, use this value. Otherwise falls back to legacy formula.
     """
     compressed_size = len(compressed_data)
     checksum = adler32(compressed_data)
 
-    # Field4 calculation: (remaining_block_count << 16) + (2 * uncompressed_size - OVERHEAD)
-    # Verified: (3 << 16) + (2 * 32768 - 3558) = 196608 + 61978 = 258586 = 0x0003F21A
-    REMAINING_BLOCK_COUNT = 3  # Blocks 3, 4, 5 follow Block 2
-    OVERHEAD_32KB = 3558       # Overhead constant for 32KB blocks
-
-    if uncompressed_size == 32768:
-        field4 = (REMAINING_BLOCK_COUNT << 16) + (2 * uncompressed_size - OVERHEAD_32KB)
-    else:
-        # Fallback for non-standard sizes - formula may need adjustment
-        # Using same formula but OVERHEAD may differ for other sizes
-        field4 = (REMAINING_BLOCK_COUNT << 16) + (2 * uncompressed_size - OVERHEAD_32KB)
+    # Use provided field4, or fall back to legacy formula (may not match original)
+    if field4 is None:
+        # Legacy formula - known to be incorrect for some saves
+        # Only use when creating new saves or when original field4 is unavailable
+        REGION_COUNT_ESTIMATE = 6  # Typical for small saves
+        OVERHEAD_ESTIMATE = 3558   # Observed in some saves, but varies
+        field4 = ((REGION_COUNT_ESTIMATE // 2) << 16) + (2 * uncompressed_size - OVERHEAD_ESTIMATE)
 
     header = struct.pack('<11I',
         remaining_file_size - 4,  # Field1: remaining_file_size - 4

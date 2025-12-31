@@ -1,0 +1,28 @@
+{
+  "description": "Cape item mappings for AC Brotherhood SAV files (Block 4)",
+  "block": 4,
+  "format": "PhysicalInventoryItem",
+  "structure": {
+    "hash_offset": 0,
+    "ownership_flag_offset": 13,
+    "cape_id_offset": 14
+  },
+  "capes": [
+    {
+      "name": "Venetian Cape",
+      "hash": "0x4470F39F",
+      "id": "0x0E",
+      "notes": "Facebook-exclusive cape, unlockable by setting ownership flag to 0x01"
+    },
+    {
+      "name": "Medici Cape",
+      "hash": "0xDD79A225",
+      "id": "0x11",
+      "notes": "Facebook-exclusive cape, unlockable by setting ownership flag to 0x01"
+    }
+  ],
+  "unlock_method": {
+    "description": "Find cape by hash in Block 4, verify ID at hash_offset+14, set byte at hash_offset+13 to 0x01",
+    "tool": "cape_unlocker.py"
+  }
+}

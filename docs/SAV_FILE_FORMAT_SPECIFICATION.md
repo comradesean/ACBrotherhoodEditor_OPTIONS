@@ -171,31 +171,40 @@ Offset | Size | Field            | Block 1       | Block 2
 - Field1 = `remaining_file_size - 4`
 - Field2 = `0x00000001`
 - Field3 (Marker) = `0x00CAFE00`
-- Field4 = `(remaining_block_count << 16) + (2 * uncompressed_size - OVERHEAD)`
+- Field4 = Complex encoding (see below)
 
-#### Block 2 Field4 Formula (Reverse Engineered)
+#### Block 2 Field4 Encoding (PARTIALLY UNDERSTOOD)
 
-```
-Field4 = (remaining_block_count << 16) + (2 * uncompressed_size - OVERHEAD)
+Field4 encodes region metadata in two 16-bit components:
 
-Where:
-  remaining_block_count = 3  (Blocks 3, 4, 5 follow Block 2)
-  uncompressed_size = 32768  (0x8000)
-  OVERHEAD = 3558            (constant for 32KB blocks)
+| Component | Meaning | Confidence |
+|-----------|---------|------------|
+| High 16 bits | `region_count / 2` | **HIGH** - Verified across 3 saves |
+| Low 16 bits | Unknown | **LOW** - No clear formula found |
 
-Example:
-  Field4 = (3 << 16) + (2 * 32768 - 3558)
-         = 196608 + 61978
-         = 258586
-         = 0x0003F21A
-```
+**Observed Values:**
 
-| Component | Value | Encoding |
-|-----------|-------|----------|
-| High 16 bits | 0x0003 | Remaining block count after Block 2 |
-| Low 16 bits | 0xF21A | `(2 * uncompressed_size) - OVERHEAD` |
+| Save File | Field4 | High 16 | Low 16 | Regions |
+|-----------|--------|---------|--------|---------|
+| FRESH.SAV | 0x0003F1D6 | 3 | 61910 | 6 |
+| CAPE_0%.SAV | 0x0003F21A | 3 | 61978 | 6 |
+| CAPE_100%.SAV | 0x0008AC49 | 8 | 44105 | 16 |
 
-**Confidence: 98%** - Formula verified with assembly proof at address `0x01711a06` (`PUSH 0x2`).
+**High 16 bits:** Confirmed to equal `total_region_count / 2` where regions are counted
+across Blocks 3, 4, and 5 (each region header `[01] [size 3B] [00 00 80 00]`).
+
+**Low 16 bits:** No consistent pattern found. Tested correlations:
+- `2 * uncompressed_size - OVERHEAD` → OVERHEAD varies (3558 to 21431)
+- Sum of region sizes → No match
+- Non-zero bytes in Block 2 → No match
+- Block 3+4+5 total size → No match
+
+**Recommendation:** When modifying saves, preserve the original Field4 value.
+Only update if adding/removing regions (update high bits only, preserve low bits).
+
+**Previous Theory (DEPRECATED):**
+The formula `(3 << 16) + (2 * 32768 - 3558) = 0x0003F21A` only matches CAPE_0%.SAV.
+It does not work for FRESH.SAV (produces wrong value) or larger saves.
 
 ### 2.3 Footer Format
 
@@ -1518,7 +1527,8 @@ def safe_parse(data):
 | Checksum (Adler-32) | **HIGH** | Round-trip verified | Yes |
 | Block 1 header | **HIGH** | Parser verified | Yes |
 | Block 2 header | **HIGH** | Parser verified | Yes |
-| Block 2 Field4 formula | **HIGH** (98%) | Assembly proof | Yes |
+| Block 2 Field4 high bits | **HIGH** | region_count/2 verified | Yes |
+| Block 2 Field4 low bits | **LOW** | Unknown formula | No |
 | Field marker `[XX 00 0B]` | **HIGH** | Hex verified | Yes |
 | 12 fields in Block 1 | **HIGH** | Pattern count | Yes |
 | SaveGame hash 0xBDBE3B52 | **HIGH** | Hex + EXE match | Yes |

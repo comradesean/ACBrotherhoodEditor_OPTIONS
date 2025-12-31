@@ -237,6 +237,42 @@ Context around the reference:
       World hash                Object ID
 ```
 
+## Size Fields (Must Update When Name Changes)
+
+When modifying the player name, three internal size fields must be adjusted by the difference in name length:
+
+| Offset | Size | Description | Example (7→4 char) |
+|--------|------|-------------|-------------------|
+| 0x0E | 1 byte | Object size field | 0x09 → 0x06 (-3) |
+| 0x12 | 2 bytes (LE) | Block size field | 257 → 254 (-3) |
+| 0x91 | 1 byte | Nested size field | 0x19 → 0x16 (-3) |
+
+**Critical**: Failure to update these fields causes the game to crash on load.
+
+### Size Field Adjustment Formula
+
+```python
+length_diff = new_name_length - old_name_length
+
+# Single-byte fields
+block1[0x0E] += length_diff
+block1[0x91] += length_diff
+
+# 2-byte field (little-endian)
+old_val = struct.unpack('<H', block1[0x12:0x14])[0]
+block1[0x12:0x14] = struct.pack('<H', old_val + length_diff)
+```
+
+### Field Details
+
+| Field | Offset | Fresh Value | Notes |
+|-------|--------|-------------|-------|
+| Object Size | 0x0E | 9 (for "Desmond") | Part of type descriptor |
+| Block Size | 0x12-0x13 | 257 (0x0101) | 2-byte LE cumulative size |
+| Nested Size | 0x91 | 25 (0x19) | Size of name container |
+
+**Verification**: These fields were identified by comparing working saves with different name lengths. All three change by exactly the name length difference.
+
 ## Implementation Notes
 
 1. **Property Marker**: All standard properties begin with `11 00 00 00`
@@ -244,6 +280,7 @@ Context around the reference:
 3. **Object References**: Include the expected type hash before the object ID
 4. **Byte Order**: All multi-byte values are little-endian
 5. **String Encoding**: UTF-8 with 4-byte length prefix and null terminator
+6. **Name Changes**: Must update size fields at 0x0E, 0x12, and 0x91
 
 ## Property Hash Reference
 
