@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Hash Resolution Table
 
-**Document Version:** 1.6
+**Document Version:** 1.7
 **Date:** 2026-01-06
-**Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1-4 + A→B Constraint Discovery)
+**Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1-4 + Unknown Hash Findings)
 **Research Method:** Ghidra Decompilation, Differential Analysis, Algorithm Testing, Binary Analysis
 
 ---
@@ -50,7 +50,7 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 | Language | 20 | 20 (100%) | 0 | 0 |
 | Content Unlocks | 8 | 2 | 6 | 0 |
 | Section 2 Property Records | 57 | 24 (42%) | 0 | 33 |
-| Section 2 Unknown Initialization | 5 | 5 (100%)** | 0 | 0 |
+| Section 2 Unknown Initialization | 5 | 0 (0%) | 0 | 5 |
 | Section 3 Property Records | 6 | 1 (17%) | 0 | 5 |
 | Progress/Internal | 1 | 0 (0%) | 0 | 1 |
 
@@ -58,7 +58,7 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 
 *Partial = Possibly Uplay-related (observed flipped in test file) but specific hash-to-reward mapping unknown*
 
-**\*\*Unknown Initialization: Constrained values with A→B dependency (hundreds of samples). PC=0x00, PS3=variable. Only 8/32 combos observed. Not independent random.**
+**Unknown Initialization:** 5 records with platform differences (4 of 5 differ: PC=0x00, PS3=0x01). Purpose unknown.
 
 ---
 
@@ -363,40 +363,37 @@ Binary: `0B 3F 00 ...` (marker=0x0B, value=0x3F, type=0x00)
 - Bit 2 (0x04): Altair's Robes
 - Bit 3 (0x08): Drachen Armor (preorder)
 
-#### Unknown Type 0x0E Records
+#### Unknown Type 0x0E Records (Platform-Identical)
 
-| Offset | Hash | PC | PS3 | Notes |
-|--------|------|:--:|:---:|-------|
-| 0x0320 | 0xC25CE923 | 0x00 | 0x00 | Unknown |
-| 0x0332 | 0x196CAF1F | 0x00 | 0x00 | Unknown |
-| 0x0344 | 0x55BEEF7D | 0x00 | 0x00 | Unknown |
-| 0x0455 | 0x11A757F6 | 0x00 | 0x00 | Unknown |
-| 0x0467 | 0x2F4ACE81 | 0x00 | 0x00 | Unknown |
+All 5 records in this group have identical values on PC and PS3.
 
-#### Unknown Initialization (PC=0, PS3=constrained) - Partially Initialized with Dependency
+| Offset | Hash | PC Value | PS3 Value | Type | Purpose |
+|--------|------|:--------:|:---------:|:----:|---------|
+| 0x0320 | 0xC25CE923 | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x0332 | 0x196CAF1F | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x0344 | 0x55BEEF7D | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x0455 | 0x11A757F6 | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x0467 | 0x2F4ACE81 | 0x00 | 0x00 | 0x0E | Unknown |
 
-**Hundreds of samples analyzed. Values are NOT independent random - constraint discovered.**
+#### Unknown Initialization Records (Platform Differences)
 
-| Offset | Hash | Label | PC | PS3 | % = 1 | Notes |
-|--------|------|:-----:|:--:|:---:|:-----:|-------|
-| 0x04A4 | 0x886B92CC | A | 0x00 | Variable | 50% | **If A=0, then B=1** |
-| 0x04B6 | 0x49F3B683 | B | 0x00 | Variable | 62% | Dependent on A |
-| 0x04C8 | 0x707E8A46 | C | 0x00 | Variable | 50% | Independent |
-| 0x04DA | 0x67059E05 | D | 0x00 | Variable | 62% | Independent |
-| 0x04EC | 0x0364F3CC | E | 0x00 | Variable | 88% | Strong bias toward 1 |
+5 records with platform-specific value differences. All use Type 0x0E.
 
-**Key Discovery: A=0 → B=1 Constraint**
-- Across hundreds of fresh saves, A=0 with B=0 has **NEVER** been observed
-- If independent random, P(A=0 AND B=0) = 25% - should appear frequently
-- This proves A and B are NOT independent
+| Label | Offset | Hash | PC Value | PS3 Value | Type | Notes |
+|:-----:|--------|------|:--------:|:---------:|:----:|-------|
+| A | 0x04A4 | 0x886B92CC | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+| B | 0x04B6 | 0x49F3B683 | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+| C | 0x04C8 | 0x707E8A46 | 0x00 | 0x00 | 0x0E | Identical on both platforms |
+| D | 0x04DA | 0x67059E05 | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+| E | 0x04EC | 0x0364F3CC | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
 
-**Evidence:**
-- PC initializes ALL 5 to 0x00
-- PS3 writes variable 0x00/0x01 values with A→B constraint
-- Only 8 of 32 possible combinations observed (from hundreds of samples)
-- "Mutually exclusive pairs" hypothesis **disproven**
-- "Independent random bits" hypothesis **disproven**
-- Functional purpose (if any) remains unknown
+**Key Facts:**
+- All 10 unknown records (both groups) use Type 0x0E
+- Group 1 (5 records): Identical on PC and PS3 (all 0x00)
+- Group 2 (5 records): 4 of 5 differ - PC=0x00, PS3=0x01 (Records A, B, D, E)
+- Record C is the only initialization record identical on both platforms (0x00)
+- All conform to standard 18-byte record structure
+- Purpose of all 10 records is unknown
 
 ### 5.5.3 Type 0x11 - Integer Settings (4 records)
 
