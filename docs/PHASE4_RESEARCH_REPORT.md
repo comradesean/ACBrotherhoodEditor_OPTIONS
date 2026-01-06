@@ -40,13 +40,16 @@ Research identified the complete known content for AC Brotherhood:
 | **Unknown #1** | 0x000B953B | UNRESOLVED |
 | **Unknown #2** | 0x001854EC | UNRESOLVED |
 
-**Uplay Rewards (4 known):**
-| Reward | Upoints | Hash |
-|--------|---------|------|
-| Florentine Noble Attire | 20 | 0x0021D9D0 |
-| Armor of Altair | 20 | 0x0036A2C4 |
-| Altair's Robes | 20 | 0x0052C3A9 |
-| Hellequin MP Character | 40 | 0x000E8D04 |
+**Uplay Rewards (4 known from official sources):**
+| Reward | Upoints |
+|--------|---------|
+| Florentine Noble Attire | 20 |
+| Armor of Altair | 20 |
+| Altair's Robes | 20 |
+| Hellequin MP Character | 40 |
+
+*Note: Six hash records exist at 0x2B5-0x30F that were flipped in a Uplay test file.
+Their specific purpose is unknown.*
 
 **Other Unlockables:**
 - Gun Capacity Upgrade (30 Upoints) - tracked in Section 3, not Section 2
@@ -66,19 +69,18 @@ Direct searches for the hex values 0x000B953B and 0x001854EC yielded **no result
 
 ```
 Section 2 Unlock Record Layout:
-0x291: Templar Lair - Trajan's Market  (0x00788F42) - KNOWN
-0x2A3: Templar Lair - Tivoli Aqueduct  (0x006FF456) - KNOWN
-0x2B5: Unknown #1                       (0x000B953B) - UNKNOWN
-0x2C7: Unknown #2                       (0x001854EC) - UNKNOWN
-0x2D9: Uplay - Florentine Noble         (0x0021D9D0) - KNOWN
-0x2EB: Uplay - Armor of Altair          (0x0036A2C4) - KNOWN
-...
+0x291: Templar Lair - Trajan's Market  (0x00788F42) - CONFIRMED
+0x2A3: Templar Lair - Tivoli Aqueduct  (0x006FF456) - CONFIRMED
+0x2B5: Possibly Uplay                   (0x000B953B) - PARTIAL (purpose unknown)
+0x2C7: Possibly Uplay                   (0x001854EC) - PARTIAL (purpose unknown)
+0x2D9: Possibly Uplay                   (0x0021D9D0) - PARTIAL (purpose unknown)
+0x2EB: Possibly Uplay                   (0x0036A2C4) - PARTIAL (purpose unknown)
+0x2FD: Possibly Uplay                   (0x0052C3A9) - PARTIAL (purpose unknown)
+0x30F: Possibly Uplay                   (0x000E8D04) - PARTIAL (purpose unknown)
 ```
 
-The unknown hashes are positioned **between Templar Lairs and Uplay rewards**, suggesting they may be:
-1. Additional secret locations that were cut
-2. Content planned but never released
-3. Regional exclusives (Japan, etc.) not available in Western versions
+All 6 hashes (0x2B5-0x30F) were observed flipped in a 100% Uplay test file.
+Their specific purpose is unknown.
 
 #### Most Probable Theories
 
@@ -104,12 +106,11 @@ The unknown hashes are positioned **between Templar Lairs and Uplay rewards**, s
 
 #### Conclusion
 
-The unknown hashes **0x000B953B** and **0x001854EC** most likely represent:
-- **Cut or beta content** that was never released
-- **Placeholder entries** in a pre-allocated unlock structure
-- **Regional exclusives** with limited documentation
+Six unlock hashes exist at offsets 0x2B5-0x30F:
+- All 6 were observed flipped in a 100% Uplay test file
+- Possibly Uplay-related, but specific purpose is unknown
 
-**Recommendation:** Document as "Cut/Unknown Content - Likely Unused" with note that enabling these flags has no known effect.
+**Recommendation:** Document all 6 as "Possibly Uplay (purpose unknown)".
 
 ---
 
@@ -292,12 +293,11 @@ Add new section for Phase 4 findings:
 ```markdown
 ### 6.4 Phase 4 Research Conclusions
 
-#### Unknown Unlock Hashes
-- 0x000B953B: Likely cut content - no public documentation found
-- 0x001854EC: Likely cut content - no public documentation found
+#### Unlock Hashes (6 total at offsets 0x2B5-0x30F)
+All 6 hashes were observed flipped in a 100% Uplay test file:
+- 0x000B953B, 0x001854EC, 0x0021D9D0, 0x0036A2C4, 0x0052C3A9, 0x000E8D04
 
-Both hashes are located between known Templar Lair and Uplay reward entries,
-suggesting they were planned content that was never released.
+Possibly Uplay-related, but specific purpose has NOT been determined.
 ```
 
 ### 2. Update Section 3 Documentation
@@ -358,13 +358,13 @@ Ubisoft's internal toolchain or source code.
 
 Phase 4 research confirms that:
 
-1. **Unknown hashes 0x000B953B and 0x001854EC** are undocumented and likely represent cut or never-released content.
+1. **Two confirmed Templar Lair hashes**: 0x00788F42 (Trajan's Market), 0x006FF456 (Tivoli Aqueduct).
 
-2. **The hash algorithm is proprietary** and precomputed at build time. Further investigation would require access to Ubisoft's internal tools.
+2. **Six possibly Uplay-related hashes** (0x000B953B, 0x001854EC, 0x0021D9D0, 0x0036A2C4, 0x0052C3A9, 0x000E8D04) observed flipped in Uplay test file. Specific purpose NOT determined.
 
-3. **Section 3 property hashes** are progress tracking identifiers. The PC-only hash (0x496F8780) relates to achievement integration.
+3. **The hash algorithm is proprietary** and precomputed at build time. Further investigation would require access to Ubisoft's internal tools.
 
-4. **Documentation updates recommended** to reflect these conclusions and prevent future investigation of dead ends.
+4. **Section 3 property hashes** are progress tracking identifiers. The PC-only hash (0x496F8780) relates to achievement integration.
 
 ---
 

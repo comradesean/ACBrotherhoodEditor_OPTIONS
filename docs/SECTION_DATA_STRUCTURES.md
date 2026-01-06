@@ -293,7 +293,7 @@ This would clarify whether flags are set at build time or updated at runtime.
 | Type 0x11 records | ✓ (4 records) | ✓ (identical) |
 | Type 0x15 record | ✓ (identical) | ✓ (identical) |
 | Hash 0xD9E10623 | Type **0x16**, Value=0 | Type **0x12**, Value=1 |
-| DLC flags (0x0516-0x0519) | 01 01 01 01 | 00 00 00 00 |
+| Unknown flags (0x0516-0x0519) | 01 01 01 01 | 00 00 00 00 |
 | Trailing bytes | 4 extra bytes | None |
 
 **Type 0x16 (PC) vs Type 0x12 (PS3) - Same Setting, Different Types:**
@@ -457,25 +457,25 @@ typedef struct {
     uint8_t      hud_tutorial_data[17];   /* 0x280-0x290 */
 
     /* Unlock records */
-    UnlockRecord templar_lair_1;          /* 0x291: hash 0x00788F42 */
-    UnlockRecord templar_lair_2;          /* 0x2A3: hash 0x006FF456 */
-    UnlockRecord unknown_unlock_1;        /* 0x2B5: hash 0x000B953B */
-    UnlockRecord unknown_unlock_2;        /* 0x2C7: hash 0x001854EC */
-    UnlockRecord uplay_florentine;        /* 0x2D9: hash 0x0021D9D0 */
-    UnlockRecord uplay_altair_armor;      /* 0x2EB: hash 0x0036A2C4 */
-    UnlockRecord uplay_altair_robes;      /* 0x2FD: hash 0x0052C3A9 */
-    UnlockRecord uplay_hellequin;         /* 0x30F: hash 0x000E8D04 */
+    UnlockRecord templar_lair_1;          /* 0x291: hash 0x00788F42 - Trajan Market */
+    UnlockRecord templar_lair_2;          /* 0x2A3: hash 0x006FF456 - Tivoli Aqueduct */
+    UnlockRecord unknown_unlock_1;        /* 0x2B5: hash 0x000B953B - possibly Uplay */
+    UnlockRecord unknown_unlock_2;        /* 0x2C7: hash 0x001854EC - possibly Uplay */
+    UnlockRecord unknown_unlock_3;        /* 0x2D9: hash 0x0021D9D0 - possibly Uplay */
+    UnlockRecord unknown_unlock_4;        /* 0x2EB: hash 0x0036A2C4 - possibly Uplay */
+    UnlockRecord unknown_unlock_5;        /* 0x2FD: hash 0x0052C3A9 - possibly Uplay */
+    UnlockRecord unknown_unlock_6;        /* 0x30F: hash 0x000E8D04 - possibly Uplay */
     uint8_t      reserved23[72];          /* 0x321-0x368 */
 
     /* Costume bitfield */
     CostumeBitfield costumes;             /* 0x369 */
     uint8_t      reserved24[428];         /* 0x36A-0x515 */
 
-    /* DLC/Update flags */
-    OPTIONS_Bool apu_1_0;                 /* 0x516: Animus Project Update 1.0 */
-    OPTIONS_Bool apu_2_0;                 /* 0x517: Animus Project Update 2.0 */
-    OPTIONS_Bool apu_3_0;                 /* 0x518: Animus Project Update 3.0 */
-    OPTIONS_Bool da_vinci_dlc;            /* 0x519: Da Vinci Disappearance */
+    /* Unknown flags (possibly DLC-related) */
+    OPTIONS_Bool unknown_flag_1;          /* 0x516: purpose unknown - possibly DLC */
+    OPTIONS_Bool unknown_flag_2;          /* 0x517: purpose unknown - possibly DLC */
+    OPTIONS_Bool unknown_flag_3;          /* 0x518: purpose unknown - possibly DLC */
+    OPTIONS_Bool unknown_flag_4;          /* 0x519: purpose unknown - possibly DLC */
     uint8_t      reserved25[4];           /* 0x51A-0x51D */
 } Section2_GameSettings;
 ```
@@ -491,13 +491,13 @@ typedef struct {
 ```c
 /* Achievement Bitfield - 7 bytes (53 achievements) */
 typedef struct {
-    uint8_t byte0;  /* 0x84: Achievements 1-8 (Story) */
-    uint8_t byte1;  /* 0x85: Achievements 9-16 (Story + Shrines) */
-    uint8_t byte2;  /* 0x86: Achievements 17-24 (Shrines + Da Vinci) */
-    uint8_t byte3;  /* 0x87: Achievements 25-32 (Side Activities) */
-    uint8_t byte4;  /* 0x88: Achievements 33-40 (Miscellaneous) */
-    uint8_t byte5;  /* 0x89: Achievements 41-48 (Multiplayer) */
-    uint8_t byte6;  /* 0x8A: Achievements 49-53 (MP + DLC), bits 5-7 unused */
+    uint8_t byte0;  /* 0x84: Achievements 1-8 */
+    uint8_t byte1;  /* 0x85: Achievements 9-16 */
+    uint8_t byte2;  /* 0x86: Achievements 17-24 */
+    uint8_t byte3;  /* 0x87: Achievements 25-32 */
+    uint8_t byte4;  /* 0x88: Achievements 33-40 */
+    uint8_t byte5;  /* 0x89: Achievements 41-48 */
+    uint8_t byte6;  /* 0x8A: Achievements 49-53, bits 5-7 unused */
 } AchievementBitfield;
 
 /* All achievements unlocked: FF FF FF FF FF FF 1F */

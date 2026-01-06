@@ -44,15 +44,17 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 
 ### Hash Resolution Status
 
-| Category | Total | Resolved | Unresolved |
-|----------|-------|----------|------------|
-| Section Identification | 3 | 3 (100%) | 0 |
-| Language | 20 | 20 (100%) | 0 |
-| Content Unlocks | 8 | 6 (75%) | 2 |
-| Section 2 Property Records | 57 | 24 (42%) | 33 |
-| Section 2 Unknown Initialization | 5 | 5 (100%)* | 0 |
-| Section 3 Property Records | 6 | 1 (17%) | 5 |
-| Progress/Internal | 1 | 0 (0%) | 1 |
+| Category | Total | Resolved | Partial | Unresolved |
+|----------|-------|----------|---------|------------|
+| Section Identification | 3 | 3 (100%) | 0 | 0 |
+| Language | 20 | 20 (100%) | 0 | 0 |
+| Content Unlocks | 8 | 2 | 6 | 0 |
+| Section 2 Property Records | 57 | 24 (42%) | 0 | 33 |
+| Section 2 Unknown Initialization | 5 | 5 (100%)* | 0 | 0 |
+| Section 3 Property Records | 6 | 1 (17%) | 0 | 5 |
+| Progress/Internal | 1 | 0 (0%) | 0 | 1 |
+
+*Partial = Possibly Uplay-related (observed flipped in test file) but specific hash-to-reward mapping unknown*
 
 *\*Unknown Initialization flags: PC version consistently initializes to 0; PS3 version shows random values on fresh saves (likely uninitialized memory bug).*
 
@@ -238,16 +240,16 @@ The language system is registered with ID `0x2DAD13E3`:
 
 These hashes appear in Section 2's 18-byte unlock records:
 
-| Offset | Hash Value | Content | Status | Confidence |
-|--------|------------|---------|--------|------------|
-| 0x291 | `0x00788F42` | Templar Lair: Trajan's Market | Confirmed | HIGH |
-| 0x2A3 | `0x006FF456` | Templar Lair: Tivoli Aqueduct | Confirmed | HIGH |
-| 0x2B5 | `0x000B953B` | **Unknown #1** | Unresolved | - |
-| 0x2C7 | `0x001854EC` | **Unknown #2** | Unresolved | - |
-| 0x2D9 | `0x0021D9D0` | Uplay: Florentine Noble Attire | Inferred | MEDIUM |
-| 0x2EB | `0x0036A2C4` | Uplay: Armor of Altair | Inferred | MEDIUM |
-| 0x2FD | `0x0052C3A9` | Uplay: Altair's Robes | Inferred | MEDIUM |
-| 0x30F | `0x000E8D04` | Uplay: Hellequin MP Character | Inferred | MEDIUM |
+| Offset | Hash Value | Content | Status |
+|--------|------------|---------|--------|
+| 0x291 | `0x00788F42` | Templar Lair: Trajan's Market | Confirmed |
+| 0x2A3 | `0x006FF456` | Templar Lair: Tivoli Aqueduct | Confirmed |
+| 0x2B5 | `0x000B953B` | Possibly Uplay (purpose unknown) | Partial |
+| 0x2C7 | `0x001854EC` | Possibly Uplay (purpose unknown) | Partial |
+| 0x2D9 | `0x0021D9D0` | Possibly Uplay (purpose unknown) | Partial |
+| 0x2EB | `0x0036A2C4` | Possibly Uplay (purpose unknown) | Partial |
+| 0x2FD | `0x0052C3A9` | Possibly Uplay (purpose unknown) | Partial |
+| 0x30F | `0x000E8D04` | Possibly Uplay (purpose unknown) | Partial |
 
 ### 5.2 Content Hash Context
 
@@ -330,29 +332,28 @@ Each record is 18 bytes with the hash at offset +0x06.
 |--------|------|---------|:--:|:---:|:------:|
 | 0x0290 | 0x788F42CC | Templar Lair: Trajan Market | 0x01 | 0x01 | 0x00 |
 | 0x02A2 | 0x6FF4568F | Templar Lair: Tivoli Aqueduct | 0x01 | 0x01 | 0x00 |
-| 0x02B4 | 0x0B953B46 | Unknown Unlock Slot #1 | 0x00 | 0x00 | 0x00 |
-| 0x02C6 | 0x1854EC5A | Unknown Unlock Slot #2 | 0x00 | 0x00 | 0x00 |
 
-#### Uplay Rewards (INFERRED - not confirmed)
+#### Possibly Uplay-Related Records (Purpose Unknown)
 
-These mappings are inferred based on position after Templar Lairs. The costume bitfield
-at 0x369 has confirmed bit positions, but the hash-to-reward mappings below are unconfirmed.
+These 6 records were observed flipped in a 100% Uplay unlock test file, indicating they are
+possibly Uplay-related. Their specific purpose has NOT been determined.
 
-| Offset | Hash | Inferred Setting | PC | PS3 | Byte10 | Confidence |
-|--------|------|------------------|:--:|:---:|:------:|:----------:|
-| 0x02D8 | 0x21D9D09F | Uplay Reward #1 (Florentine?) | 0x01 | 0x01 | 0x00 | MEDIUM |
-| 0x02EA | 0x36A2C4DC | Uplay Reward #2 (Armor Altair?) | 0x01 | 0x01 | 0x00 | MEDIUM |
-| 0x02FC | 0x52C3A915 | Uplay Reward #3 (Altair Robes?) | 0x01 | 0x01 | 0x00 | MEDIUM |
-| 0x030E | 0x0E8D040F | Uplay Reward #4 (Hellequin?) | 0x01 | 0x01 | 0x00 | LOW |
+| Offset | Hash | Setting | PC | PS3 | Byte10 |
+|--------|------|---------|:--:|:---:|:------:|
+| 0x02B4 | 0x0B953B46 | Possibly Uplay (purpose unknown) | 0x00 | 0x00 | 0x00 |
+| 0x02C6 | 0x1854EC5A | Possibly Uplay (purpose unknown) | 0x00 | 0x00 | 0x00 |
+| 0x02D8 | 0x21D9D09F | Possibly Uplay (purpose unknown) | 0x01 | 0x01 | 0x00 |
+| 0x02EA | 0x36A2C4DC | Possibly Uplay (purpose unknown) | 0x01 | 0x01 | 0x00 |
+| 0x02FC | 0x52C3A915 | Possibly Uplay (purpose unknown) | 0x01 | 0x01 | 0x00 |
+| 0x030E | 0x0E8D040F | Possibly Uplay (purpose unknown) | 0x01 | 0x01 | 0x00 |
 
-**Note:** Hellequin is a multiplayer character, NOT a costume. It would not appear in the
-costume bitfield at 0x369. The 4th Uplay reward hash remains unconfirmed.
+*All 6 records were flipped in a Uplay test file. Their specific purpose is unknown.*
 
 **Confirmed (Costume Bitfield 0x369):**
 - Bit 0 (0x01): Florentine Noble Attire
 - Bit 1 (0x02): Armor of Altair
 - Bit 2 (0x04): Altair's Robes
-- Bit 3 (0x08): Drachen Armor (preorder, not Uplay)
+- Bit 3 (0x08): Drachen Armor (preorder)
 
 #### Unknown Type 0x0E Records
 
