@@ -1,8 +1,8 @@
 # Assassin's Creed Brotherhood OPTIONS File Format Specification
 
-**Document Version:** 2.0
-**Date:** 2025-12-27
-**Status:** Formal Technical Specification
+**Document Version:** 2.1
+**Date:** 2026-01-06
+**Status:** Formal Technical Specification (Section 1 Record Structure Updated)
 **Research Method:** WinDbg Time-Travel Debugging + Ghidra Decompilation + 24-File Differential Analysis
 
 ---
@@ -229,24 +229,39 @@ header.uncompressed_size_1 = read_uint32_le(buffer + 0x0C);  /* Little-endian */
 
 #### 4.1.2 Property Record Structure
 
-Section 1 contains **12 property records** starting at offset 0x18, each 18 bytes:
+**IMPORTANT:** Section 1 uses **21-byte records**, NOT 18-byte records like Sections 2 and 3.
+
+Section 1 contains **12 records** with 0x0B markers at the following PC offsets:
+`0x26, 0x3B, 0x50, 0x65, 0x7A, 0x8F, 0xA1, 0xBE, 0xD3, 0xE8, 0xFD, 0x112`
+
+**Record Distance Analysis:**
+- Most records: 21 bytes (0x15 spacing)
+- Record 6 @ 0x8F: 18 bytes (exception)
+- Record 7 @ 0xA1: 29 bytes (exception - contains "Options" ASCII string)
 
 ```c
+/* Section 1 Property Record - 21 bytes (standard)
+ * NOTE: Section 1 uses 21-byte records, unlike Sections 2/3 which use 18-byte records.
+ * Two exceptions exist: Record 6 (18 bytes) and Record 7 (29 bytes with "Options" string).
+ */
 typedef struct {
-    uint32_t value;        /* +0x00: Property value (LE) */
-    uint8_t  unknown;      /* +0x04: Usually 0x00 */
-    uint8_t  type_marker;  /* +0x05: 0x0B = property marker */
-    uint32_t unknown2;     /* +0x06: Variable data */
-    uint32_t hash;         /* +0x0A: Content identifier hash */
-    uint32_t padding;      /* +0x0E: Usually zeros */
+    uint8_t      marker;          /* +0x00: 0x0B = record start marker */
+    uint8_t      value[4];        /* +0x01-0x04: Value (4 bytes) */
+    uint8_t      type;            /* +0x05: Type field (0x11, 0x0E, or 0x4F) */
+    uint8_t      padding1[3];     /* +0x06-0x08: Padding (00 00 00) */
+    uint32_t     hash;            /* +0x09-0x0C: Hash/ID (4 bytes) */
+    uint8_t      trailer[8];      /* +0x0D-0x14: Padding/trailer (8 bytes) */
 } Section1_PropertyRecord;
 ```
 
-**Known Records:**
-- Record 1 (0x18): Value = Field0 (0x16) - self-referential
-- Record 2 (0x2A): Value = Field1 (0xFEDBAC) - self-referential
+**Type Field Values:**
+- 0x11: Most common type
+- 0x0E: Boolean-style type (same as Sections 2/3)
+- 0x4F: Special type (Record 7 with "Options" string)
 
-The self-referential pattern may be used for integrity validation.
+**PS3 Confirmation:** PS3 Section 1 follows the same record distance pattern, with offsets shifted by 6 bytes due to PS3 header prefix.
+
+**Purpose:** Unknown. The specific purpose of Section 1 records has not been determined.
 
 #### 4.1.3 Profile State Flag
 
