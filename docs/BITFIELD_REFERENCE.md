@@ -1,7 +1,7 @@
 # AC Brotherhood OPTIONS - Bitfield Reference
 
-**Document Version:** 1.0
-**Date:** 2025-12-27
+**Document Version:** 1.1
+**Date:** 2026-01-06
 **Status:** Complete Bitfield Documentation
 
 This document provides complete documentation of all bitfields, flag bytes, and multi-bit encoded fields found in the AC Brotherhood OPTIONS file format.
@@ -11,7 +11,7 @@ This document provides complete documentation of all bitfields, flag bytes, and 
 ## Table of Contents
 
 1. [Section 1 Bitfields](#section-1-bitfields)
-   - [Platform Flags (0x0E-0x0F)](#platform-flags-0x0e-0x0f)
+   - [Version Flags (0x0E-0x0F)](#version-flags-0x0e-0x0f)
 2. [Section 2 Bitfields](#section-2-bitfields)
    - [Action Camera Frequency (0x183)](#action-camera-frequency-0x183)
    - [Costume Bitfield (0x369)](#costume-bitfield-0x369)
@@ -25,32 +25,38 @@ This document provides complete documentation of all bitfields, flag bytes, and 
 
 ## Section 1 Bitfields
 
-### Platform Flags (0x0E-0x0F)
+### Version Flags (0x0E-0x0F)
 
 **Location:** Section 1, Offset 0x0E-0x0F (also present in Sections 2 and 3)
 **Size:** 2 bytes (16 bits)
-**Confidence:** [H] High - Platform differential analysis
+**Confidence:** [H] High - Version differential analysis
 
-The platform flags field identifies the target platform and may contain additional system configuration bits.
+The version flags field identifies the game version (not platform). This is a VERSION flag, not a platform flag.
 
 | Offset | Bit | Mask | Name | Values | Description |
 |--------|-----|------|------|--------|-------------|
-| 0x0E | 0-7 | 0x00FF | Platform Low Byte | 0x0C (PC), 0x08 (PS3) | Primary platform identifier |
-| 0x0F | 0-7 | 0xFF00 | Platform High Byte | 0x05 | Version/revision indicator |
+| 0x0E | 0-7 | 0x00FF | Version Low Byte | 0x0C (v1.05), 0x08 (v1.0) | Game version identifier |
+| 0x0F | 0-7 | 0xFF00 | Version High Byte | 0x05 | Format revision indicator |
 
-#### Known Platform Values
+#### Known Version Values
 
-| Platform | Bytes (LE) | Combined Value | Description |
-|----------|------------|----------------|-------------|
-| PC | `0C 05` | 0x050C | Windows PC version |
-| PS3 | `08 05` | 0x0508 | PlayStation 3 version |
+| Version | Bytes (LE) | Combined Value | Description |
+|---------|------------|----------------|-------------|
+| v1.05 (patched) | `0C 05` | 0x050C | Latest patch version (PC always uses this) |
+| v1.0 (disc) | `08 05` | 0x0508 | Disc/launch version (PS3 unpatched) |
 
-**Bit Breakdown (0x050C for PC):**
+**Key Finding:**
+- 0x08 = Version 1.0 (disc/launch version)
+- 0x0C = Version 1.05 (latest patch)
+
+PC always uses 0x0C (v1.05). PS3 may have 0x08 (v1.0) or 0x0C (v1.05) depending on patch status.
+
+**Bit Breakdown (0x050C for v1.05):**
 
 | Bit Position | Hex | Meaning |
 |--------------|-----|---------|
 | Bits 0-1 | 0x0C & 0x03 = 0x00 | Reserved/unused |
-| Bits 2-3 | 0x0C & 0x0C = 0x0C | Platform type (0x03 = PC, 0x02 = PS3) |
+| Bits 2-3 | 0x0C & 0x0C = 0x0C | Version type (0x03 = v1.05, 0x02 = v1.0) |
 | Bits 4-7 | 0x0C & 0xF0 = 0x00 | Reserved |
 | Bits 8-11 | 0x05 & 0x0F = 0x05 | Format version |
 | Bits 12-15 | 0x05 & 0xF0 = 0x00 | Reserved |
@@ -461,7 +467,7 @@ bool enabled = (data[offset] & mask) != 0;
 
 | Address | Function | Section | Bitfields Parsed |
 |---------|----------|---------|------------------|
-| 0x0046D710 | FUN_0046d710 | Section 1 | Platform flags at 0x0E |
+| 0x0046D710 | FUN_0046d710 | Section 1 | Version flags at 0x0E |
 | 0x01712CA0 | FUN_01712ca0 | Section 2 | Costume, DLC flags |
 | 0x017108E0 | FUN_017108e0 | Section 3 | Achievement bitfield |
 | 0x01B024F0 | FUN_01b024f0 | Section 2 | Settings parsing |
@@ -475,7 +481,7 @@ bool enabled = (data[offset] & mask) != 0;
 
 | Section | Offset | Size | Bits Used | Name | Confidence |
 |---------|--------|------|-----------|------|------------|
-| 1, 2, 3 | 0x0E-0x0F | 2 bytes | 16 | Platform Flags | [H] |
+| 1, 2, 3 | 0x0E-0x0F | 2 bytes | 16 | Version Flags | [H] |
 | 2 | 0x183 | 1 byte | 2 | Action Camera Frequency | [M] |
 | 2 | 0x369* | 1 byte | 6 | Costume Bitfield (VALUE byte within 18-byte record at 0x368) | [P] |
 | 2 | 0x516-0x519 | 4 bytes | 4x8 | DLC/Update Flags | [M] |
@@ -487,7 +493,7 @@ bool enabled = (data[offset] & mask) != 0;
 
 | Bitfield | All Bits Set | Description |
 |----------|--------------|-------------|
-| Platform Flags | 0x050C (PC) / 0x0508 (PS3) | Platform-specific |
+| Version Flags | 0x050C (v1.05) / 0x0508 (v1.0) | Version-specific |
 | Action Camera | 0x03 | Maximum frequency |
 | Costume | 0x3F | All costumes unlocked |
 | Achievement | `FF FF FF FF FF FF 1F` | All 53 achievements |

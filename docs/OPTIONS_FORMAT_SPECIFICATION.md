@@ -1,6 +1,6 @@
 # Assassin's Creed Brotherhood OPTIONS File Format Specification
 
-**Document Version:** 2.1
+**Document Version:** 2.2
 **Date:** 2026-01-06
 **Status:** Formal Technical Specification (Section 1 Record Structure Updated)
 **Research Method:** WinDbg Time-Travel Debugging + Ghidra Decompilation + 24-File Differential Analysis
@@ -223,7 +223,7 @@ header.uncompressed_size_1 = read_uint32_le(buffer + 0x0C);  /* Little-endian */
 |--------|------|------|------------|-------|------------|
 | 0x00-0x09 | 10 | bytes | Zero Padding | `0x00` | PROVEN |
 | 0x0A-0x0D | 4 | hash | Section Hash | `0xBDBE3B52` | PROVEN |
-| 0x0E-0x0F | 2 | flags | Platform Flags | PC=`0x050C`, PS3=`0x0508` | HIGH |
+| 0x0E-0x0F | 2 | flags | Version Flags | v1.0=`0x0508`, v1.05=`0x050C` | HIGH |
 | 0x10-0x13 | 4 | value | Unknown | Varies | LOW |
 | 0x14-0x17 | 4 | type | Type Indicator | `0x00010000` | MEDIUM |
 
@@ -303,7 +303,7 @@ typedef struct {
     /* Header region */
     uint8_t  zero_padding[10];       /* 0x00-0x09: Zero padding */
     uint32_t section_hash;           /* 0x0A-0x0D: 0x305AE1A8 */
-    uint16_t platform_flags;         /* 0x0E-0x0F: PC=0x050C (bytes: 0C 05), PS3=0x0508 (bytes: 08 05) */
+    uint16_t version_flags;          /* 0x0E-0x0F: v1.0=0x0508, v1.05=0x050C */
     uint8_t  reserved1[4];           /* 0x10-0x13 */
     uint32_t type_indicator;         /* 0x14-0x17: 0x00110000 */
     uint8_t  reserved2[75];          /* 0x18-0x62 */
@@ -499,7 +499,7 @@ typedef struct {
 |--------|------|------|------------|-------|------------|
 | 0x00-0x09 | 10 | bytes | Zero Padding | `0x00` | PROVEN |
 | 0x0A-0x0D | 4 | hash | Section Hash | `0xC9876D66` | HIGH |
-| 0x0E-0x0F | 2 | flags | Platform Flags | PC=`0x050C`, PS3=`0x0508` | HIGH |
+| 0x0E-0x0F | 2 | flags | Version Flags | v1.0=`0x0508`, v1.05=`0x050C` | HIGH |
 | 0x10-0x13 | 4 | value | Unknown | Varies | LOW |
 | 0x14-0x17 | 4 | type | Type Indicator | `0x00010000` | MEDIUM |
 
@@ -510,7 +510,7 @@ typedef struct {
     /* Header region */
     uint8_t  zero_padding[10];       /* 0x00-0x09: Zero padding */
     uint32_t section_hash;           /* 0x0A-0x0D: 0xC9876D66 */
-    uint16_t platform_flags;         /* 0x0E-0x0F: PC=0x050C, PS3=0x0508 */
+    uint16_t version_flags;          /* 0x0E-0x0F: v1.0=0x0508, v1.05=0x050C */
     uint8_t  reserved0[8];           /* 0x10-0x17: Unknown */
 
     /* Property records region (uses same 18-byte structure as Sections 1 & 2) */
@@ -781,11 +781,17 @@ typedef struct {
 
 All sections share a common header pattern with a section-specific hash at offset 0x0A:
 
-| Section | Hash at 0x0A | Platform Flags at 0x0E | Purpose |
+| Section | Hash at 0x0A | Version Flags at 0x0E | Purpose |
 |---------|--------------|------------------------|---------|
-| Section 1 | `0xBDBE3B52` | PC=0x050C, PS3=0x0508 | System/Profile type identifier |
-| Section 2 | `0x305AE1A8` | PC=0x050C, PS3=0x0508 | Game Settings type identifier |
-| Section 3 | `0xC9876D66` | PC=0x050C, PS3=0x0508 | Game Progress type identifier |
+| Section 1 | `0xBDBE3B52` | v1.0=0x0508, v1.05=0x050C | System/Profile type identifier |
+| Section 2 | `0x305AE1A8` | v1.0=0x0508, v1.05=0x050C | Game Settings type identifier |
+| Section 3 | `0xC9876D66` | v1.0=0x0508, v1.05=0x050C | Game Progress type identifier |
+
+**Version Flag Note:** The flags at offset 0x0E identify the game version, not the platform:
+- 0x08 = Version 1.0 (disc/launch version)
+- 0x0C = Version 1.05 (latest patch)
+
+PC always uses 0x0C (v1.05). PS3 may have either value depending on patch status.
 
 **Note:** Hash at Section 3 offset 0x90 (`0x6F88B05B`) is part of the progress/achievement structure, not the section header.
 
@@ -1086,7 +1092,7 @@ Header starts 0x10 bytes before this pattern.
 **Author:** Generated from reverse engineering documentation
 **Version History:**
 - v1.0: Initial specification
-- v2.0: Added Section 1 property record structure (12 records), Section identification hashes (0x0A-0x0D), Platform flags (0x0E-0x0F), 2 unknown unlock records in Section 2, PC vs PS3 Section 3 size difference explanation (PSN Trophy system)
+- v2.0: Added Section 1 property record structure (12 records), Section identification hashes (0x0A-0x0D), Version flags (0x0E-0x0F), 2 unknown unlock records in Section 2, PC vs PS3 Section 3 size difference explanation (PSN Trophy system)
 
 **Sources:**
 - WinDbg Time-Travel Debugging traces
