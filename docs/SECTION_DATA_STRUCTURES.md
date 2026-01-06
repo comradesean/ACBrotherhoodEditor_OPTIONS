@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Section Data Structures
 
-**Document Version:** 1.5
+**Document Version:** 1.6
 **Date:** 2026-01-06
-**Status:** Complete C Structure Definitions (Phase 1-4 + A→B Constraint Discovery)
+**Status:** Complete C Structure Definitions (Phase 1-4 + Unknown Hash Findings)
 
 This document provides complete C structure definitions for all decompressed section data in the AC Brotherhood OPTIONS file format.
 
@@ -315,31 +315,42 @@ PS3: 0B 01 12 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
 - PS3 ends at 0x0519 (1306 bytes)
 - PC ends at 0x051D (1310 bytes)
 
-### Unknown Initialization Records (PS3) - Constrained Values with Dependency
+### Unknown Type 0x0E Records (Platform-Identical)
 
-Five Type 0x0E records at end of Section 2 have **constrained but variable values** on PS3.
+Five Type 0x0E records with unknown purpose. Values are identical on PC and PS3.
 
-**Hundreds of samples analyzed. Key discovery: A=0 → B=1 constraint.**
+| Offset | Hash | PC Value | PS3 Value | Type | Purpose |
+|--------|------|:--------:|:---------:|:----:|---------|
+| 0x320 | 0xC25CE923 | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x332 | 0x196CAF1F | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x344 | 0x55BEEF7D | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x455 | 0x11A757F6 | 0x00 | 0x00 | 0x0E | Unknown |
+| 0x467 | 0x2F4ACE81 | 0x00 | 0x00 | 0x0E | Unknown |
 
-| Offset | Hash | Label | PC | PS3 | % = 1 | Notes |
-|--------|------|:-----:|:--:|:---:|:-----:|-------|
-| 0x4A4 | 0x886B92CC | A | 0x00 | Variable | 50% | **If A=0, then B=1** |
-| 0x4B6 | 0x49F3B683 | B | 0x00 | Variable | 62% | Dependent on A |
-| 0x4C8 | 0x707E8A46 | C | 0x00 | Variable | 50% | Independent |
-| 0x4DA | 0x67059E05 | D | 0x00 | Variable | 62% | Independent |
-| 0x4EC | 0x0364F3CC | E | 0x00 | Variable | 88% | Strong bias toward 1 |
+**Key Facts:**
+- All 5 records use Type 0x0E
+- All values are 0x00 on both platforms
+- All conform to standard 18-byte record structure
+- Purpose is unknown
 
-**Key Discovery:**
-- Across hundreds of fresh saves, A=0 with B=0 has **NEVER** been observed
-- This proves A and B are NOT independent random bits
-- Only 8 of 32 possible combinations observed
+### Unknown Initialization Records (Platform Differences)
 
-**Evidence:**
-- PC initializes ALL 5 to 0x00
-- PS3 writes variable 0x00/0x01 values with A→B constraint
-- "Mutually exclusive pairs" hypothesis disproven
-- "Independent random bits" hypothesis disproven
-- Functional purpose (if any) remains unknown
+Five Type 0x0E records at end of Section 2 have platform-specific value differences.
+
+| Label | Offset | Hash | PC Value | PS3 Value | Type | Notes |
+|:-----:|--------|------|:--------:|:---------:|:----:|-------|
+| A | 0x4A4 | 0x886B92CC | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+| B | 0x4B6 | 0x49F3B683 | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+| C | 0x4C8 | 0x707E8A46 | 0x00 | 0x00 | 0x0E | Identical on both platforms |
+| D | 0x4DA | 0x67059E05 | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+| E | 0x4EC | 0x0364F3CC | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+
+**Key Facts:**
+- All 5 records use Type 0x0E
+- 4 of 5 differ: PC=0x00, PS3=0x01 (Records A, B, D, E)
+- Record C is identical on both platforms (0x00)
+- All conform to standard 18-byte record structure
+- Purpose of all 5 records is unknown
 
 ### Known Property Hashes (Section 2)
 
