@@ -349,7 +349,13 @@ possibly Uplay-related. Their specific purpose has NOT been determined.
 
 *All 6 records were flipped in a Uplay test file. Their specific purpose is unknown.*
 
-**Confirmed (Costume Bitfield 0x369):**
+**Confirmed (Costume Record at 0x368-0x379):**
+
+The costume bitfield at 0x369 is the VALUE byte within an 18-byte record starting at 0x368.
+This record uses **Type 0x00** (bitfield/complex), NOT Type 0x0E (boolean).
+
+Binary: `0B 3F 00 ...` (marker=0x0B, value=0x3F, type=0x00)
+
 - Bit 0 (0x01): Florentine Noble Attire
 - Bit 1 (0x02): Armor of Altair
 - Bit 2 (0x04): Altair's Robes
@@ -401,9 +407,11 @@ Byte 0x10 contains the actual integer value, not a flag.
 | 0x03E9 | 0x7ACF45C6 | 7 | ✓ | ✓ | Unknown purpose |
 | 0x0479 | 0xD4C878C7 | 6 | ✓ | ✓ | Unknown purpose |
 
-### 5.5.4 Type 0x00 - Complex/Container Records (18 records)
+### 5.5.4 Type 0x00 - Complex/Container/Bitfield Records (18 records)
 
-These records have variable data in the trailing bytes region.
+These records have variable data in the trailing bytes region. Unlike Type 0x0E (boolean), Type 0x00 is used for bitfields and complex values.
+
+**Key Example:** The costume record at 0x0368 uses Type 0x00 because the VALUE byte (0x369) contains a 6-bit bitfield, not a simple boolean.
 
 | Offset | Hash | Value | Byte10 | Notes |
 |--------|------|:-----:|:------:|-------|
@@ -416,7 +424,7 @@ These records have variable data in the trailing bytes region.
 | 0x00E9 | 0x6A000000 | 0x00 | 0x00 | Internal |
 | 0x0110 | 0xE6000000 | 0x00 | 0x00 | Internal |
 | 0x0125 | 0x8C000000 | 0x00 | 0x00 | Internal |
-| 0x0368 | 0x3D000000 | 0x3F | 0x02 | Internal |
+| 0x0368 | 0x3D000000 | 0x3F | 0x02 | **Costume bitfield** (Type 0x00, NOT 0x0E) |
 | 0x03FB | 0x95000000 | 0x00 | 0x00 | Internal |
 | 0x0410 | 0xDE000000 | 0x00 | 0x00 | Internal |
 | 0x0425 | 0xF7000000 | 0x00 | 0x00 | Internal |
@@ -447,20 +455,52 @@ Same setting, different type codes per platform:
 ### 5.5.8 Property Hash Structure
 
 ```c
-/* Section 2 Property Record - 18 bytes (Type 0x0E / Boolean)
+/* Section 2/3 Property Record - 18 bytes
  * Note: 0x0B marker is at START of each record, not end.
  * Structure: [marker 1B][value 1B][type 1B][padding 3B][hash 4B][padding 8B]
  */
 typedef struct {
     uint8_t      marker;          /* +0x00: 0x0B = record start marker */
-    uint8_t      value;           /* +0x01: Setting value (0x00 or 0x01 for bool) */
-    uint8_t      type;            /* +0x02: 0x0E, 0x11, 0x15, 0x16, 0x17, etc. */
+    uint8_t      value;           /* +0x01: Setting value (interpretation depends on type) */
+    uint8_t      type;            /* +0x02: Type code (see table below) */
     uint8_t      padding1[3];     /* +0x03-0x05: Always zeros */
     OPTIONS_Hash property_hash;   /* +0x06-0x09: Property identifier hash (LE) */
-    uint8_t      padding2[8];     /* +0x0A-0x11: Zero padding (may contain data for non-0x0E types) */
+    uint8_t      padding2[8];     /* +0x0A-0x11: Zero padding (may contain data for some types) */
 } Section2_PropertyRecord;
 
 _Static_assert(sizeof(Section2_PropertyRecord) == 18, "Must be 18 bytes");
+```
+
+### 5.5.9 Record Type Field Reference
+
+The Type byte at offset +0x02 determines how the VALUE byte (+0x01) is interpreted:
+
+| Type | Name | Value Interpretation | Examples |
+|:----:|------|---------------------|----------|
+| 0x00 | Bitfield/Complex | Multi-bit value or complex data | Costume bitfield (0x369) |
+| 0x0E | Boolean | 0x00=false, 0x01=true | HUD toggles, unlock flags |
+| 0x11 | Integer | Numeric value (0-255) | Internal settings |
+| 0x12 | Platform (PS3) | Platform-specific | Platform ID record |
+| 0x15 | Float-related | Associated float value | Sensitivity/volume |
+| 0x16 | Platform (PC) | Platform-specific | Platform ID record |
+| 0x17 | Special | Non-standard | Keyboard bindings region |
+| 0x1E | Special | Non-standard structure | Unknown purpose |
+
+**Key Distinction:** Type 0x00 vs Type 0x0E
+- Type 0x0E: Boolean (value is 0x00 or 0x01)
+- Type 0x00: Bitfield/complex (value can be any byte, e.g., 0x3F for all costumes)
+
+**Binary Examples:**
+```
+Costume Record (Type 0x00):  0B 3F 00 00 00 00 ... (0x368)
+                                ^  ^
+                                |  +-- Type 0x00 (bitfield)
+                                +-- Value 0x3F (all costumes)
+
+Boolean Record (Type 0x0E):  0B 01 0E 00 00 00 ... (0x4D, Gun Capacity)
+                                ^  ^
+                                |  +-- Type 0x0E (boolean)
+                                +-- Value 0x01 (unlocked)
 ```
 
 **Visual Layout:**
@@ -468,13 +508,14 @@ _Static_assert(sizeof(Section2_PropertyRecord) == 18, "Must be 18 bytes");
 Offset:  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11
          ─────────────────────────────────────────────────────
 Type 0E: 0B VV 0E 00 00 00 HH HH HH HH 00 00 00 00 00 00 00 00
+Type 00: 0B VV 00 00 00 00 HH HH HH HH DD DD DD DD DD DD DD DD
          │  │  │  └──┬──┘  └────┬────┘  └────────┬────────────┘
          │  │  │     │          │                │
-         │  │  │     │          │                └─ 8 zero bytes (padding2)
+         │  │  │     │          │                └─ 8 bytes (zeros for 0E, data for 00)
          │  │  │     │          └─ 4-byte hash (little-endian)
          │  │  │     └─ 3 zero bytes (padding1)
-         │  │  └─ Type marker (0x0E = boolean)
-         │  └─ Value (0x00 or 0x01)
+         │  │  └─ Type marker (0x0E=boolean, 0x00=bitfield/complex)
+         │  └─ Value byte (meaning depends on Type)
          └─ Record start marker (always 0x0B)
 ```
 

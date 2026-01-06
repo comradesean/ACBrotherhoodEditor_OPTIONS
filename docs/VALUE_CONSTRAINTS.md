@@ -282,13 +282,19 @@ All HUD toggles follow the same boolean pattern:
 
 ## Unlock and Progress Fields
 
-### Costume Bitfield
+### Costume Record (18 bytes at 0x368-0x379)
+
+**IMPORTANT:** The costume "bitfield" at 0x369 is NOT a standalone field. It is the VALUE byte within an 18-byte property record starting at offset 0x368. This record uses **Type 0x00** (bitfield/complex), not Type 0x0E (boolean).
 
 | Field | Section | Offset | Type | Valid Range | Default | Conf |
 |-------|---------|--------|------|-------------|---------|------|
-| Costume Bitfield | S2 | 0x369 | bitfield | 0x00-0x3F | 0x00 | [P] |
+| Record Marker | S2 | 0x368 | marker | 0x0B | 0x0B | [P] |
+| Costume VALUE | S2 | 0x369 | bitfield | 0x00-0x3F | 0x00 | [P] |
+| Record Type | S2 | 0x36A | type | 0x00 | 0x00 | [P] |
 
-**Bit Definitions:**
+**Binary verified:** `0B 3F 00 ...` (marker=0x0B, value=0x3F, type=0x00)
+
+**Bit Definitions (for VALUE byte at 0x369):**
 
 | Bit | Mask | Costume | Source |
 |-----|------|---------|--------|
@@ -352,13 +358,19 @@ All HUD toggles follow the same boolean pattern:
 | 0x89 | 8/8 | Multiplayer (41-48) |
 | 0x8A | 5/8 | MP + DLC (49-53), bits 5-7 unused |
 
-### Uplay Gun Capacity Upgrade (30 Upoints)
+### Uplay Gun Capacity Upgrade Record (18 bytes at 0x4D-0x5E)
+
+**IMPORTANT:** The gun capacity flag at 0x4E is NOT a standalone field. It is the VALUE byte within an 18-byte property record starting at offset 0x4D. This record uses **Type 0x0E** (boolean).
 
 | Field | Section | Offset | Type | Valid Values | Default | Conf |
 |-------|---------|--------|------|--------------|---------|------|
-| Gun Capacity Upgrade | S3 | 0x4E | bool | 0x00/0x01 | 0x00 | [P] |
+| Record Marker | S3 | 0x4D | marker | 0x0B | 0x0B | [P] |
+| Gun Capacity VALUE | S3 | 0x4E | bool | 0x00/0x01 | 0x00 | [P] |
+| Record Type | S3 | 0x4F | type | 0x0E | 0x0E | [P] |
 
-**Note:** This is the ONLY Uplay equipment upgrade stored in Section 3. The upgrade increases Ezio's pistol ammunition capacity. Unlike costume Uplay rewards (which are stored in Section 2's bitfield at 0x369), this gameplay upgrade is tracked separately in the game progress section.
+**Binary verified:** `0B 01 0E ...` (marker=0x0B, value=0x01, type=0x0E)
+
+**Note:** This is the ONLY Uplay equipment upgrade stored in Section 3. The upgrade increases Ezio's pistol ammunition capacity. Unlike costume Uplay rewards (which are stored in Section 2's record at 0x368), this gameplay upgrade is tracked separately in the game progress section.
 
 ### DLC Sync Flag
 
@@ -564,7 +576,8 @@ typedef enum {
 
 Certain fields must be consistent with each other:
 
-1. **Costume Bitfield (0x369) controls costume unlocks:**
+1. **Costume Record (0x368-0x379) controls costume unlocks:**
+   - VALUE byte at 0x369 within 18-byte record (Type 0x00)
    - Bit 0 (0x01) = Florentine Noble Attire
    - Bit 1 (0x02) = Armor of Altair
    - Bit 2 (0x04) = Altair's Robes

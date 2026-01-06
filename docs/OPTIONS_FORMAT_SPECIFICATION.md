@@ -407,20 +407,33 @@ _Static_assert(sizeof(UnlockRecord) == 18, "UnlockRecord must be 18 bytes");
 
 **Note:** Unknown records #1 and #2 were discovered through 21-file language differential analysis. Hashes do not match known Uplay or DLC content - possibly beta/cut content or region-specific unlocks.
 
-#### 4.2.4 Costume Bitfield (Offset 0x369)
+#### 4.2.4 Costume Record (18 bytes starting at 0x368)
+
+**IMPORTANT:** The costume bitfield at 0x369 is NOT a standalone byte. It is the VALUE byte within an 18-byte property record starting at offset 0x368. This record uses **Type 0x00** (bitfield/complex), not Type 0x0E (boolean).
+
+**Binary verified:** `0B 3F 00 00 00 00 00 00 3D 00 00 00 C2 EA 86 02 96 CE`
 
 ```c
+/* Costume Record - 18 bytes starting at offset 0x368
+ * The "bitfield" at 0x369 is the VALUE byte within this record.
+ */
 typedef struct {
-    uint8_t florentine_noble : 1;  /* Bit 0 (0x01) */
-    uint8_t armor_of_altair  : 1;  /* Bit 1 (0x02) */
-    uint8_t altairs_robes    : 1;  /* Bit 2 (0x04) */
-    uint8_t drachen_armor    : 1;  /* Bit 3 (0x08) */
-    uint8_t desmond          : 1;  /* Bit 4 (0x10) */
-    uint8_t raiden           : 1;  /* Bit 5 (0x20) */
-    uint8_t unused           : 2;  /* Bits 6-7 */
-} CostumeBitfield;
+    uint8_t  marker;          /* +0x00 (0x368): 0x0B - record start */
+    uint8_t  costume_value;   /* +0x01 (0x369): costume bitfield (0x00-0x3F) */
+    uint8_t  type;            /* +0x02 (0x36A): 0x00 - Type 0x00 (bitfield/complex) */
+    uint8_t  padding[3];      /* +0x03-0x05: zeros */
+    uint32_t property_hash;   /* +0x06-0x09: property hash (LE) */
+    uint8_t  type_data[8];    /* +0x0A-0x11: type-specific data */
+} CostumeRecord;
 
-/* All costumes: 0x3F */
+/* Costume bitfield bit definitions (value at offset 0x369) */
+#define COSTUME_FLORENTINE_NOBLE  0x01  /* Bit 0 - Uplay */
+#define COSTUME_ARMOR_OF_ALTAIR   0x02  /* Bit 1 - Uplay */
+#define COSTUME_ALTAIRS_ROBES     0x04  /* Bit 2 - Uplay */
+#define COSTUME_DRACHEN_ARMOR     0x08  /* Bit 3 - Preorder */
+#define COSTUME_DESMOND           0x10  /* Bit 4 - In-game */
+#define COSTUME_RAIDEN            0x20  /* Bit 5 - In-game */
+#define COSTUME_ALL_UNLOCKED      0x3F  /* All 6 costumes */
 ```
 
 #### 4.2.5 Volume Level Values
@@ -485,11 +498,16 @@ typedef struct {
     uint16_t platform_flags;         /* 0x0E-0x0F: PC=0x050C, PS3=0x0508 */
     uint8_t  reserved0[8];           /* 0x10-0x17: Unknown */
 
-    /* Property records region (uses same 18-byte structure as Section 1) */
+    /* Property records region (uses same 18-byte structure as Sections 1 & 2) */
     uint8_t  reserved1[53];          /* 0x18-0x4C: Unknown */
-    uint8_t  marker_0x4d;            /* 0x4D: 0x0B (constant marker) */
-    uint8_t  uplay_gun_upgrade;      /* 0x4E: Boolean - 30-point Uplay reward */
-    uint8_t  marker_0x4f;            /* 0x4F: 0x0E (constant marker) */
+
+    /* Gun Capacity Upgrade Record - 18 bytes starting at 0x4D
+     * Binary verified: 0B 01 0E 00 00 00 ...
+     * This is the VALUE byte within an 18-byte record, NOT a standalone marker.
+     */
+    uint8_t  gun_record_marker;      /* 0x4D: 0x0B (record start marker) */
+    uint8_t  uplay_gun_upgrade;      /* 0x4E: Boolean value - 30-point Uplay reward */
+    uint8_t  gun_record_type;        /* 0x4F: 0x0E (Type 0x0E = boolean record) */
     uint8_t  reserved2[48];          /* 0x50-0x7F: Unknown */
 
     /* Achievement region - PC ONLY */
@@ -703,10 +721,16 @@ typedef struct {
     uint8_t bytes[7];  /* LSB-first bit order within each byte */
 } AchievementBitfield;
 
-/* Costume bitfield: 1 byte, 6 bits used */
+/* Costume Record: 18 bytes, value byte at +0x01 contains 6-bit bitfield
+ * Note: The "bitfield" at 0x369 is NOT standalone - it's within an 18-byte record.
+ * The record starts at 0x368 with marker 0x0B and uses Type 0x00 (bitfield/complex).
+ */
 typedef struct {
-    uint8_t value;  /* Bits 0-5 used */
-} CostumeBitfield;
+    uint8_t  marker;          /* +0x00: 0x0B */
+    uint8_t  costume_value;   /* +0x01: bitfield (0x00-0x3F) */
+    uint8_t  type;            /* +0x02: 0x00 (NOT 0x0E) */
+    uint8_t  padding[15];     /* +0x03-0x11: record data */
+} CostumeRecord;
 ```
 
 ---
