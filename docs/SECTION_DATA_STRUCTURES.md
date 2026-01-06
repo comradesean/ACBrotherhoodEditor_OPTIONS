@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Section Data Structures
 
-**Document Version:** 1.6
+**Document Version:** 1.7
 **Date:** 2026-01-06
-**Status:** Complete C Structure Definitions (Phase 1-4 + Unknown Hash Findings)
+**Status:** Complete C Structure Definitions (Phase 1-4 + Section 1 Record Structure Update)
 
 This document provides complete C structure definitions for all decompressed section data in the AC Brotherhood OPTIONS file format.
 
@@ -45,52 +45,82 @@ typedef struct {
 } SectionHeader_Common;
 ```
 
-### Property Record Structure (18 bytes)
+### Property Record Structure (21 bytes)
 
-Section 1 uses 12 property records following the header:
+**IMPORTANT:** Section 1 uses **21-byte records**, NOT 18-byte records like Sections 2 and 3.
+
+Section 1 contains 12 records with 0x0B markers at the following PC offsets:
+`0x26, 0x3B, 0x50, 0x65, 0x7A, 0x8F, 0xA1, 0xBE, 0xD3, 0xE8, 0xFD, 0x112`
+
+**Record Distance Analysis:**
+- Most records: 21 bytes (0x15 spacing)
+- Record 6 @ 0x8F: 18 bytes (exception)
+- Record 7 @ 0xA1: 29 bytes (exception - contains "Options" ASCII string)
 
 ```c
-/* Property Record - 18 bytes */
+/* Section 1 Property Record - 21 bytes (standard)
+ * NOTE: Section 1 uses 21-byte records, unlike Sections 2/3 which use 18-byte records.
+ * Two exceptions exist: Record 6 (18 bytes) and Record 7 (29 bytes with "Options" string).
+ */
 typedef struct {
-    uint32_t value;           /* +0x00: Property value (little-endian) */
-    uint8_t  unknown1;        /* +0x04: Usually 0x00 */
-    uint8_t  type_marker;     /* +0x05: 0x0B = property marker */
-    uint32_t unknown2;        /* +0x06: Variable data */
-    OPTIONS_Hash hash;        /* +0x0A: Content identifier hash */
-    uint32_t padding;         /* +0x0E: Usually zeros */
-} PropertyRecord;
+    uint8_t      marker;          /* +0x00: 0x0B = record start marker */
+    uint8_t      value[4];        /* +0x01-0x04: Value (4 bytes) */
+    uint8_t      type;            /* +0x05: Type field (0x11, 0x0E, or 0x4F) */
+    uint8_t      padding1[3];     /* +0x06-0x08: Padding (00 00 00) */
+    OPTIONS_Hash hash;            /* +0x09-0x0C: Hash/ID (4 bytes) */
+    uint8_t      trailer[8];      /* +0x0D-0x14: Padding/trailer (8 bytes) */
+} Section1_PropertyRecord;
 
-_Static_assert(sizeof(PropertyRecord) == 18, "PropertyRecord must be 18 bytes");
+_Static_assert(sizeof(Section1_PropertyRecord) == 21, "Section1_PropertyRecord must be 21 bytes");
+
+/* Section 1 Type Field Values:
+ * - 0x11: Most common type
+ * - 0x0E: Boolean-style type (same as Sections 2/3)
+ * - 0x4F: Special type (Record 7 with "Options" string)
+ */
 ```
+
+**PS3 Confirmation:** PS3 Section 1 follows the same record distance pattern (21, 21, 21... 18, 29, 21...), with offsets shifted by 6 bytes due to PS3 header prefix.
+
+**Purpose:** Unknown. The specific purpose of Section 1 records has not been determined.
 
 ### Complete Section 1 Structure
 
 ```c
-/* Section 1: System/Profile Data - 283 bytes (PC) */
+/* Section 1: System/Profile Data - 283 bytes (PC)
+ *
+ * IMPORTANT: Section 1 uses 21-byte records (with exceptions), NOT 18-byte records.
+ * Record layout cannot be represented as a simple array due to variable record sizes.
+ */
 typedef struct {
-    /* Common header */
+    /* Common header (0x00-0x17) */
     uint8_t      zero_padding[10];    /* 0x00-0x09 */
     OPTIONS_Hash section_hash;        /* 0x0A-0x0D: 0xBDBE3B52 */
     uint16_t     platform_flags;      /* 0x0E-0x0F: PC=0x050C */
     uint32_t     unknown1;            /* 0x10-0x13 */
     uint32_t     type_indicator;      /* 0x14-0x17: 0x00010000 */
 
-    /* Property records (12 x 18 bytes = 216 bytes) */
-    PropertyRecord records[12];       /* 0x18-0xF7 */
+    /* Pre-record padding (0x18-0x25) */
+    uint8_t      pre_record[14];      /* 0x18-0x25 */
 
-    /* Record 1 (0x18): value = 0x16 (self-ref to header Field0) */
-    /* Record 2 (0x2A): value = 0xFEDBAC (self-ref to header Field1) */
+    /* Property records region (0x26-0x11A)
+     * 12 records with 0x0B markers at:
+     *   0x26, 0x3B, 0x50, 0x65, 0x7A, 0x8F, 0xA1, 0xBE, 0xD3, 0xE8, 0xFD, 0x112
+     *
+     * Record distances (from one 0x0B to next):
+     *   21, 21, 21, 21, 21, 18, 29, 21, 21, 21, 21, (end)
+     *
+     * Note: Record 6 (0x8F) is 18 bytes (exception)
+     *       Record 7 (0xA1) is 29 bytes and contains "Options" string (exception)
+     *
+     * Purpose of all records: Unknown
+     */
+    uint8_t      record_region[237];  /* 0x26-0x11A */
 
-    /* Profile state */
-    uint8_t  reserved1[89];           /* 0xF8-0x50 (overlaps with records) */
-    uint8_t  profile_state_flag;      /* 0x51: 0x02 (base) or 0x06 (all rewards) */
-    uint8_t  reserved2[84];           /* 0x52-0xA5 */
+    /* Profile state flag embedded within record region */
+    /* Located at offset 0x51: 0x02 (base) or 0x06 (all rewards) */
 
-    /* ASCII identifier */
-    char     options_string[8];       /* 0xA6-0xAD: "Options\0" */
-
-    /* Remaining data */
-    uint8_t  trailing_data[109];      /* 0xAE-0x11A */
+    /* "Options" string embedded at 0xA6-0xAD within record 7 */
 } Section1_SystemProfile;
 
 /* PS3 Section 1 Prefix - 6 bytes at offset 0x00 before main structure */
@@ -869,8 +899,11 @@ static const uint32_t SENSITIVITY_VALUES[] = {
 1. **Byte Order:** All multi-byte values are little-endian unless otherwise noted
 2. **Reserved Fields:** Marked as `reserved` - purpose unknown, modify at own risk
 3. **Platform Flags:** Distinguishes PC (0x050C) from PS3 (0x0508) at decompressed data level
-4. **18-byte Records:** Both PropertyRecord and UnlockRecord are 18 bytes - shared serialization format
+4. **Record Sizes by Section:**
+   - **Section 1:** 21-byte records (with exceptions: Record 6 = 18 bytes, Record 7 = 29 bytes)
+   - **Sections 2 & 3:** 18-byte records (consistent throughout)
 5. **PS3 Differences:** PS3 uses PSN Trophy API for achievements, hence smaller Section 3
+6. **Section 1 Purpose:** The specific purpose of Section 1 records is unknown
 
 ---
 

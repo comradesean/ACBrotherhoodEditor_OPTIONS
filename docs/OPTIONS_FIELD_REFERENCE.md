@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS File - Complete Field Reference
 
-**Last Updated:** 2025-12-27
-**Document Version:** 3.2
-**Status:** Authoritative Reference (Consolidated from 13 Source Documents + Phase 1 & 2 Analysis)
+**Last Updated:** 2026-01-06
+**Document Version:** 3.3
+**Status:** Authoritative Reference (Section 1 Record Structure Updated)
 
 ---
 
@@ -89,28 +89,42 @@
 | 0x10-0x13 | 4 | value | Unknown | Varies | [L] | Observed |
 | 0x14-0x17 | 4 | type | Type Indicator | 0x00010000 | [M] | Constant observed |
 
-### Property Record Structure (18-byte records)
+### Property Record Structure (21-byte records)
 
-Section 1 contains **12 property records** starting at offset 0x18, each using an 18-byte structure:
+**IMPORTANT:** Section 1 uses **21-byte records**, NOT 18-byte records like Sections 2 and 3.
+
+Section 1 contains **12 records** with 0x0B markers at the following PC offsets:
+`0x26, 0x3B, 0x50, 0x65, 0x7A, 0x8F, 0xA1, 0xBE, 0xD3, 0xE8, 0xFD, 0x112`
 
 | Record Offset | Size | Field | Description |
 |---------------|------|-------|-------------|
-| +0x00 | 4 | Value | Property value (4-byte little-endian) |
-| +0x04 | 1 | Unknown | Usually 0x00 |
-| +0x05 | 1 | Type Marker | 0x0B = property marker |
-| +0x06 | 4 | Unknown | Variable data |
-| +0x0A | 4 | Hash | Content identifier hash |
-| +0x0E | 4 | Padding | Usually zeros |
+| +0x00 | 1 | Marker | 0x0B = record start marker |
+| +0x01-0x04 | 4 | Value | Value (4 bytes) |
+| +0x05 | 1 | Type | Type field (0x11, 0x0E, or 0x4F) |
+| +0x06-0x08 | 3 | Padding | Padding (00 00 00) |
+| +0x09-0x0C | 4 | Hash | Hash/ID (4 bytes) |
+| +0x0D-0x14 | 8 | Trailer | Padding/trailer (8 bytes) |
 
-#### Known Property Records
+#### Record Distance Exceptions
 
-| Record | Offset | Value | Hash | Meaning | Conf |
-|--------|--------|-------|------|---------|------|
-| 1 | 0x18 | = Field1 (0x16) | - | Self-ref: uncompressed size marker | [P] |
-| 2 | 0x2A | = Field2 (0xFEDBAC) | - | Self-ref: section identifier | [P] |
-| 3-12 | 0x3C+ | Varies | Varies | Unknown properties | [L] |
+| Record | Offset | Distance | Notes |
+|--------|--------|----------|-------|
+| 1-5 | 0x26-0x7A | 21 bytes each | Standard spacing |
+| 6 | 0x8F | **18 bytes** | Exception |
+| 7 | 0xA1 | **29 bytes** | Exception - contains "Options" string |
+| 8-12 | 0xBE-0x112 | 21 bytes each | Standard spacing |
 
-**Note:** Records 1-2 contain self-referential values that match the 44-byte header's Field1 and Field2. This pattern may be used for validation.
+#### Type Field Values
+
+| Type | Description | Conf |
+|------|-------------|------|
+| 0x11 | Most common type | [M] |
+| 0x0E | Boolean-style type (same as Sections 2/3) | [M] |
+| 0x4F | Special type (Record 7 with "Options" string) | [M] |
+
+**Purpose:** Unknown. The specific purpose of Section 1 records has not been determined.
+
+**PS3 Confirmation:** PS3 Section 1 follows the same record distance pattern, with offsets shifted by 6 bytes due to PS3 header prefix.
 
 ### Profile State Flag
 

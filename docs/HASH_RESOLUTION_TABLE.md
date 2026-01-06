@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Hash Resolution Table
 
-**Document Version:** 1.7
+**Document Version:** 1.8
 **Date:** 2026-01-06
-**Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1-4 + Unknown Hash Findings)
+**Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1-4 + Section 1 Record Structure Update)
 **Research Method:** Ghidra Decompilation, Differential Analysis, Algorithm Testing, Binary Analysis
 
 ---
@@ -453,10 +453,18 @@ Same setting, different type codes per platform:
 
 ### 5.5.8 Property Hash Structure
 
+**IMPORTANT: Record Size Varies by Section**
+- **Section 1:** 21-byte records (with exceptions: Record 6 = 18 bytes, Record 7 = 29 bytes)
+- **Sections 2 & 3:** 18-byte records (consistent throughout)
+
+See `SECTION_DATA_STRUCTURES.md` for Section 1 record layout details.
+
 ```c
 /* Section 2/3 Property Record - 18 bytes
  * Note: 0x0B marker is at START of each record, not end.
  * Structure: [marker 1B][value 1B][type 1B][padding 3B][hash 4B][padding 8B]
+ *
+ * NOTE: Section 1 uses a DIFFERENT structure with 21-byte records.
  */
 typedef struct {
     uint8_t      marker;          /* +0x00: 0x0B = record start marker */
