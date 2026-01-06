@@ -42,12 +42,6 @@
 | `0x291` | `0x788F42CC` | `0x00` → `0x01` | Mercati di Traiano (Trajan's Market) - "Shopaholic" |
 | `0x2a3` | `0x6FF4568F` | `0x00` → `0x01` | Tivoli Aqueducts - "Liquid Gold" |
 
-#### Unknown Unlock Slots
-| Address | Hash | Value Change | Description |
-|---------|------|-------------|-------------|
-| `0x2b5` | `0x0B953B46` | `0x00` → `0x01` | Unknown - possibly cut content |
-| `0x2c7` | `0x1854EC5A` | `0x00` → `0x01` | Unknown - possibly cut content |
-
 #### Costume Unlocks (CONFIRMED)
 **Address:** `0x369` (Bitwise Operator)
 
@@ -61,30 +55,33 @@
 | `100000` | `0x20` | Raiden | 100% sync bonus |
 | `111111` | `0x3f` | **ALL OUTFITS** | - |
 
-#### Uplay Reward Unlock Records (INFERRED - not confirmed)
+#### Possibly Uplay-Related Unlock Records (Purpose Unknown)
 
-These 4 records follow the Templar Lairs. We have the hashes but the mapping to specific
-rewards is **inferred based on position only**, not confirmed through testing.
+These 6 records follow the Templar Lairs. They were observed flipped (0x01) in a 100% Uplay
+unlock test file, indicating they are **possibly Uplay-related**. Their specific purpose
+has NOT been determined.
 
-| Address | Hash | Value Change | Inferred Reward | Confidence |
-|---------|------|-------------|-----------------|:----------:|
-| `0x2d9` | `0x21D9D09F` | `0x00` → `0x01` | Florentine Noble? | MEDIUM |
-| `0x2eb` | `0x36A2C4DC` | `0x00` → `0x01` | Armor of Altair? | MEDIUM |
-| `0x2fd` | `0x52C3A915` | `0x00` → `0x01` | Altair's Robes? | MEDIUM |
-| `0x30f` | `0x0E8D040F` | `0x00` → `0x01` | Hellequin MP? | LOW |
+| Address | Hash | Value Change | Description |
+|---------|------|-------------|-------------|
+| `0x2b5` | `0x0B953B46` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2c7` | `0x1854EC5A` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2d9` | `0x21D9D09F` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2eb` | `0x36A2C4DC` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2fd` | `0x52C3A915` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x30f` | `0x0E8D040F` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
 
-**Important:** Hellequin is a **multiplayer character**, NOT a costume. It does NOT
-appear in the costume bitfield at 0x369. The 4th reward hash mapping is especially uncertain.
+*Note: All 6 records were flipped in a Uplay test file. Their specific purpose is unknown.*
 
-#### DLC/Update Flags
+#### Unknown Flags (Possibly DLC-Related)
 | Address | Value Change | Description |
 |---------|-------------|-------------|
-| `0x516` | `0x00` → `0x01` | Animus Project Update 1.0 |
-| `0x517` | `0x00` → `0x01` | Animus Project Update 2.0 |
-| `0x518` | `0x00` → `0x01` | Animus Project Update 3.0 |
-| `0x519` | `0x00` → `0x01` | Da Vinci Disappearance DLC |
+| `0x516` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
+| `0x517` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
+| `0x518` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
+| `0x519` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
 
-*Note: Other multiplayer characters (Harlequin, Officer) location UNKNOWN.*
+*Note: These 4 flags were assumed to be DLC-related based on count matching known
+DLC (3 Animus Projects + Da Vinci Disappearance), but this has NOT been confirmed.*
 
 ---
 

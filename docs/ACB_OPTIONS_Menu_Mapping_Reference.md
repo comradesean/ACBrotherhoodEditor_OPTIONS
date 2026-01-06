@@ -109,13 +109,15 @@ Section 2 contains 18-byte records for unlockable content. Each record follows t
 
 | Name | Address | Hash | Status |
 |------|---------|------|--------|
-| **Templar Lair 1** (Trajan Market) | `0x291` | `0x00788F42` | Documented |
-| **Templar Lair 2** (Aqueduct) | `0x2A3` | `0x006FF456` | Documented |
-| **Uplay Reward #1** | `0x2D9` | `0x0021D9D0` | Likely Florentine Noble Attire |
-| **Uplay Reward #2** | `0x2EB` | `0x0036A2C4` | Likely Armor of Altair |
-| **Uplay Reward #3** | `0x2FD` | `0x0052C3A9` | Likely Altair's Robes |
-| **Uplay Reward #4** | `0x30F` | `0x000E8D04` | Likely Hellequin MP Character |
-| **Costume Bitfield** | `0x369` | N/A | Multiple costume flags |
+| **Templar Lair 1** (Trajan Market) | `0x291` | `0x00788F42` | Confirmed |
+| **Templar Lair 2** (Aqueduct) | `0x2A3` | `0x006FF456` | Confirmed |
+| **Unknown Unlock #1** | `0x2B5` | `0x000B953B` | Possibly Uplay (purpose unknown) |
+| **Unknown Unlock #2** | `0x2C7` | `0x001854EC` | Possibly Uplay (purpose unknown) |
+| **Unknown Unlock #3** | `0x2D9` | `0x0021D9D0` | Possibly Uplay (purpose unknown) |
+| **Unknown Unlock #4** | `0x2EB` | `0x0036A2C4` | Possibly Uplay (purpose unknown) |
+| **Unknown Unlock #5** | `0x2FD` | `0x0052C3A9` | Possibly Uplay (purpose unknown) |
+| **Unknown Unlock #6** | `0x30F` | `0x000E8D04` | Possibly Uplay (purpose unknown) |
+| **Costume Bitfield** | `0x369` | N/A | Confirmed - multiple costume flags |
 
 ### Uplay Rewards Context
 
@@ -129,22 +131,24 @@ The following Uplay rewards exist for AC Brotherhood:
 
 ---
 
-## DLC/Update Flags
+## Unknown Flags (Possibly DLC-Related)
 
 | Setting | Address | Type | Description |
 |---------|---------|------|-------------|
-| **Update Flag #1** | `0x516` | Boolean | Likely Animus Project Update 1.0 |
-| **Update Flag #2** | `0x517` | Boolean | Likely Animus Project Update 2.0 |
-| **Update Flag #3** | `0x518` | Boolean | Likely Animus Project Update 3.0 |
-| **Update Flag #4** | `0x519` | Boolean | Likely Da Vinci Disappearance DLC |
+| **Unknown Flag #1** | `0x516` | Boolean | Purpose unknown - possibly DLC |
+| **Unknown Flag #2** | `0x517` | Boolean | Purpose unknown - possibly DLC |
+| **Unknown Flag #3** | `0x518` | Boolean | Purpose unknown - possibly DLC |
+| **Unknown Flag #4** | `0x519` | Boolean | Purpose unknown - possibly DLC |
 
-These 4 consecutive bytes are located at the end of Section 2 data and are set to `0x01` when the corresponding content is available.
+These 4 consecutive bytes are located at the end of Section 2 data and are set to `0x01` on PC.
+They were assumed to be DLC-related based on count matching known DLC, but this has NOT been confirmed.
 
-### Free Content Updates (Animus Project Updates)
+### Known DLC/Updates (for reference)
 
 - **APU 1.0**: Added Mont Saint-Michel map
 - **APU 2.0**: Added Pienza map
 - **APU 3.0**: Added Alhambra map + Dama Rossa, Knight, Marquis, Pariah characters
+- **Da Vinci Disappearance**: Story DLC
 
 ---
 
