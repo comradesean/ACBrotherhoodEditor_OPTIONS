@@ -176,7 +176,7 @@ _Static_assert(sizeof(Section2_PropertyRecord) == 18, "Must be 18 bytes");
 There are NO standalone fields - every value is the VALUE byte (+0x01) within an 18-byte record.
 
 Section 2 contains 62 records per platform. There are 8 distinct types across both platforms
-(Type 0x12 is PS3-only, Type 0x16 is PC-only; both represent the same setting with hash 0xD9E10623):
+(Type 0x12 is PS3 v1.0 only, Type 0x16 is PS3 v1.05 and PC; both represent the same setting with hash 0xD9E10623):
 
 | Type | Count | Byte 0x10 Usage | Byte 0x11 | Platform | Description |
 |------|-------|-----------------|-----------|----------|-------------|
