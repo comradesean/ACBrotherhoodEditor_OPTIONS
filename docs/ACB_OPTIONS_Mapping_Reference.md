@@ -36,38 +36,52 @@
 
 ### Unlockable Content
 
-#### Templar Lair Unlocks
-| Address | Value Change | Description |
-|---------|-------------|-------------|
-| `0x291` | `0x00` → `0x01` | Mercati di Traiano (Trajan's Market) - "Shopaholic" |
-| `0x2a3` | `0x00` → `0x01` | Tivoli Aqueducts - "Liquid Gold" |
+#### Templar Lair Unlocks (CONFIRMED)
+| Address | Hash | Value Change | Description |
+|---------|------|-------------|-------------|
+| `0x291` | `0x788F42CC` | `0x00` → `0x01` | Mercati di Traiano (Trajan's Market) - "Shopaholic" |
+| `0x2a3` | `0x6FF4568F` | `0x00` → `0x01` | Tivoli Aqueducts - "Liquid Gold" |
 
-#### Costume Unlocks
+#### Costume Unlocks (CONFIRMED)
 **Address:** `0x369` (Bitwise Operator)
 
-| Binary | Hex Value | Outfit Name |
-|--------|-----|--------|
-| `000001` | `0x01` | Florentine Noble Attire |
-| `000010` | `0x02` | Armor of Altair |
-| `000100` | `0x04` | Altair's Robes |
-| `001000` | `0x08` | Drachen Armor |
-| `010000` | `0x10` | Desmond |
-| `100000` | `0x20` | Raiden |
-| `111111` | `0x3f` | **ALL OUTFITS** |
+| Binary | Hex Value | Outfit Name | Source |
+|--------|-----|--------|--------|
+| `000001` | `0x01` | Florentine Noble Attire | Uplay (20 pts) |
+| `000010` | `0x02` | Armor of Altair | Uplay (20 pts) |
+| `000100` | `0x04` | Altair's Robes | Uplay (20 pts) |
+| `001000` | `0x08` | Drachen Armor | Pre-order DLC |
+| `010000` | `0x10` | Desmond | In-game unlock |
+| `100000` | `0x20` | Raiden | 100% sync bonus |
+| `111111` | `0x3f` | **ALL OUTFITS** | - |
 
-#### Unknown Toggles
+#### Possibly Uplay-Related Unlock Records (Purpose Unknown)
+
+These 6 records follow the Templar Lairs. They were observed flipped (0x01) in a 100% Uplay
+unlock test file, indicating they are **possibly Uplay-related**. Their specific purpose
+has NOT been determined.
+
+| Address | Hash | Value Change | Description |
+|---------|------|-------------|-------------|
+| `0x2b5` | `0x0B953B46` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2c7` | `0x1854EC5A` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2d9` | `0x21D9D09F` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2eb` | `0x36A2C4DC` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x2fd` | `0x52C3A915` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+| `0x30f` | `0x0E8D040F` | `0x00` → `0x01` | Possibly Uplay (purpose unknown) |
+
+*Note: All 6 records were flipped in a Uplay test file. Their specific purpose is unknown.*
+
+#### Unknown Flags (Possibly DLC-Related)
 | Address | Value Change | Description |
 |---------|-------------|-------------|
-| `0x2d9` | `0x00` → `0x01` | UNKNOWN |
-| `0x2eb` | `0x00` → `0x01` | UNKNOWN |
-| `0x2fd` | `0x00` → `0x01` | UNKNOWN |
-| `0x30f` | `0x00` → `0x01` | UNKNOWN |
-| `0x516` | `0x00` → `0x01` | UNKNOWN |
-| `0x517` | `0x00` → `0x01` | UNKNOWN |
-| `0x518` | `0x00` → `0x01` | UNKNOWN |
-| `0x519` | `0x00` → `0x01` | UNKNOWN |
+| `0x516` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
+| `0x517` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
+| `0x518` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
+| `0x519` | `0x00` → `0x01` | Unknown (purpose not confirmed) |
 
-*Note: Multiplayer characters (Harlequin, Hellequin, or Officer) are all UNKNOWN.*
+*Note: These 4 flags were assumed to be DLC-related based on count matching known
+DLC (3 Animus Projects + Da Vinci Disappearance), but this has NOT been confirmed.*
 
 ---
 
@@ -76,8 +90,10 @@
 ### Equipment Upgrade & DLC
 | Address | Value Change | Description |
 |---------|-------------|-------------|
-| `0x4e` | `0x00` → `0x01` | Gun Capacity Upgrade |
+| `0x4e` | `0x00` → `0x01` | Gun Capacity Upgrade (30-point Uplay reward) |
 | `0x9D` | `0x00` → `0x01` | UNKNOWN DLC (Prevents load when disabled - possibly Copernicus Conspiracy?)  (probably not: Da Vinci Disappearance?) |
+
+**Note:** The Gun Capacity Upgrade is the ONLY Uplay unlock stored in Section 3. All costume-related Uplay unlocks (Florentine Noble Attire, Armor of Altair, Altair's Robes) are stored in Section 2's costume bitfield at offset 0x369.
 
 ### Achievement Unlocks (Bitwise)
 **Address Range:** `0x84` → `0x8a` (7 bytes) 
@@ -198,6 +214,14 @@ Hex Values:   80 40 20 10 08 04 02 01
 
 ---
 
-*Last updated: 12/25/2025  
-*Game: Assassin's Creed Brotherhood*  
+## References
+
+For detailed hash information and record structures, see:
+- `HASH_RESOLUTION_TABLE.md` - Complete hash reference with PC/PS3 comparison
+- `SECTION_DATA_STRUCTURES.md` - C structure definitions for all record types
+
+---
+
+*Last updated: 2026-01-06*
+*Game: Assassin's Creed Brotherhood*
 *All addresses are hexadecimal offsets from their section's base*
