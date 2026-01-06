@@ -1,6 +1,6 @@
 # AC Brotherhood OPTIONS - Section Data Structures
 
-**Document Version:** 1.7
+**Document Version:** 1.8
 **Date:** 2026-01-06
 **Status:** Complete C Structure Definitions (Phase 1-4 + Section 1 Record Structure Update)
 
@@ -39,7 +39,7 @@ All sections share a common header pattern at offset 0x00-0x17:
 typedef struct {
     uint8_t      zero_padding[10];    /* 0x00-0x09: Always zeros */
     OPTIONS_Hash section_hash;        /* 0x0A-0x0D: Section type identifier */
-    uint16_t     platform_flags;      /* 0x0E-0x0F: PC=0x050C, PS3=0x0508 */
+    uint16_t     version_flags;       /* 0x0E-0x0F: Version identifier (see below) */
     uint32_t     unknown;             /* 0x10-0x13: Variable */
     uint32_t     type_indicator;      /* 0x14-0x17: Usually 0x00010000 */
 } SectionHeader_Common;
@@ -96,7 +96,7 @@ typedef struct {
     /* Common header (0x00-0x17) */
     uint8_t      zero_padding[10];    /* 0x00-0x09 */
     OPTIONS_Hash section_hash;        /* 0x0A-0x0D: 0xBDBE3B52 */
-    uint16_t     platform_flags;      /* 0x0E-0x0F: PC=0x050C */
+    uint16_t     version_flags;       /* 0x0E-0x0F: v1.05=0x050C */
     uint32_t     unknown1;            /* 0x10-0x13 */
     uint32_t     type_indicator;      /* 0x14-0x17: 0x00010000 */
 
@@ -183,9 +183,9 @@ Section 2 contains 62 records per platform. There are 8 distinct types across bo
 | 0x0E | 37 | Flag (0x00 or 0x03) | Always 0x00 | Both | Boolean toggles |
 | 0x00 | 18 | Variable data | Variable | Both | Complex/container records |
 | 0x11 | 4 | **Integer value** (6,7,10) | Always 0x00 | Both | Integer settings |
-| 0x12 | 1 | Length (0x1D=29) | Always 0x00 | **PS3 only** | Same as 0x16, hash 0xD9E10623 |
+| 0x12 | 1 | Length (0x1D=29) | Always 0x00 | **v1.0 only** | Same as 0x16, hash 0xD9E10623 |
 | 0x15 | 1 | Size/count (0x19=25) | Always 0x00 | Both | Float-related |
-| 0x16 | 1 | Length (0x1D=29) | Always 0x00 | **PC only** | Same as 0x12, hash 0xD9E10623 |
+| 0x16 | 1 | Length (0x1D=29) | Always 0x00 | **v1.05/PC** | Same as 0x12, hash 0xD9E10623 |
 | 0x04 | 1 | Variable | Variable | Both | Terminal/controller record |
 | 0x1E | 1 | 0x00 | 0x00 | Both | Special (value=121) |
 
@@ -252,21 +252,23 @@ typedef struct {
     uint8_t      padding2;        /* +0x11: 0x00 */
 } Record_Type15;
 
-/* Type 0x12 (PS3) / Type 0x16 (PC) - Same setting, different type codes
- * Both platforms have this record at offset 0x04FE with hash 0xD9E10623.
- * PC uses Type 0x16 with Value=0, PS3 uses Type 0x12 with Value=1.
- * Byte 0x10 = 0x1D (29) on both - likely string length or index.
+/* Type 0x12 (v1.0) / Type 0x16 (v1.05 and PC) - Version-dependent type codes
+ * This record at offset 0x04FE with hash 0xD9E10623 uses different types by version:
+ * - Type 0x12: PS3 v1.0 (disc version)
+ * - Type 0x16: PS3 v1.05 (patched) and PC
+ * Value differs by platform: PC=0x00, PS3=0x01 (both versions).
+ * Byte 0x10 = 0x1D (29) on all - likely string length or index.
  */
 typedef struct {
     uint8_t      marker;          /* +0x00: 0x0B */
     uint8_t      value;           /* +0x01: PC=0x00, PS3=0x01 */
-    uint8_t      type;            /* +0x02: PC=0x16, PS3=0x12 */
+    uint8_t      type;            /* +0x02: v1.0=0x12, v1.05/PC=0x16 */
     uint8_t      padding1[3];     /* +0x03-0x05: 00 00 00 */
     OPTIONS_Hash hash;            /* +0x06-0x09: 0xD9E10623 */
     uint8_t      reserved[6];     /* +0x0A-0x0F: 00 00 00 00 00 00 */
     uint8_t      str_length;      /* +0x10: 0x1D (29) - string length/index */
     uint8_t      padding2;        /* +0x11: 0x00 */
-} Record_Type12_16;  /* Type varies by platform */
+} Record_Type12_16;  /* Type varies by game version */
 
 /* Type 0x1E (Special) - 1 record
  * VALUE field = 121 (0x79) - not a boolean.
@@ -322,22 +324,24 @@ This would clarify whether flags are set at build time or updated at runtime.
 | Aspect | PC | PS3 |
 |--------|:--:|:---:|
 | Size | 1310 bytes | 1306 bytes |
-| Platform flag (0x0E) | 0x0C | 0x08 |
+| Version flag (0x0E) | 0x0C (v1.05) | 0x08 (v1.0) or 0x0C (v1.05) |
 | Type 0x11 records | ✓ (4 records) | ✓ (identical) |
 | Type 0x15 record | ✓ (identical) | ✓ (identical) |
-| Hash 0xD9E10623 | Type **0x16**, Value=0 | Type **0x12**, Value=1 |
+| Hash 0xD9E10623 | Type **0x16**, Value=0 | Type **0x12** (v1.0) or **0x16** (v1.05), Value=1 |
 | Unknown flags (0x0516-0x0519) | 01 01 01 01 | 00 00 00 00 |
 | Trailing bytes | 4 extra bytes | None |
 
-**Type 0x16 (PC) vs Type 0x12 (PS3) - Same Setting, Different Types:**
+**Type 0x16 (v1.05/PC) vs Type 0x12 (v1.0) - Same Setting, Version-Dependent Types:**
 ```
 Offset: 0x04FE
-Hash:   0xD9E10623 (same on both)
+Hash:   0xD9E10623 (same on all)
 
-PC:  0B 00 16 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
-PS3: 0B 01 12 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
-         ^^
-     Value/Type differ, everything else identical
+PC (v1.05):      0B 00 16 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
+PS3 (v1.0):      0B 01 12 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
+PS3 (v1.05):     0B 01 16 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
+                     ^^ ^^
+                     |  +-- Type: 0x12 (v1.0) or 0x16 (v1.05/PC)
+                     +-- Value: 0x00 (PC) or 0x01 (PS3, both versions)
 ```
 
 **4-Byte Size Difference Explained:**
@@ -459,7 +463,7 @@ typedef struct {
     /* Common header (0x00-0x17) */
     uint8_t      zero_padding[10];        /* 0x00-0x09 */
     OPTIONS_Hash section_hash;            /* 0x0A-0x0D: 0x305AE1A8 */
-    uint16_t     platform_flags;          /* 0x0E-0x0F: PC=0x050C */
+    uint16_t     version_flags;           /* 0x0E-0x0F: v1.05=0x050C */
     uint8_t      reserved1[4];            /* 0x10-0x13 */
     uint32_t     type_indicator;          /* 0x14-0x17: 0x00110000 */
     uint8_t      reserved2[75];           /* 0x18-0x62 */
@@ -624,7 +628,7 @@ typedef struct {
     /* Common header (0x00-0x17) */
     uint8_t      zero_padding[10];        /* 0x00-0x09 */
     OPTIONS_Hash section_hash;            /* 0x0A-0x0D: 0xC9876D66 */
-    uint16_t     platform_flags;          /* 0x0E-0x0F: PC=0x050C */
+    uint16_t     version_flags;           /* 0x0E-0x0F: v1.05=0x050C */
     uint8_t      reserved1[8];            /* 0x10-0x17 */
 
     /* Property records region (0x18-0x4C) - 3 records identified */
@@ -701,7 +705,7 @@ typedef struct {
     /* Common header (0x00-0x17) */
     uint8_t      zero_padding[10];        /* 0x00-0x09 */
     OPTIONS_Hash section_hash;            /* 0x0A-0x0D: 0xC9876D66 */
-    uint16_t     platform_flags;          /* 0x0E-0x0F: PS3=0x0508 */
+    uint16_t     version_flags;           /* 0x0E-0x0F: v1.0=0x0508 or v1.05=0x050C */
     uint8_t      reserved1[8];            /* 0x10-0x17 */
 
     /* Property records region (0x18-0x4C) - same as PC */
@@ -757,7 +761,7 @@ typedef struct {
 typedef struct {
     uint8_t      zero_padding[10];    /* 0x00-0x09: Always zeros */
     OPTIONS_Hash section_hash;        /* 0x0A-0x0D: 0xB4B55039 */
-    uint16_t     platform_flags;      /* 0x0E-0x0F: 0x075D */
+    uint16_t     version_flags;       /* 0x0E-0x0F: 0x075D */
     uint32_t     unknown;             /* 0x10-0x13: 0x07550000 */
     uint32_t     type_indicator;      /* 0x14-0x17: 0x00110000 */
     uint8_t      extended_header[73]; /* 0x18-0x60: Property records */
@@ -899,7 +903,10 @@ static const uint32_t SENSITIVITY_VALUES[] = {
 
 1. **Byte Order:** All multi-byte values are little-endian unless otherwise noted
 2. **Reserved Fields:** Marked as `reserved` - purpose unknown, modify at own risk
-3. **Platform Flags:** Distinguishes PC (0x050C) from PS3 (0x0508) at decompressed data level
+3. **Version Flags (0x0E-0x0F):** Identifies game version, not platform:
+   - 0x08 = Version 1.0 (disc/launch version)
+   - 0x0C = Version 1.05 (latest patch)
+   - PC always uses 0x0C (v1.05); PS3 may have 0x08 (v1.0) or 0x0C (v1.05)
 4. **Record Sizes by Section:**
    - **Section 1:** 21-byte records (with exceptions: Record 6 = 18 bytes, Record 7 = 29 bytes)
    - **Sections 2 & 3:** 18-byte records (consistent throughout)

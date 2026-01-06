@@ -1,7 +1,7 @@
 # AC Brotherhood OPTIONS - Value Constraints and Validation Rules
 
-**Document Version:** 1.0
-**Date:** 2025-12-27
+**Document Version:** 1.1
+**Date:** 2026-01-06
 **Status:** Comprehensive Value Constraints Reference
 
 This document specifies valid value ranges, defaults, and validation behaviors for all editable fields in the AC Brotherhood OPTIONS file format.
@@ -394,15 +394,21 @@ All HUD toggles follow the same boolean pattern:
 
 ---
 
-## Platform-Specific Fields
+## Version and Platform Fields
 
-### Platform Flags
+### Version Flags (0x0E-0x0F)
 
 | Field | Section | Offset | Type | Valid Values | Conf |
 |-------|---------|--------|------|--------------|------|
-| Platform Flags | All | 0x0E-0x0F | uint16 | PC=0x050C, PS3=0x0508 | [H] |
+| Version Flags | All | 0x0E-0x0F | uint16 | v1.0=0x0508, v1.05=0x050C | [H] |
 
-**Validation Behavior:** Must match across all sections within a file. Mismatched platform flags may cause load failure.
+**Key Finding:** Offset 0x0E is a VERSION flag, not a platform flag:
+- 0x08 = Version 1.0 (disc/launch version)
+- 0x0C = Version 1.05 (latest patch)
+
+PC always uses 0x0C (v1.05). PS3 may have 0x08 (v1.0) or 0x0C (v1.05) depending on patch status.
+
+**Validation Behavior:** Must match across all sections within a file. Mismatched version flags may cause load failure.
 
 ### PS3-Specific Toggles
 
@@ -413,7 +419,7 @@ All HUD toggles follow the same boolean pattern:
 | PS3 Toggle C | S2 | 0x4DB | bool | 0x00/0x01 | [L] |
 | PS3 Toggle D | S2 | 0x4ED | bool | 0x00/0x01 | [L] |
 | PS3 Toggle E | S2 | 0x4FF | bool | 0x00/0x01 | [L] |
-| Platform ID | S2 | 0x500 | uint8 | PC=0x16, PS3=0x12 | [M] |
+| Type Field | S2 | 0x500 | uint8 | v1.0=0x12, v1.05/PC=0x16 | [M] |
 
 ---
 
@@ -516,7 +522,7 @@ typedef enum {
 | **Boolean Normalize** | Non-zero values treated as 0x01 | All boolean fields |
 | **Mask** | Invalid bits are masked off | Costume bitfield, Achievement bitfield |
 | **Fallback** | Invalid values trigger fallback to default | Language index/hash |
-| **Reject** | Invalid values cause load failure | Platform flags mismatch |
+| **Reject** | Invalid values cause load failure | Version flags mismatch |
 
 ### Validation Function References
 
@@ -594,8 +600,8 @@ Certain fields must be consistent with each other:
    - Subtitle language index at 0xA7 must match hash at 0xAB
 
 4. **Platform Consistency:**
-   - All sections must have matching platform flags (0x0E-0x0F)
-   - Platform ID at 0x500 must match platform flags
+   - All sections must have matching version flags (0x0E-0x0F)
+   - Type field at 0x500 correlates with version flags (0x12 for v1.0, 0x16 for v1.05)
 
 ---
 

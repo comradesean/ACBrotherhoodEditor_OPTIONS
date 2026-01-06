@@ -1,6 +1,6 @@
 # AC Brotherhood OPTIONS - Hash Resolution Table
 
-**Document Version:** 1.8
+**Document Version:** 1.9
 **Date:** 2026-01-06
 **Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1-4 + Section 1 Record Structure Update)
 **Research Method:** Ghidra Decompilation, Differential Analysis, Algorithm Testing, Binary Analysis
@@ -128,7 +128,7 @@ Each decompressed section contains a type identifier hash at offset 0x0A-0x0D:
 struct SectionHeader_Common {
     uint8_t  zero_padding[10];    /* 0x00-0x09: Always zeros */
     uint32_t section_hash;        /* 0x0A-0x0D: Section type hash */
-    uint16_t platform_flags;      /* 0x0E-0x0F: PC=0x050C, PS3=0x0508 */
+    uint16_t version_flags;       /* 0x0E-0x0F: v1.0=0x0508, v1.05=0x050C */
     uint32_t unknown;             /* 0x10-0x13: Variable */
     uint32_t type_indicator;      /* 0x14-0x17: Type marker */
 };
@@ -437,14 +437,22 @@ These records have variable data in the trailing bytes region. Unlike Type 0x0E 
 |--------|------|:-----:|:------:|:--:|:---:|
 | 0x0062 | 0xB3AB00A8 | 0x01 | 0x19 (25) | ✓ | ✓ |
 
-### 5.5.6 Type 0x12/0x16 - Platform-Specific (1 record each)
+### 5.5.6 Type 0x12/0x16 - Version-Dependent (1 record each)
 
-Same setting, different type codes per platform:
+Same setting, type code depends on game version (not platform):
 
-| Platform | Type | Offset | Hash | Value | Byte10 |
-|----------|:----:|--------|------|:-----:|:------:|
-| PC | 0x16 | 0x04FE | 0xD9E10623 | 0x00 | 0x1D (29) |
-| PS3 | 0x12 | 0x04FE | 0xD9E10623 | 0x01 | 0x1D (29) |
+| Version | Type | Offset | Hash | Value | Byte10 |
+|---------|:----:|--------|------|:-----:|:------:|
+| v1.05 / PC | 0x16 | 0x04FE | 0xD9E10623 | PC=0x00, PS3=0x01 | 0x1D (29) |
+| v1.0 (disc) | 0x12 | 0x04FE | 0xD9E10623 | 0x01 | 0x1D (29) |
+
+**Key Finding:** The Type field (0x12 vs 0x16) correlates with game version, not platform:
+- Type 0x12: PS3 version 1.0 (disc/launch version)
+- Type 0x16: PS3 version 1.05 (patched) and all PC versions
+
+The Value field (0x00 vs 0x01) correlates with platform:
+- Value 0x00: PC (all versions)
+- Value 0x01: PS3 (both v1.0 and v1.05)
 
 ### 5.5.7 Type 0x1E - Special (1 record)
 
@@ -488,9 +496,9 @@ The Type byte at offset +0x02 determines how the VALUE byte (+0x01) is interpret
 | 0x00 | Bitfield/Complex | Multi-bit value or complex data | Costume bitfield (0x369) |
 | 0x0E | Boolean | 0x00=false, 0x01=true | HUD toggles, unlock flags |
 | 0x11 | Integer | Numeric value (0-255) | Internal settings |
-| 0x12 | Platform (PS3) | Platform-specific | Platform ID record |
+| 0x12 | Version (v1.0) | Version-specific | Version ID record (disc) |
 | 0x15 | Float-related | Associated float value | Sensitivity/volume |
-| 0x16 | Platform (PC) | Platform-specific | Platform ID record |
+| 0x16 | Version (v1.05/PC) | Version-specific | Version ID record (patched) |
 | 0x17 | Special | Non-standard | Keyboard bindings region |
 | 0x1E | Special | Non-standard structure | Unknown purpose |
 

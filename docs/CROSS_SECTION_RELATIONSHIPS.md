@@ -1,7 +1,7 @@
 # AC Brotherhood OPTIONS - Cross-Section Relationships
 
-**Document Version:** 1.0
-**Date:** 2025-12-27
+**Document Version:** 1.1
+**Date:** 2026-01-06
 **Status:** Comprehensive Analysis of Inter-Section Dependencies
 
 This document details the relationships and dependencies between the four sections (PC: 3 sections, PS3: 4 sections) of the OPTIONS file format.
@@ -22,14 +22,18 @@ All sections share a common header pattern that enables identification and valid
 
 These hashes serve as internal type markers, complementing the header's Field2 magic numbers (0xC5, 0x11FACE11, 0x21EFFE22).
 
-### Platform Flags (Offset 0x0E-0x0F)
+### Version Flags (Offset 0x0E-0x0F)
 
-| Platform | Flags Value | Byte Order |
-|----------|-------------|------------|
-| PC | `0x050C` (bytes: 0C 05) | Little-endian |
-| PS3 | `0x0508` (bytes: 08 05) | Little-endian |
+| Version | Flags Value | Byte Order | Description |
+|---------|-------------|------------|-------------|
+| v1.05 (patched) | `0x050C` (bytes: 0C 05) | Little-endian | Latest patch (PC always uses this) |
+| v1.0 (disc) | `0x0508` (bytes: 08 05) | Little-endian | Disc/launch version (PS3 unpatched) |
 
-All three sections use identical platform flags within the same file.
+**Key Finding:** Offset 0x0E is a VERSION flag, not a platform flag:
+- 0x08 = Version 1.0 (disc/launch version)
+- 0x0C = Version 1.05 (latest patch)
+
+All sections use identical version flags within the same file. PC always uses 0x0C. PS3 may have 0x08 or 0x0C depending on patch status.
 
 ---
 
@@ -239,7 +243,7 @@ When modifying OPTIONS files, validate:
 1. **Costume Consistency:** If modifying unlock record at 0x2D9/0x2EB/0x2FD, also update costume bitfield at 0x369
 2. **Uplay Gun Capacity Upgrade:** Section 3 offset 0x4E should reflect 30-point Uplay reward status (this is the ONLY Uplay unlock in Section 3)
 3. **Profile State:** If setting Section 3 to "all rewards," consider updating Section 1:0x51 to 0x06
-4. **Platform Flags:** All sections should have matching platform flags (0x050C or 0x0508)
+4. **Version Flags:** All sections should have matching version flags (0x050C for v1.05 or 0x0508 for v1.0)
 5. **Checksums:** Update each modified section's checksum independently
 
 ---
@@ -252,7 +256,7 @@ When modifying OPTIONS files, validate:
 | Uplay Gun Capacity (30 pts) | (Uplay) | S3:0x4E | Direct flag - ONLY Uplay unlock in Section 3 |
 | Profile State ↔ DLC Sync | S1:0x51 | S3:0x9D | Correlated state |
 | Language Index → Hash | S2:0x8E/0xA7 | S2:0x92/0xAB | Lookup pair |
-| Platform Flags | All sections | Header 0x0E | Consistent value |
+| Version Flags | All sections | Header 0x0E | Consistent value (v1.0=0x08, v1.05=0x0C) |
 | Section Hashes | All sections | Header 0x0A | Type identifier |
 
 ---

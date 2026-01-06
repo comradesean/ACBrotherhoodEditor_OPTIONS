@@ -1,7 +1,7 @@
 # AC Brotherhood OPTIONS File - Complete Field Reference
 
 **Last Updated:** 2026-01-06
-**Document Version:** 3.3
+**Document Version:** 3.4
 **Status:** Authoritative Reference (Section 1 Record Structure Updated)
 
 ---
@@ -85,7 +85,7 @@
 |--------|------|------|------------|-------|------|----------|
 | 0x00-0x09 | 10 | padding | Zero Padding | Always 0x00 | [P] | Structure analysis |
 | 0x0A-0x0D | 4 | hash | Section Hash | 0xBDBE3B52 | [P] | Constant across all files |
-| 0x0E-0x0F | 2 | flags | Platform Flags | PC=0x050C, PS3=0x0508 | [H] | Platform diff |
+| 0x0E-0x0F | 2 | flags | Version Flags | v1.0=0x0508, v1.05=0x050C | [H] | Version diff |
 | 0x10-0x13 | 4 | value | Unknown | Varies | [L] | Observed |
 | 0x14-0x17 | 4 | type | Type Indicator | 0x00010000 | [M] | Constant observed |
 
@@ -183,7 +183,7 @@ After this 6-byte prefix, PS3 data aligns perfectly with PC data. The section ha
 |--------|------|------|------------|-------|------|----------|
 | 0x00-0x09 | 10 | padding | Zero Padding | 0x00 | [P] | Structure analysis |
 | 0x0A-0x0D | 4 | hash | Section Hash | 0x305AE1A8 | [H] | Constant per section |
-| 0x0E-0x0F | 2 | flags | Platform Flags | PC=0x050C (bytes: 0C 05), PS3=0x0508 (bytes: 08 05) | [H] | Platform diff |
+| 0x0E-0x0F | 2 | flags | Version Flags | v1.0=0x0508, v1.05=0x050C | [H] | Version diff |
 | 0x14-0x17 | 4 | type | Type Indicator | 0x00110000 | [M] | Observed |
 
 ### Display Settings (0x63-0xAE)
@@ -403,7 +403,7 @@ The 17-byte "gaps" between settings are NOT unmapped - they are the **trailing p
 
 | Offset Range | Size | Notes |
 |--------------|------|-------|
-| 0x10-0x13 | 4 bytes | Between platform flags and type |
+| 0x10-0x13 | 4 bytes | Between version flags and type |
 | 0x18-0x62 | 75 bytes | Initialization records (4 records, structure identified) |
 | 0x36A-0x3D7 | 110 bytes | Complex nested structure with 0x571396CE pattern |
 | 0x426-0x43D | 24 bytes | Type 0x17 marker region (possibly keyboard bindings) |
@@ -425,7 +425,7 @@ The 17-byte "gaps" between settings are NOT unmapped - they are the **trailing p
 |--------|------|------|------------|-------|------|----------|
 | 0x00-0x09 | 10 | padding | Zero Padding | 0x00 | [P] | Structure analysis |
 | 0x0A-0x0D | 4 | hash | Section Hash | 0xC9876D66 (or 0x6F88B05B) | [H] | Constant per section |
-| 0x0E-0x0F | 2 | flags | Platform Flags | PC=0x050C, PS3=0x0508 | [H] | Platform diff |
+| 0x0E-0x0F | 2 | flags | Version Flags | v1.0=0x0508, v1.05=0x050C | [H] | Version diff |
 | 0x10-0x13 | 4 | value | Unknown | Varies | [L] | Observed |
 | 0x14-0x17 | 4 | type | Type Indicator | 0x00010000 | [M] | Constant observed |
 
@@ -631,7 +631,7 @@ Section 4 is PS3-exclusive and contains DualShock 3 controller mapping data.
 |--------|------|------|------------|-------|------|----------|
 | 0x00-0x09 | 10 | padding | Zero Padding | 0x00 | [P] | Structure analysis |
 | 0x0A-0x0D | 4 | hash | Section Hash | 0xB4B55039 | [H] | Constant |
-| 0x0E-0x0F | 2 | flags | Platform Flags | 0x075D | [H] | Platform identifier |
+| 0x0E-0x0F | 2 | flags | Version Flags | 0x075D | [H] | Version identifier |
 | 0x10-0x13 | 4 | value | Unknown | 0x07550000 | [L] | Observed |
 | 0x14-0x17 | 4 | type | Type Indicator | 0x00110000 | [H] | Matches Section 2 |
 | 0x18-0x60 | 73 | records | Extended Header | Property records | [M] | Structure markers |
@@ -825,11 +825,17 @@ The checksum is computed over the **compressed data only**, not including the 4-
 
 All three sections share a common header pattern at offset 0x0A-0x0F:
 
-| Section | Hash at 0x0A | Platform Flags at 0x0E |
+| Section | Hash at 0x0A | Version Flags at 0x0E |
 |---------|--------------|------------------------|
-| Section 1 | 0xBDBE3B52 | PC=0x050C, PS3=0x0508 |
-| Section 2 | 0x305AE1A8 | PC=0x050C, PS3=0x0508 |
-| Section 3 | 0xC9876D66 | PC=0x050C, PS3=0x0508 |
+| Section 1 | 0xBDBE3B52 | v1.0=0x0508, v1.05=0x050C |
+| Section 2 | 0x305AE1A8 | v1.0=0x0508, v1.05=0x050C |
+| Section 3 | 0xC9876D66 | v1.0=0x0508, v1.05=0x050C |
+
+**Key Finding:** Offset 0x0E is a VERSION flag, not a platform flag:
+- 0x08 = Version 1.0 (disc/launch version)
+- 0x0C = Version 1.05 (latest patch)
+
+PC always uses 0x0C (v1.05). PS3 may have 0x08 (v1.0) or 0x0C (v1.05) depending on patch status.
 
 These section hashes serve as type identifiers complementing Field3 in the 44-byte header.
 
@@ -943,7 +949,7 @@ Despite the cross-references above, sections are largely independent:
 |---------|------|---------|
 | 1.0 | 2025-12-27 | Initial comprehensive consolidation |
 | 2.0 | 2025-12-27 | Added detailed unmapped regions, byte counts, Ghidra function reference |
-| 3.0 | 2025-12-27 | Major update: (1) Section 1 now 96% mapped with 12 property records, (2) Added 2 new unknown unlock records at 0x2B5/0x2C7 in Section 2, (3) Explained 43-byte PC/PS3 Section 3 difference (PSN Trophy system), (4) Added section hashes and platform flags to all sections, (5) Expanded cross-section relationships |
+| 3.0 | 2025-12-27 | Major update: (1) Section 1 now 96% mapped with 12 property records, (2) Added 2 new unknown unlock records at 0x2B5/0x2C7 in Section 2, (3) Explained 43-byte PC/PS3 Section 3 difference (PSN Trophy system), (4) Added section hashes and version flags to all sections, (5) Expanded cross-section relationships |
 
 ---
 
