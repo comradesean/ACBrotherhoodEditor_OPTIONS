@@ -50,7 +50,7 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 | Language | 20 | 20 (100%) | 0 | 0 |
 | Content Unlocks | 8 | 2 | 6 | 0 |
 | Section 2 Property Records | 57 | 24 (42%) | 0 | 33 |
-| Section 2 Unknown Initialization | 5 | 0 (0%) | 0 | 5 |
+| Section 2 Unknown Platform-Variable | 5 | 0 (0%) | 0 | 5 |
 | Section 3 Property Records | 6 | 1 (17%) | 0 | 5 |
 | Progress/Internal | 1 | 0 (0%) | 0 | 1 |
 
@@ -58,7 +58,7 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 
 *Partial = Possibly Uplay-related (observed flipped in test file) but specific hash-to-reward mapping unknown*
 
-**Unknown Initialization:** 5 records with platform differences (4 of 5 differ: PC=0x00, PS3=0x01). Purpose unknown.
+**Unknown Platform-Variable:** 5 records with variable values. PC always 0x00 on fresh files. PS3 varies (0x00 or 0x01) between fresh files. Purpose unknown.
 
 ---
 
@@ -375,23 +375,24 @@ All 5 records in this group have identical values on PC and PS3.
 | 0x0455 | 0x11A757F6 | 0x00 | 0x00 | 0x0E | Unknown |
 | 0x0467 | 0x2F4ACE81 | 0x00 | 0x00 | 0x0E | Unknown |
 
-#### Unknown Initialization Records (Platform Differences)
+#### Unknown Platform-Variable Records
 
-5 records with platform-specific value differences. All use Type 0x0E.
+5 records with platform-variable values. All use Type 0x0E.
 
-| Label | Offset | Hash | PC Value | PS3 Value | Type | Notes |
-|:-----:|--------|------|:--------:|:---------:|:----:|-------|
-| A | 0x04A4 | 0x886B92CC | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
-| B | 0x04B6 | 0x49F3B683 | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
-| C | 0x04C8 | 0x707E8A46 | 0x00 | 0x00 | 0x0E | Identical on both platforms |
-| D | 0x04DA | 0x67059E05 | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
-| E | 0x04EC | 0x0364F3CC | 0x00 | 0x01 | 0x0E | PC/PS3 differ |
+| Label | Offset | Hash | PC | PS3 | Type | Notes |
+|:-----:|--------|------|:--:|:---:|:----:|-------|
+| A | 0x04A4 | 0x886B92CC | 0x00 | varies (0x00 or 0x01) | 0x0E | PC always 0x00; PS3 variable |
+| B | 0x04B6 | 0x49F3B683 | 0x00 | varies (0x00 or 0x01) | 0x0E | PC always 0x00; PS3 variable |
+| C | 0x04C8 | 0x707E8A46 | 0x00 | varies (0x00 or 0x01) | 0x0E | PC always 0x00; PS3 variable |
+| D | 0x04DA | 0x67059E05 | 0x00 | varies (0x00 or 0x01) | 0x0E | PC always 0x00; PS3 variable |
+| E | 0x04EC | 0x0364F3CC | 0x00 | varies (0x00 or 0x01) | 0x0E | PC always 0x00; PS3 variable |
 
-**Key Facts:**
+**Key Facts (based on 13 fresh PS3 OPTIONS files):**
 - All 10 unknown records (both groups) use Type 0x0E
-- Group 1 (5 records): Identical on PC and PS3 (all 0x00)
-- Group 2 (5 records): 4 of 5 differ - PC=0x00, PS3=0x01 (Records A, B, D, E)
-- Record C is the only initialization record identical on both platforms (0x00)
+- Group 1 (5 records at 0x320-0x467): Identical on PC and PS3 (all 0x00)
+- Group 2 (5 records at 0x4A4-0x4EC): PC always 0x00; PS3 varies (0x00 or 0x01) between fresh files
+- PS3 values are set at file creation time and vary between fresh saves
+- These are NOT modified by gameplay - values vary on fresh/new profile files
 - All conform to standard 18-byte record structure
 - Purpose of all 10 records is unknown
 
