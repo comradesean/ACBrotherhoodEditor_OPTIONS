@@ -557,6 +557,23 @@ typedef struct {
 _Static_assert(sizeof(Section3_PropertyRecord) == 18, "Section3_PropertyRecord must be 18 bytes");
 ```
 
+### Section 3 Property Record Summary
+
+| Offset | Hash | Type (PC) | Type (PS3) | Value | Purpose |
+|--------|------|:---------:|:----------:|:-----:|---------|
+| 0x1A | 0xBF4C2013 | 0x0E | 0x0E | 0x00 | Unknown |
+| 0x2F | 0x3B546966 | 0x0E | 0x0E | 0x01 | Unknown |
+| 0x41 | 0x4DBC7DA7 | 0x0E | 0x0E | 0x01 | Popup Dismissed Flag |
+| 0x53 | 0x5B95F10B | 0x0E | 0x0E | 0x01 | Unknown |
+| 0x65 | 0x2A4E8A90 | **0x15** | **0x00** | 0x00 | Unknown (type differs by platform) |
+| 0x77 | 0x496F8780 | - | N/A | - | Unknown (PC only) |
+
+**Key Facts:**
+- Values are identical across 21+ saves (default initialization values)
+- Record at 0x65 has different Type: 0x15 on PC, 0x00 on PS3
+- Record at 0x77 is PC only (absent on PS3)
+- Section 3 has hash at record start (+0x00), not +0x0A like Section 2
+
 ### Complete Section 3 Structure (PC)
 
 ```c
@@ -569,23 +586,24 @@ typedef struct {
     uint8_t      reserved1[8];            /* 0x10-0x17 */
 
     /* Property records region (0x18-0x4C) - 3 records identified */
-    /* Record 1: 0x18-0x29 */
-    OPTIONS_Hash record1_hash;            /* 0x1A: 0xBF4C2013 */
+    /* Record 1: 0x18-0x29 - Type 0x0E, Value 0x00 */
+    OPTIONS_Hash record1_hash;            /* 0x1A: 0xBF4C2013 - Unknown purpose */
     uint8_t      record1_data[14];        /* 0x1E-0x2B */
 
-    /* Record 2: 0x2C-0x3D */
-    OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 */
+    /* Record 2: 0x2C-0x3D - Type 0x0E, Value 0x01 */
+    OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 - Unknown purpose */
     uint8_t      record2_data[14];        /* 0x33-0x40 */
 
-    /* Record 3: 0x3E-0x4F - Gun Capacity Upgrade Record (18 bytes)
+    /* Record 3: 0x3E-0x4F - Popup Dismissed Flag Record (18 bytes)
+     * Type 0x0E, Value 0x01
      * This record follows the standard 18-byte structure.
      * Binary verified: 0B 01 0E 00 00 00 ...
      *                  ^  ^  ^
      *                  |  |  +-- Type 0x0E (boolean)
-     *                  |  +-- Value 0x01 (upgrade unlocked)
+     *                  |  +-- Value 0x01 (popup dismissed)
      *                  +-- Marker 0x0B (record start)
      */
-    OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 */
+    OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 - Popup Dismissed Flag */
     uint8_t      record3_data[6];         /* 0x45-0x4A: Part of previous record */
     uint8_t      padding_0x4b_0x4c[2];    /* 0x4B-0x4C: Padding */
 
@@ -598,16 +616,16 @@ typedef struct {
     uint8_t      gun_record_type;         /* 0x4F: 0x0E (Type 0x0E = boolean record) */
 
     /* Pre-achievement region (0x50-0x7F) - 2 more records */
-    /* Record 4: 0x50-0x61 */
-    OPTIONS_Hash record4_hash;            /* 0x53: 0x5B95F10B (both platforms) */
+    /* Record 4: 0x50-0x61 - Type 0x0E, Value 0x01 */
+    OPTIONS_Hash record4_hash;            /* 0x53: 0x5B95F10B - Unknown purpose (both platforms) */
     uint8_t      record4_data[14];        /* 0x57-0x64 */
 
-    /* Record 5: 0x62-0x73 */
-    OPTIONS_Hash record5_hash;            /* 0x65: 0x2A4E8A90 (both platforms) */
+    /* Record 5: 0x62-0x73 - Type 0x15 (PC) / 0x00 (PS3), Value 0x00 */
+    OPTIONS_Hash record5_hash;            /* 0x65: 0x2A4E8A90 - Unknown purpose (type differs by platform) */
     uint8_t      record5_data[14];        /* 0x69-0x76 */
 
     /* Record 6: 0x74-0x7F (PC only, partial) */
-    OPTIONS_Hash record6_hash;            /* 0x77: 0x496F8780 (PC only) */
+    OPTIONS_Hash record6_hash;            /* 0x77: 0x496F8780 - Unknown purpose (PC only) */
     uint8_t      record6_data[8];         /* 0x7B-0x7F */
 
     /* Achievement region - PC ONLY */
@@ -633,6 +651,9 @@ typedef struct {
  * 1. No embedded achievement bitfield (PSN Trophy API handles this)
  * 2. DLC sync flag at 0x5A instead of 0x9D
  * 3. Record 6 (0x496F8780) and achievement region omitted
+ *
+ * Platform-specific Type difference:
+ * - Record 5 (0x2A4E8A90): Type 0x00 on PS3, Type 0x15 on PC
  */
 typedef struct {
     /* Common header (0x00-0x17) */
@@ -642,11 +663,14 @@ typedef struct {
     uint8_t      reserved1[8];            /* 0x10-0x17 */
 
     /* Property records region (0x18-0x4C) - same as PC */
-    OPTIONS_Hash record1_hash;            /* 0x1A: 0xBF4C2013 */
+    /* Record 1: Type 0x0E, Value 0x00 */
+    OPTIONS_Hash record1_hash;            /* 0x1A: 0xBF4C2013 - Unknown purpose */
     uint8_t      record1_data[14];        /* 0x1E-0x2B */
-    OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 */
+    /* Record 2: Type 0x0E, Value 0x01 */
+    OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 - Unknown purpose */
     uint8_t      record2_data[14];        /* 0x33-0x40 */
-    OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 */
+    /* Record 3: Type 0x0E, Value 0x01 */
+    OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 - Popup Dismissed Flag */
     uint8_t      record3_data[6];         /* 0x45-0x4A: Part of previous record */
     uint8_t      padding_0x4b_0x4c[2];    /* 0x4B-0x4C: Padding */
 
@@ -658,14 +682,18 @@ typedef struct {
     uint8_t      gun_record_type;         /* 0x4F: 0x0E (Type 0x0E = boolean record) */
 
     /* Shared records region (0x50-0x76) */
-    OPTIONS_Hash record4_hash;            /* 0x53: 0x5B95F10B (same as PC) */
+    /* Record 4: Type 0x0E, Value 0x01 */
+    OPTIONS_Hash record4_hash;            /* 0x53: 0x5B95F10B - Unknown purpose (same as PC) */
     uint8_t      record4_data[14];        /* 0x57-0x64 */
-    OPTIONS_Hash record5_hash;            /* 0x65: 0x2A4E8A90 (same as PC) */
+    /* Record 5: Type 0x00 (PS3) vs 0x15 (PC), Value 0x00 */
+    OPTIONS_Hash record5_hash;            /* 0x65: 0x2A4E8A90 - Unknown purpose (Type differs by platform) */
     uint8_t      record5_data[8];         /* 0x69-0x70 */
+
+    /* NOTE: Record 6 (0x496F8780) is PC only - absent on PS3 */
 
     /* Platform-specific differences */
     uint8_t      ps3_flag_0x60;           /* 0x60: 0x01 (PC has 0x00) */
-    uint8_t      ps3_type_0x73;           /* 0x73: 0x00 (PC has 0x15) */
+    uint8_t      ps3_type_0x73;           /* 0x73: 0x00 (PC has 0x15) - Record 5 type difference */
 
     /* DLC sync region - different offset than PC */
     OPTIONS_Bool dlc_sync_flag;           /* 0x5A */

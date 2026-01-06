@@ -54,6 +54,8 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 | Section 3 Property Records | 6 | 1 (17%) | 0 | 5 |
 | Progress/Internal | 1 | 0 (0%) | 0 | 1 |
 
+**Section 3 Notes:** Record at 0x65 has platform-specific Type (0x15 PC, 0x00 PS3). Record at 0x77 is PC only.
+
 *Partial = Possibly Uplay-related (observed flipped in test file) but specific hash-to-reward mapping unknown*
 
 **\*\*Unknown Initialization: Constrained values with A→B dependency (hundreds of samples). PC=0x00, PS3=variable. Only 8/32 combos observed. Not independent random.**
@@ -547,18 +549,24 @@ Two content hashes discovered via 21-file differential analysis remain unresolve
 
 ### 6.2 Section 3 Property Record Hashes (Phase 1 Discovery)
 
-Six new hashes were discovered in Section 3's property record region through binary analysis:
+Six hashes were discovered in Section 3's property record region through binary analysis:
 
-| Offset | Hash Value | Platform | Purpose | Status |
-|--------|------------|----------|---------|--------|
-| 0x1A | `0xBF4C2013` | Both | Property Record 1 | Unresolved |
-| 0x2F | `0x3B546966` | Both | Property Record 2 | Unresolved |
-| 0x41 | `0x4DBC7DA7` | Both | Popup Dismissed Flag (one-time notification shown) | Resolved |
-| 0x53 | `0x5B95F10B` | Both | Property Record 4 | Unresolved |
-| 0x65 | `0x2A4E8A90` | Both | Property Record 5 | Unresolved |
-| 0x77 | `0x496F8780` | PC only | Property Record 6 | Unresolved |
+| Offset | Hash Value | Type | Value | Platform | Purpose | Status |
+|--------|------------|:----:|:-----:|----------|---------|--------|
+| 0x1A | `0xBF4C2013` | 0x0E | 0x00 | Both | Unknown | Unresolved |
+| 0x2F | `0x3B546966` | 0x0E | 0x01 | Both | Unknown | Unresolved |
+| 0x41 | `0x4DBC7DA7` | 0x0E | 0x01 | Both | Popup Dismissed Flag | Resolved |
+| 0x53 | `0x5B95F10B` | 0x0E | 0x01 | Both | Unknown | Unresolved |
+| 0x65 | `0x2A4E8A90` | PC=0x15, PS3=0x00 | 0x00 | Both | Unknown | Unresolved |
+| 0x77 | `0x496F8780` | - | - | PC only | Unknown | Unresolved |
 
-**Context:** These hashes are part of the Section 3 property record structure. Unlike Section 1 records where the hash is at +0x0A, Section 3 records have the hash at the START (+0x00) of each record.
+**Key Facts:**
+- Values are identical across 21+ saves (default initialization values)
+- Record at offset 0x65 has **different Type by platform**: 0x15 on PC, 0x00 on PS3
+- Record at offset 0x77 is **PC only** (absent on PS3)
+- Section 3 records have hash at START (+0x00), not at +0x0A like Section 2
+
+**Context:** These hashes are part of the Section 3 property record structure. Unlike Section 2 records where the hash is at +0x06, Section 3 records have the hash at the START (+0x00) of each record.
 
 **Note:** Record 6 (0x496F8780) is PC-only - PS3 Section 3 omits this record and the subsequent achievement region.
 
