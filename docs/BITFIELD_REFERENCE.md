@@ -96,9 +96,20 @@ data[0x183] = (data[0x183] & 0xFC) | (new_level & 0x03);
 
 ### Costume Bitfield (0x369)
 
-**Location:** Section 2, Offset 0x369
+**Location:** Section 2, Offset 0x369 (within 18-byte record starting at 0x368)
 **Size:** 1 byte (8 bits, 6 bits used)
-**Confidence:** [P] Proven - Ghidra: FUN_00acf240
+**Confidence:** [P] Proven - Ghidra: FUN_00acf240, Binary verification
+
+**IMPORTANT:** The costume "bitfield" at 0x369 is NOT a standalone byte. It is the VALUE byte (+0x01) within an 18-byte property record that starts at offset 0x368. This record uses **Type 0x00** (bitfield/complex value), not Type 0x0E (boolean).
+
+**Record Structure (binary verified):**
+```
+0x368: 0B 3F 00 00 00 00 00 00 3D 00 00 00 C2 EA 86 02 96 CE
+       ^  ^  ^
+       |  |  +-- Type 0x00 (bitfield/complex record, NOT 0x0E boolean)
+       |  +-- Value byte (costume bitfield): 0x3F = all unlocked
+       +-- Marker 0x0B (record start)
+```
 
 The costume bitfield tracks unlocked alternate costumes/outfits for Ezio.
 
@@ -466,9 +477,11 @@ bool enabled = (data[offset] & mask) != 0;
 |---------|--------|------|-----------|------|------------|
 | 1, 2, 3 | 0x0E-0x0F | 2 bytes | 16 | Platform Flags | [H] |
 | 2 | 0x183 | 1 byte | 2 | Action Camera Frequency | [M] |
-| 2 | 0x369 | 1 byte | 6 | Costume Bitfield | [P] |
+| 2 | 0x369* | 1 byte | 6 | Costume Bitfield (VALUE byte within 18-byte record at 0x368) | [P] |
 | 2 | 0x516-0x519 | 4 bytes | 4x8 | DLC/Update Flags | [M] |
 | 3 | 0x84-0x8A | 7 bytes | 53 | Achievement Bitfield (PC) | [P] |
+
+*Note: The costume bitfield at 0x369 is the VALUE byte within an 18-byte property record starting at 0x368. It uses Type 0x00 (bitfield/complex), not Type 0x0E (boolean).
 
 ### Mask Quick Reference
 

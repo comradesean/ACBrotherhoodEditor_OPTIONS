@@ -142,6 +142,9 @@ _Static_assert(sizeof(Section2_PropertyRecord) == 18, "Must be 18 bytes");
 
 ### Record Types and Their Structures
 
+**IMPORTANT:** All property/settings in Sections 2 and 3 follow the 18-byte record structure.
+There are NO standalone fields - every value is the VALUE byte (+0x01) within an 18-byte record.
+
 Section 2 contains 62 records per platform. There are 8 distinct types across both platforms
 (Type 0x12 is PS3-only, Type 0x16 is PC-only; both represent the same setting with hash 0xD9E10623):
 
@@ -370,21 +373,40 @@ typedef struct {
 _Static_assert(sizeof(UnlockRecord) == 18, "UnlockRecord must be 18 bytes");
 ```
 
-### Costume Bitfield
+### Costume Bitfield Record (18 bytes starting at 0x368)
+
+The costume bitfield is stored within an 18-byte property record, NOT as a standalone byte.
 
 ```c
-/* Costume Bitfield - 1 byte at offset 0x369 */
+/* Costume Record - 18 bytes starting at offset 0x368
+ * The costume "bitfield" at 0x369 is the VALUE byte within this record.
+ * This record uses Type 0x00 (bitfield/complex), NOT Type 0x0E (boolean).
+ *
+ * Binary verified: 0B 3F 00 00 00 00 00 00 3D 00 00 00 C2 EA 86 02 96 CE
+ *                  ^  ^  ^
+ *                  |  |  +-- Type 0x00 (bitfield/complex value record)
+ *                  |  +-- Value 0x3F (all costumes unlocked)
+ *                  +-- Marker 0x0B (record start)
+ */
 typedef struct {
-    uint8_t florentine_noble : 1;  /* Bit 0 (0x01) - Uplay */
-    uint8_t armor_of_altair  : 1;  /* Bit 1 (0x02) - Uplay */
-    uint8_t altairs_robes    : 1;  /* Bit 2 (0x04) - Uplay */
-    uint8_t drachen_armor    : 1;  /* Bit 3 (0x08) - Preorder */
-    uint8_t desmond          : 1;  /* Bit 4 (0x10) - Unlockable */
-    uint8_t raiden           : 1;  /* Bit 5 (0x20) - Unlockable */
-    uint8_t unused           : 2;  /* Bits 6-7 */
-} CostumeBitfield;
+    uint8_t      marker;          /* +0x00 (0x368): 0x0B - record start marker */
+    uint8_t      costume_value;   /* +0x01 (0x369): Costume bitfield value (0x00-0x3F) */
+    uint8_t      type;            /* +0x02 (0x36A): 0x00 - Type 0x00 (bitfield/complex) */
+    uint8_t      padding[3];      /* +0x03-0x05: Always zeros */
+    OPTIONS_Hash property_hash;   /* +0x06-0x09: Property identifier hash (LE) */
+    uint8_t      type_data[8];    /* +0x0A-0x11: Type-specific data region */
+} CostumeRecord;
 
-/* All costumes unlocked: 0x3F */
+_Static_assert(sizeof(CostumeRecord) == 18, "CostumeRecord must be 18 bytes");
+
+/* Costume bitfield bit definitions (value byte at offset 0x369) */
+#define COSTUME_FLORENTINE_NOBLE  0x01  /* Bit 0 - Uplay (20 pts) */
+#define COSTUME_ARMOR_OF_ALTAIR   0x02  /* Bit 1 - Uplay (20 pts) */
+#define COSTUME_ALTAIRS_ROBES     0x04  /* Bit 2 - Uplay (20 pts) */
+#define COSTUME_DRACHEN_ARMOR     0x08  /* Bit 3 - Preorder bonus */
+#define COSTUME_DESMOND           0x10  /* Bit 4 - In-game unlock */
+#define COSTUME_RAIDEN            0x20  /* Bit 5 - In-game unlock */
+#define COSTUME_ALL_UNLOCKED      0x3F  /* All 6 costumes */
 ```
 
 ### Complete Section 2 Structure
@@ -477,11 +499,11 @@ typedef struct {
     UnlockRecord unknown_unlock_4;        /* 0x2EB: hash 0x0036A2C4 - possibly Uplay */
     UnlockRecord unknown_unlock_5;        /* 0x2FD: hash 0x0052C3A9 - possibly Uplay */
     UnlockRecord unknown_unlock_6;        /* 0x30F: hash 0x000E8D04 - possibly Uplay */
-    uint8_t      reserved23[72];          /* 0x321-0x368 */
+    uint8_t      reserved23[71];          /* 0x321-0x367 */
 
-    /* Costume bitfield */
-    CostumeBitfield costumes;             /* 0x369 */
-    uint8_t      reserved24[428];         /* 0x36A-0x515 */
+    /* Costume record - 18 bytes (0x368-0x379), NOT a standalone bitfield */
+    CostumeRecord costume_record;         /* 0x368-0x379: 18-byte record, value at +0x01 (0x369) */
+    uint8_t      reserved24[412];         /* 0x37A-0x515 */
 
     /* Unknown flags (possibly DLC-related) */
     OPTIONS_Bool unknown_flag_1;          /* 0x516: purpose unknown - possibly DLC */
@@ -555,15 +577,25 @@ typedef struct {
     OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 */
     uint8_t      record2_data[14];        /* 0x33-0x40 */
 
-    /* Record 3: 0x3E-0x4F (overlaps with Uplay marker) */
+    /* Record 3: 0x3E-0x4F - Gun Capacity Upgrade Record (18 bytes)
+     * This record follows the standard 18-byte structure.
+     * Binary verified: 0B 01 0E 00 00 00 ...
+     *                  ^  ^  ^
+     *                  |  |  +-- Type 0x0E (boolean)
+     *                  |  +-- Value 0x01 (upgrade unlocked)
+     *                  +-- Marker 0x0B (record start)
+     */
     OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 */
-    uint8_t      record3_data[10];        /* 0x45-0x4E */
+    uint8_t      record3_data[6];         /* 0x45-0x4A: Part of previous record */
+    uint8_t      padding_0x4b_0x4c[2];    /* 0x4B-0x4C: Padding */
 
-    uint8_t      marker_0x4d;             /* 0x4D: 0x0B (constant) */
+    /* Gun Capacity Upgrade Record - 18 bytes starting at 0x4D */
+    uint8_t      gun_record_marker;       /* 0x4D: 0x0B (record start marker) */
     OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: Gun Capacity Upgrade - 30-point Uplay reward
+                                           * VALUE byte within 18-byte record.
                                            * Increases pistol ammo capacity. ONLY Uplay unlock in S3.
-                                           * Costume unlocks are in Section 2 bitfield (0x369). */
-    uint8_t      marker_0x4f;             /* 0x4F: 0x0E (constant) */
+                                           * Costume unlocks are in Section 2 record (0x368-0x379). */
+    uint8_t      gun_record_type;         /* 0x4F: 0x0E (Type 0x0E = boolean record) */
 
     /* Pre-achievement region (0x50-0x7F) - 2 more records */
     /* Record 4: 0x50-0x61 */
@@ -615,12 +647,15 @@ typedef struct {
     OPTIONS_Hash record2_hash;            /* 0x2F: 0x3B546966 */
     uint8_t      record2_data[14];        /* 0x33-0x40 */
     OPTIONS_Hash record3_hash;            /* 0x41: 0x4DBC7DA7 */
-    uint8_t      record3_data[10];        /* 0x45-0x4E */
+    uint8_t      record3_data[6];         /* 0x45-0x4A: Part of previous record */
+    uint8_t      padding_0x4b_0x4c[2];    /* 0x4B-0x4C: Padding */
 
-    uint8_t      marker_0x4d;             /* 0x4D: 0x0B (constant) */
+    /* Gun Capacity Upgrade Record - 18 bytes starting at 0x4D (same as PC) */
+    uint8_t      gun_record_marker;       /* 0x4D: 0x0B (record start marker) */
     OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: Gun Capacity Upgrade - 30-point Uplay reward
+                                           * VALUE byte within 18-byte record.
                                            * Same offset on PS3 as PC. ONLY Uplay unlock in S3. */
-    uint8_t      marker_0x4f;             /* 0x4F: 0x0E (constant) */
+    uint8_t      gun_record_type;         /* 0x4F: 0x0E (Type 0x0E = boolean record) */
 
     /* Shared records region (0x50-0x76) */
     OPTIONS_Hash record4_hash;            /* 0x53: 0x5B95F10B (same as PC) */

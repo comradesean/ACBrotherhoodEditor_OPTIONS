@@ -292,11 +292,18 @@ Each unlock record is 18 bytes with this structure:
 - Region-specific content
 - Debug/test flags
 
-### Costume Bitfield (0x369)
+### Costume Record (18 bytes at 0x368-0x379)
+
+**IMPORTANT:** The costume "bitfield" at 0x369 is NOT a standalone byte. It is the VALUE byte within an 18-byte property record starting at offset 0x368. This record uses **Type 0x00** (bitfield/complex), not Type 0x0E (boolean).
 
 | Offset | Size | Type | Field Name | Conf | Evidence |
 |--------|------|------|------------|------|----------|
-| 0x369 | 1 | bitfield | Costume Unlocks | [P] | Ghidra: FUN_00acf240 |
+| 0x368 | 1 | marker | Record Start | [P] | Binary: always 0x0B |
+| 0x369 | 1 | bitfield | Costume Unlocks (VALUE byte) | [P] | Ghidra: FUN_00acf240 |
+| 0x36A | 1 | type | Record Type | [P] | Binary: 0x00 (NOT 0x0E) |
+| 0x36B-0x379 | 15 | bytes | Record Data | [P] | Hash + padding |
+
+**Binary verified:** `0B 3F 00 ...` at 0x368 (marker=0x0B, value=0x3F, type=0x00)
 
 | Bit | Hex | Costume Name |
 |-----|-----|--------------|
@@ -425,13 +432,17 @@ Section 3 uses a different property record structure than Section 1. The hash ap
 | 5 | 0x65 | 0x2A4E8A90 | Both | [H] | Binary analysis |
 | 6 | 0x77 | 0x496F8780 | PC only | [H] | Binary analysis |
 
-#### Known Markers
+#### Gun Capacity Upgrade Record (18 bytes starting at 0x4D)
+
+**IMPORTANT:** The bytes at 0x4D, 0x4E, 0x4F are NOT standalone markers. They are the first three bytes of an 18-byte property record. The record follows the standard structure with marker 0x0B at +0x00, value at +0x01, and type at +0x02.
 
 | Offset | Size | Type | Field Name | Value Range | Conf | Evidence |
 |--------|------|------|------------|-------------|------|----------|
-| 0x4D | 1 | marker | Structure Marker | 0x0B | [P] | Constant value |
-| 0x4E | 1 | bool | Uplay Gun Capacity Upgrade (30 pts) | 0=No, 1=Yes | [P] | 24-file differential; ONLY Uplay unlock in Section 3 |
-| 0x4F | 1 | marker | Structure Marker | 0x0E | [P] | Constant value |
+| 0x4D | 1 | marker | Record Start Marker | 0x0B | [P] | 18-byte record structure |
+| 0x4E | 1 | bool | Uplay Gun Capacity Upgrade (VALUE byte) | 0=No, 1=Yes | [P] | 24-file differential; ONLY Uplay unlock in Section 3 |
+| 0x4F | 1 | type | Record Type | 0x0E | [P] | Type 0x0E = boolean record |
+
+**Binary verified:** `0B 01 0E 00 00 00 ...` at 0x4D (marker=0x0B, value=0x01, type=0x0E)
 
 #### PC vs PS3 Differences in Pre-Achievement Region
 
@@ -808,9 +819,11 @@ All three sections share a common header pattern at offset 0x0A-0x0F:
 
 These section hashes serve as type identifiers complementing Field3 in the 44-byte header.
 
-### Section 2 Costume Bitfield (0x369)
+### Section 2 Costume Record (0x368-0x379)
 
-The costume bitfield at offset 0x369 is the authoritative control for costume unlocks:
+**IMPORTANT:** The costume "bitfield" at 0x369 is the VALUE byte within an 18-byte property record starting at 0x368. This record uses **Type 0x00** (bitfield/complex), not Type 0x0E (boolean).
+
+The value byte at offset 0x369 is the authoritative control for costume unlocks:
 
 | Bit | Mask | Costume |
 |-----|------|---------|
@@ -821,18 +834,22 @@ The costume bitfield at offset 0x369 is the authoritative control for costume un
 | 4 | 0x10 | Desmond |
 | 5 | 0x20 | Raiden |
 
-### Section 3: Uplay Gun Capacity Upgrade
+### Section 3: Uplay Gun Capacity Upgrade Record (0x4D-0x5E)
 
-The **Gun Capacity Upgrade** is a 30-point Uplay reward that increases Ezio's pistol ammunition capacity. Unlike costume Uplay rewards (stored in Section 2's bitfield at 0x369), this gameplay upgrade is stored in **Section 3** (Game Progress):
+The **Gun Capacity Upgrade** is a 30-point Uplay reward that increases Ezio's pistol ammunition capacity. Unlike costume Uplay rewards (stored in Section 2's record at 0x368), this gameplay upgrade is stored in **Section 3** (Game Progress).
+
+**IMPORTANT:** The value at 0x4E is the VALUE byte within an 18-byte property record starting at 0x4D. This record uses **Type 0x0E** (boolean).
 
 ```
 Section 3 (Game Progress)
-└── 0x4E: Gun Capacity Upgrade (30-point Uplay reward)
-         0x00 = Not redeemed
-         0x01 = Redeemed (increased pistol capacity)
+├── 0x4D: Record marker (0x0B - record start)
+├── 0x4E: Gun Capacity Upgrade VALUE byte (30-point Uplay reward)
+│         0x00 = Not redeemed
+│         0x01 = Redeemed (increased pistol capacity)
+└── 0x4F: Record type (0x0E - boolean record)
 ```
 
-**Key distinction:** This is the ONLY Uplay unlock stored in Section 3. All other Uplay costume rewards are in Section 2.
+**Key distinction:** This is the ONLY Uplay unlock stored in Section 3. All other Uplay costume rewards are in Section 2 (record at 0x368).
 
 ### Unknown Uplay-Related Records (0x2D9, 0x2EB, 0x2FD, 0x30F)
 
