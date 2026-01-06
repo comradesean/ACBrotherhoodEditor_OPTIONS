@@ -400,10 +400,10 @@ _Static_assert(sizeof(UnlockRecord) == 18, "UnlockRecord must be 18 bytes");
 | 0x2A3 | Templar Lair 2 | `0x006FF456` | Tivoli Aqueduct |
 | 0x2B5 | Unknown #1 | `0x000B953B` | Discovered via differential analysis |
 | 0x2C7 | Unknown #2 | `0x001854EC` | Discovered via differential analysis |
-| 0x2D9 | Uplay Reward 1 | `0x0021D9D0` | Florentine Noble Attire |
-| 0x2EB | Uplay Reward 2 | `0x0036A2C4` | Armor of Altair |
-| 0x2FD | Uplay Reward 3 | `0x0052C3A9` | Altair's Robes |
-| 0x30F | Uplay Reward 4 | `0x000E8D04` | Hellequin MP Character |
+| 0x2D9 | Possibly Uplay | `0x0021D9D0` | Purpose unknown (flips in Uplay test files) |
+| 0x2EB | Possibly Uplay | `0x0036A2C4` | Purpose unknown (flips in Uplay test files) |
+| 0x2FD | Possibly Uplay | `0x0052C3A9` | Purpose unknown (flips in Uplay test files) |
+| 0x30F | Possibly Uplay | `0x000E8D04` | Purpose unknown (flips in Uplay test files) |
 
 **Note:** Unknown records #1 and #2 were discovered through 21-file language differential analysis. Hashes do not match known Uplay or DLC content - possibly beta/cut content or region-specific unlocks.
 
@@ -758,10 +758,10 @@ All sections share a common header pattern with a section-specific hash at offse
 | `0x006FF456` | Templar Lair: Tivoli Aqueduct |
 | `0x000B953B` | Unknown Unlock #1 (discovered via differential) |
 | `0x001854EC` | Unknown Unlock #2 (discovered via differential) |
-| `0x0021D9D0` | Florentine Noble Attire |
-| `0x0036A2C4` | Armor of Altair |
-| `0x0052C3A9` | Altair's Robes |
-| `0x000E8D04` | Hellequin MP Character |
+| `0x0021D9D0` | Possibly Uplay (purpose unknown) |
+| `0x0036A2C4` | Possibly Uplay (purpose unknown) |
+| `0x0052C3A9` | Possibly Uplay (purpose unknown) |
+| `0x000E8D04` | Possibly Uplay (purpose unknown) |
 | `0x6F88B05B` | Section 3 progress/achievement constant |
 
 ---

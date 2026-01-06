@@ -282,10 +282,10 @@ Each unlock record is 18 bytes with this structure:
 | 0x2A3 | Templar Lair: Tivoli Aqueduct | 0x006FF456 | [P] | Ghidra + Differential |
 | 0x2B5 | Unknown Unlock #1 | 0x000B953B | [M] | Differential (new discovery) |
 | 0x2C7 | Unknown Unlock #2 | 0x001854EC | [M] | Differential (new discovery) |
-| 0x2D9 | Uplay: Florentine Noble Attire | 0x0021D9D0 | [H] | Differential + Context |
-| 0x2EB | Uplay: Armor of Altair | 0x0036A2C4 | [H] | Differential + Context |
-| 0x2FD | Uplay: Altair's Robes | 0x0052C3A9 | [H] | Differential + Context |
-| 0x30F | Uplay: Hellequin MP Character | 0x000E8D04 | [H] | Differential + Context |
+| 0x2D9 | Possibly Uplay (purpose unknown) | 0x0021D9D0 | [M] | Flips in Uplay test files |
+| 0x2EB | Possibly Uplay (purpose unknown) | 0x0036A2C4 | [M] | Flips in Uplay test files |
+| 0x2FD | Possibly Uplay (purpose unknown) | 0x0052C3A9 | [M] | Flips in Uplay test files |
+| 0x30F | Possibly Uplay (purpose unknown) | 0x000E8D04 | [M] | Flips in Uplay test files |
 
 **Note:** Unknown Unlock #1 (0x2B5) and #2 (0x2C7) were discovered through comprehensive 21-file language differential analysis. Their hashes (0x000B953B and 0x001854EC) don't match any known Uplay or DLC content. These may be:
 - Beta/cut content unlocks
@@ -373,10 +373,10 @@ The 17-byte "gaps" between settings are NOT unmapped - they are the **trailing p
 | 0x27F | 0x41027E09 | HUD: Tutorial | [H] |
 | 0x291 | 0x788F42CC | Templar Lair: Trajan Market | [H] |
 | 0x2A3 | 0x6FF4568F | Templar Lair: Tivoli Aqueduct | [H] |
-| 0x2D9 | 0x21D9D09F | Uplay: Florentine Noble | [H] |
-| 0x2EB | 0x36A2C4DC | Uplay: Armor of Altair | [H] |
-| 0x2FD | 0x52C3A915 | Uplay: Altair Robes | [H] |
-| 0x30F | 0x0E8D040F | Uplay: Hellequin | [H] |
+| 0x2D9 | 0x21D9D09F | Possibly Uplay (purpose unknown) | [M] |
+| 0x2EB | 0x36A2C4DC | Possibly Uplay (purpose unknown) | [M] |
+| 0x2FD | 0x52C3A915 | Possibly Uplay (purpose unknown) | [M] |
+| 0x30F | 0x0E8D040F | Possibly Uplay (purpose unknown) | [M] |
 
 ### Remaining Unmapped Regions (Section 2)
 
@@ -430,7 +430,7 @@ Section 3 uses a different property record structure than Section 1. The hash ap
 | Offset | Size | Type | Field Name | Value Range | Conf | Evidence |
 |--------|------|------|------------|-------------|------|----------|
 | 0x4D | 1 | marker | Structure Marker | 0x0B | [P] | Constant value |
-| 0x4E | 1 | bool | Uplay Gun Capacity Upgrade | 0=No, 1=Yes | [P] | 24-file differential |
+| 0x4E | 1 | bool | Uplay Gun Capacity Upgrade (30 pts) | 0=No, 1=Yes | [P] | 24-file differential; ONLY Uplay unlock in Section 3 |
 | 0x4F | 1 | marker | Structure Marker | 0x0E | [P] | Constant value |
 
 #### PC vs PS3 Differences in Pre-Achievement Region
@@ -808,23 +808,35 @@ All three sections share a common header pattern at offset 0x0A-0x0F:
 
 These section hashes serve as type identifiers complementing Field3 in the 44-byte header.
 
-### Section 2 → Section 3: Uplay Reward Flow
+### Section 2 Costume Bitfield (0x369)
+
+The costume bitfield at offset 0x369 is the authoritative control for costume unlocks:
+
+| Bit | Mask | Costume |
+|-----|------|---------|
+| 0 | 0x01 | Florentine Noble Attire |
+| 1 | 0x02 | Armor of Altair |
+| 2 | 0x04 | Altair's Robes |
+| 3 | 0x08 | Drachen Armor |
+| 4 | 0x10 | Desmond |
+| 5 | 0x20 | Raiden |
+
+### Section 3: Uplay Gun Capacity Upgrade
+
+The **Gun Capacity Upgrade** is a 30-point Uplay reward that increases Ezio's pistol ammunition capacity. Unlike costume Uplay rewards (stored in Section 2's bitfield at 0x369), this gameplay upgrade is stored in **Section 3** (Game Progress):
 
 ```
-Section 2 (Unlock Records)          Section 3 (Progress State)
-├── 0x2D9: Florentine Noble  ──┬──→ 0x369 bit 0 (Costume)
-├── 0x2EB: Armor of Altair   ──┼──→ 0x369 bit 1 (Costume)
-├── 0x2FD: Altair's Robes    ──┼──→ 0x369 bit 2 (Costume)
-├── 0x30F: Hellequin MP      ──┘    (MP character, no costume bit)
-└── (Gun Capacity in S3)     ────→ 0x4E (Uplay Gun Upgrade flag)
+Section 3 (Game Progress)
+└── 0x4E: Gun Capacity Upgrade (30-point Uplay reward)
+         0x00 = Not redeemed
+         0x01 = Redeemed (increased pistol capacity)
 ```
 
-### Section 2 Costume Bitfield → Uplay Costumes
+**Key distinction:** This is the ONLY Uplay unlock stored in Section 3. All other Uplay costume rewards are in Section 2.
 
-- Costume bitfield at 0x369 includes Uplay-unlocked costumes
-- Bit 0 (Florentine Noble Attire) corresponds to 0x2D9 unlock
-- Bit 1 (Armor of Altair) corresponds to 0x2EB unlock
-- Bit 2 (Altair's Robes) corresponds to 0x2FD unlock
+### Unknown Uplay-Related Records (0x2D9, 0x2EB, 0x2FD, 0x30F)
+
+The unlock records at offsets 0x2D9, 0x2EB, 0x2FD, and 0x30F were observed to flip (0x00 to 0x01) in Uplay test files. However, their specific purpose is **UNKNOWN**. They do NOT directly control costume unlocks - the costume bitfield at 0x369 is the authoritative mechanism for that.
 
 ### Section 1 → Section 3: Profile State Correlation
 

@@ -315,10 +315,10 @@ All HUD toggles follow the same boolean pattern:
 | Templar Lair 2 (Aqueduct) | S2 | 0x2A3 | bool | 0x00/0x01 | 0x00 | [P] |
 | Unknown Unlock #1 | S2 | 0x2B5 | bool | 0x00/0x01 | 0x00 | [M] |
 | Unknown Unlock #2 | S2 | 0x2C7 | bool | 0x00/0x01 | 0x00 | [M] |
-| Uplay: Florentine Noble | S2 | 0x2D9 | bool | 0x00/0x01 | 0x00 | [H] |
-| Uplay: Armor of Altair | S2 | 0x2EB | bool | 0x00/0x01 | 0x00 | [H] |
-| Uplay: Altair's Robes | S2 | 0x2FD | bool | 0x00/0x01 | 0x00 | [H] |
-| Uplay: Hellequin MP | S2 | 0x30F | bool | 0x00/0x01 | 0x00 | [H] |
+| Possibly Uplay (unknown) | S2 | 0x2D9 | bool | 0x00/0x01 | 0x00 | [M] |
+| Possibly Uplay (unknown) | S2 | 0x2EB | bool | 0x00/0x01 | 0x00 | [M] |
+| Possibly Uplay (unknown) | S2 | 0x2FD | bool | 0x00/0x01 | 0x00 | [M] |
+| Possibly Uplay (unknown) | S2 | 0x30F | bool | 0x00/0x01 | 0x00 | [M] |
 
 ### DLC/Update Flags
 
@@ -352,11 +352,13 @@ All HUD toggles follow the same boolean pattern:
 | 0x89 | 8/8 | Multiplayer (41-48) |
 | 0x8A | 5/8 | MP + DLC (49-53), bits 5-7 unused |
 
-### Uplay Gun Upgrade
+### Uplay Gun Capacity Upgrade (30 Upoints)
 
 | Field | Section | Offset | Type | Valid Values | Default | Conf |
 |-------|---------|--------|------|--------------|---------|------|
 | Gun Capacity Upgrade | S3 | 0x4E | bool | 0x00/0x01 | 0x00 | [P] |
+
+**Note:** This is the ONLY Uplay equipment upgrade stored in Section 3. The upgrade increases Ezio's pistol ammunition capacity. Unlike costume Uplay rewards (which are stored in Section 2's bitfield at 0x369), this gameplay upgrade is tracked separately in the game progress section.
 
 ### DLC Sync Flag
 
@@ -562,10 +564,11 @@ typedef enum {
 
 Certain fields must be consistent with each other:
 
-1. **Costume Bitfield vs Unlock Records:**
-   - If 0x2D9 (Florentine Noble) = 0x01, then 0x369 bit 0 should be set
-   - If 0x2EB (Armor of Altair) = 0x01, then 0x369 bit 1 should be set
-   - If 0x2FD (Altair's Robes) = 0x01, then 0x369 bit 2 should be set
+1. **Costume Bitfield (0x369) controls costume unlocks:**
+   - Bit 0 (0x01) = Florentine Noble Attire
+   - Bit 1 (0x02) = Armor of Altair
+   - Bit 2 (0x04) = Altair's Robes
+   - Note: The unlock records at 0x2D9, 0x2EB, 0x2FD, 0x30F are Uplay-related but their specific purpose is UNKNOWN. They flip in Uplay test files but do NOT directly control costume unlocks.
 
 2. **Profile State vs Progress State:**
    - If S1:0x51 = 0x06 (All rewards), then:

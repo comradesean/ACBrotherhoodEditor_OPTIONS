@@ -53,14 +53,12 @@ All three sections use identical platform flags within the same file.
 │  │    Section 2     │                                         │      │
 │  │  Game Settings   │                                         │      │
 │  │                  │                                         │      │
-│  │ Unlock Records:  │                                         │      │
-│  │ • 0x2D9 ─────────┼──→ Florentine Noble ──┐                 │      │
-│  │ • 0x2EB ─────────┼──→ Armor of Altair ───┼─→ Costume      │      │
-│  │ • 0x2FD ─────────┼──→ Altair's Robes ────┘   Bitfield     │      │
-│  │ • 0x30F: Hellequin (MP, no costume)         @ 0x369       │      │
-│  │                  │                                         │      │
 │  │ Costume Bitfield │                                         │      │
-│  │ @ 0x369         │                                         │      │
+│  │ @ 0x369:         │                                         │      │
+│  │ • Bit 0 (0x01) ──┼──→ Florentine Noble Attire              │      │
+│  │ • Bit 1 (0x02) ──┼──→ Armor of Altair                      │      │
+│  │ • Bit 2 (0x04) ──┼──→ Altair's Robes                       │      │
+│  │                  │                                         │      │
 │  └──────────────────┘                                         │      │
 │           │                                                   │      │
 │           │ Uplay rewards link                                │      │
@@ -88,38 +86,41 @@ All three sections use identical platform flags within the same file.
 
 ## Detailed Relationships
 
-### 1. Section 2 → Section 3: Uplay Reward Flow
+### 1. Section 2 Costume Bitfield (0x369)
 
-The Uplay reward system spans both sections:
+The costume bitfield at offset 0x369 directly controls costume unlocks:
 
-| Section 2 Unlock | Hash | Section 3 Effect | Section 2 Effect |
-|------------------|------|------------------|------------------|
-| 0x2D9: Florentine Noble | `0x0021D9D0` | None | 0x369 bit 0 |
-| 0x2EB: Armor of Altair | `0x0036A2C4` | None | 0x369 bit 1 |
-| 0x2FD: Altair's Robes | `0x0052C3A9` | None | 0x369 bit 2 |
-| 0x30F: Hellequin MP | `0x000E8D04` | None | (MP character) |
-| (Gun Capacity) | N/A | 0x4E = 0x01 | N/A (in S3) |
+| Bit | Mask | Costume | Source |
+|-----|------|---------|--------|
+| 0 | 0x01 | Florentine Noble Attire | Uplay (20 pts) |
+| 1 | 0x02 | Armor of Altair | Uplay (20 pts) |
+| 2 | 0x04 | Altair's Robes | Uplay (20 pts) |
+| 3 | 0x08 | Drachen Armor | Preorder bonus |
+| 4 | 0x10 | Desmond | In-game unlock |
+| 5 | 0x20 | Raiden | In-game unlock |
 
-**Flow:**
-1. User redeems Uplay reward
-2. Game sets unlock record flag in Section 2
-3. For costume rewards, costume bitfield at 0x369 is also set
-4. Gun Capacity Upgrade (30-point reward) sets flag in Section 3
+### 2. Section 3: Uplay Gun Capacity Upgrade
 
-### 2. Section 2 Costume Bitfield → Uplay Unlock Records
+The **Gun Capacity Upgrade** is a 30-point Uplay reward that increases Ezio's pistol ammunition capacity.
 
-Direct correlation between costume bits and unlock records:
+**Key distinction:** This is the ONLY Uplay unlock stored in Section 3. All costume Uplay rewards (Florentine Noble Attire, Armor of Altair, Altair's Robes) are stored in Section 2's costume bitfield at offset 0x369.
 
-| Bit | Costume | Corresponding Unlock Record |
-|-----|---------|----------------------------|
-| 0 (0x01) | Florentine Noble Attire | 0x2D9 |
-| 1 (0x02) | Armor of Altair | 0x2EB |
-| 2 (0x04) | Altair's Robes | 0x2FD |
-| 3 (0x08) | Drachen Armor | (Preorder, no unlock record) |
-| 4 (0x10) | Desmond | (In-game unlock, no record) |
-| 5 (0x20) | Raiden | (In-game unlock, no record) |
+| Field | Section | Offset | Value |
+|-------|---------|--------|-------|
+| Gun Capacity Upgrade | S3 | 0x4E | 0x00=Not redeemed, 0x01=Redeemed |
 
-### 3. Section 1 ↔ Section 3: Profile State Correlation
+### 3. Unknown Uplay-Related Records
+
+The unlock records at 0x2D9, 0x2EB, 0x2FD, and 0x30F flip in Uplay test files, but their specific purpose is **UNKNOWN**. They do NOT directly control costume unlocks - the costume bitfield at 0x369 is the authoritative mechanism.
+
+| Section 2 Offset | Hash | Purpose |
+|------------------|------|---------|
+| 0x2D9 | `0x0021D9D0` | Possibly Uplay (unknown) |
+| 0x2EB | `0x0036A2C4` | Possibly Uplay (unknown) |
+| 0x2FD | `0x0052C3A9` | Possibly Uplay (unknown) |
+| 0x30F | `0x000E8D04` | Possibly Uplay (unknown) |
+
+### 4. Section 1 ↔ Section 3: Profile State Correlation
 
 The Profile State Flag in Section 1 correlates with Section 3's DLC Sync Flag:
 
@@ -236,7 +237,7 @@ Section 4 is completely independent:
 When modifying OPTIONS files, validate:
 
 1. **Costume Consistency:** If modifying unlock record at 0x2D9/0x2EB/0x2FD, also update costume bitfield at 0x369
-2. **Uplay Gun Upgrade:** Section 3 offset 0x4E should reflect 30-point Uplay reward status
+2. **Uplay Gun Capacity Upgrade:** Section 3 offset 0x4E should reflect 30-point Uplay reward status (this is the ONLY Uplay unlock in Section 3)
 3. **Profile State:** If setting Section 3 to "all rewards," consider updating Section 1:0x51 to 0x06
 4. **Platform Flags:** All sections should have matching platform flags (0x050C or 0x0508)
 5. **Checksums:** Update each modified section's checksum independently
@@ -248,7 +249,7 @@ When modifying OPTIONS files, validate:
 | Relationship | Source | Target | Type |
 |--------------|--------|--------|------|
 | Uplay Costume → Bitfield | S2:0x2D9/2EB/2FD | S2:0x369 | Redundant state |
-| Uplay Gun → Progress | (Uplay) | S3:0x4E | Direct flag |
+| Uplay Gun Capacity (30 pts) | (Uplay) | S3:0x4E | Direct flag - ONLY Uplay unlock in Section 3 |
 | Profile State ↔ DLC Sync | S1:0x51 | S3:0x9D | Correlated state |
 | Language Index → Hash | S2:0x8E/0xA7 | S2:0x92/0xAB | Lookup pair |
 | Platform Flags | All sections | Header 0x0E | Consistent value |
