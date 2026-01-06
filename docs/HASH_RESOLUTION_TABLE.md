@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Hash Resolution Table
 
-**Document Version:** 1.2
-**Date:** 2025-12-27
-**Status:** Comprehensive Hash Reference with Algorithm Analysis (Phase 1 + Phase 2 Updates)
+**Document Version:** 1.4
+**Date:** 2026-01-06
+**Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1 + Phase 2 + Phase 3 Analysis)
 **Research Method:** Ghidra Decompilation, Differential Analysis, Algorithm Testing, Binary Analysis
 
 ---
@@ -50,8 +50,11 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 | Language | 20 | 20 (100%) | 0 |
 | Content Unlocks | 8 | 6 (75%) | 2 |
 | Section 2 Property Records | 57 | 24 (42%) | 33 |
-| Section 3 Property Records | 6 | 0 (0%) | 6 |
+| Section 2 Unknown Initialization | 5 | 5 (100%)* | 0 |
+| Section 3 Property Records | 6 | 1 (17%) | 5 |
 | Progress/Internal | 1 | 0 (0%) | 1 |
+
+*\*Unknown Initialization flags: PC version consistently initializes to 0; PS3 version shows random values on fresh saves (likely uninitialized memory bug).*
 
 ---
 
@@ -272,75 +275,191 @@ typedef struct {
 
 ---
 
-## 5.5 Section 2 Property Hashes (Phase 2 Discovery)
+## 5.5 Section 2 Complete Hash Reference (Phase 2/3 Discovery)
 
-Phase 2 analysis discovered that Section 2 uses 18-byte property records, each containing a unique 4-byte hash at offset +0x05. **57 unique property hashes** were identified.
+Section 2 contains **62 records** per platform with **58 unique hashes** across 8 record types.
+Each record is 18 bytes with the hash at offset +0x06.
 
-### 5.5.1 Mapped Property Hashes (24 total)
+### 5.5.1 Summary Statistics
 
-| Offset | Hash | Purpose | Type |
-|--------|------|---------|------|
-| 0x13B | 0xA15FACF2 | Invert 3P X axis | 0x0E |
-| 0x14D | 0xC36B150F | Invert 3P Y axis | 0x0E |
-| 0x15F | 0x9CCE0247 | Invert 1P X axis | 0x0E |
-| 0x171 | 0x56932719 | Invert 1P Y axis | 0x0E |
-| 0x183 | 0x962BD533 | Action Camera Frequency | 0x0E |
-| 0x195 | 0x7ED0EABB | Brightness | 0x0E |
-| 0x1A7 | 0xDE6CD4AB | Blood toggle | 0x0E |
-| 0x1B9 | 0xED915BD4 | Flying Machine Invert | 0x0E |
-| 0x1CB | 0xF20B5679 | Cannon Invert X | 0x0E |
-| 0x1DD | 0xC9762625 | Cannon Invert Y | 0x0E |
-| 0x1EF | 0x039BEE69 | HUD: Health Meter | 0x0E |
-| 0x201 | 0x0E04FA13 | HUD: Controls | 0x0E |
-| 0x213 | 0xF3ED28F7 | HUD: Updates | 0x0E |
-| 0x225 | 0xA3C6D1B9 | HUD: Weapon | 0x0E |
-| 0x237 | 0x761E3CE0 | HUD: Mini-Map | 0x0E |
-| 0x249 | 0x12F43A92 | HUD: Money | 0x0E |
-| 0x26D | 0x40EF7C8B | HUD: SSI | 0x0E |
-| 0x27F | 0x41027E09 | HUD: Tutorial | 0x0E |
-| 0x291 | 0x788F42CC | Templar Lair: Trajan Market | 0x0E |
-| 0x2A3 | 0x6FF4568F | Templar Lair: Tivoli Aqueduct | 0x0E |
-| 0x2D9 | 0x21D9D09F | Uplay: Florentine Noble | 0x0E |
-| 0x2EB | 0x36A2C4DC | Uplay: Armor of Altair | 0x0E |
-| 0x2FD | 0x52C3A915 | Uplay: Altair Robes | 0x0E |
-| 0x30F | 0x0E8D040F | Uplay: Hellequin | 0x0E |
+| Category | Count | Percentage |
+|----------|-------|------------|
+| Total unique hashes | 58 | 100% |
+| Identified/mapped | 35 | 60% |
+| Unknown/unmapped | 23 | 40% |
 
-### 5.5.2 Unmapped Property Hashes (33 total)
+### 5.5.2 Type 0x0E - Boolean Settings (37 records)
 
-Located in the post-costume region (0x36A-0x515), these remain unresolved:
+#### Control Settings
 
-| Offset | Hash | Type | Notes |
-|--------|------|------|-------|
-| 0x3D8 | 0x11854ADA | 0x0E | Unknown |
-| 0x3EA | 0x7ACF45C6 | 0x11 | Unknown |
-| 0x3FF | 0xF44B5195 | 0x11 | Unknown |
-| 0x414 | 0x5DEBF8DE | 0x11 | Unknown |
-| 0x426 | 0xD92D49F7 | 0x17 | Type 0x17 - possibly keyboard bindings |
-| 0x444 | 0x000C0C40 | 0x0E | Low hash - possible MP setting |
-| 0x456 | 0x11A757F6 | 0x0E | Unknown |
-| 0x468 | 0x2F4ACE81 | 0x0E | Unknown |
-| 0x47A | 0xD4C878C7 | 0x11 | Unknown |
-| 0x493 | 0x528947F4 | 0x0E | Unknown |
-| 0x4A5 | 0x886B92CC | 0x0E | PS3 Toggle A |
-| 0x4B7 | 0x49F3B683 | 0x0E | PS3 Toggle B |
-| 0x4C9 | 0x707E8A46 | 0x0E | PS3 Toggle C |
-| 0x4DB | 0x67059E05 | 0x0E | PS3 Toggle D |
-| 0x4ED | 0x0364F3CC | 0x0E | PS3 Toggle E |
+| Offset | Hash | Setting | PC | PS3 | Byte10 |
+|--------|------|---------|:--:|:---:|:------:|
+| 0x013A | 0xA15FACF2 | Invert 3P X axis | 0x00 | 0x00 | 0x00 |
+| 0x014C | 0xC36B150F | Invert 3P Y axis | 0x00 | 0x00 | 0x00 |
+| 0x015E | 0x9CCE0247 | Invert 1P X axis | 0x00 | 0x00 | 0x00 |
+| 0x0170 | 0x56932719 | Invert 1P Y axis | 0x00 | 0x00 | **0x03** |
+| 0x0182 | 0x962BD533 | Action Camera Frequency | 0x02 | 0x02 | **0x03** |
+| 0x01B8 | 0xED915BD4 | Flying Machine Invert | 0x01 | 0x01 | 0x00 |
+| 0x01CA | 0xF20B5679 | Cannon Invert X | 0x00 | 0x00 | 0x00 |
+| 0x01DC | 0xC9762625 | Cannon Invert Y | 0x00 | 0x00 | 0x00 |
 
-*Note: Additional hashes exist in the 0x36A-0x3D7 and other regions but were not fully enumerated.*
+#### Display Settings
 
-### 5.5.3 Property Hash Structure
+| Offset | Hash | Setting | PC | PS3 | Byte10 |
+|--------|------|---------|:--:|:---:|:------:|
+| 0x0194 | 0x7ED0EABB | Brightness | 0x05 | 0x05 | 0x00 |
+| 0x01A6 | 0xDE6CD4AB | Blood toggle | 0x01 | 0x01 | 0x00 |
+
+#### HUD Settings
+
+| Offset | Hash | Setting | PC | PS3 | Byte10 |
+|--------|------|---------|:--:|:---:|:------:|
+| 0x01EE | 0x039BEE69 | HUD: Health Meter | 0x01 | 0x01 | 0x00 |
+| 0x0200 | 0x0E04FA13 | HUD: Controls | 0x01 | 0x01 | 0x00 |
+| 0x0212 | 0xF3ED28F7 | HUD: Updates | 0x01 | 0x01 | 0x00 |
+| 0x0224 | 0xA3C6D1B9 | HUD: Weapon | 0x01 | 0x01 | 0x00 |
+| 0x0236 | 0x761E3CE0 | HUD: Mini-Map | 0x01 | 0x01 | 0x00 |
+| 0x0248 | 0x12F43A92 | HUD: Money | 0x01 | 0x01 | 0x00 |
+| 0x025A | 0x0F2DBE58 | HUD: Unknown | 0x01 | 0x01 | 0x00 |
+| 0x026C | 0x40EF7C8B | HUD: SSI | 0x01 | 0x01 | 0x00 |
+| 0x027E | 0x41027E09 | HUD: Tutorial | 0x01 | 0x01 | 0x00 |
+
+#### Templar Lairs
+
+| Offset | Hash | Setting | PC | PS3 | Byte10 |
+|--------|------|---------|:--:|:---:|:------:|
+| 0x0290 | 0x788F42CC | Templar Lair: Trajan Market | 0x01 | 0x01 | 0x00 |
+| 0x02A2 | 0x6FF4568F | Templar Lair: Tivoli Aqueduct | 0x01 | 0x01 | 0x00 |
+| 0x02B4 | 0x0B953B46 | Unknown Unlock Slot #1 | 0x00 | 0x00 | 0x00 |
+| 0x02C6 | 0x1854EC5A | Unknown Unlock Slot #2 | 0x00 | 0x00 | 0x00 |
+
+#### Uplay Rewards (INFERRED - not confirmed)
+
+These mappings are inferred based on position after Templar Lairs. The costume bitfield
+at 0x369 has confirmed bit positions, but the hash-to-reward mappings below are unconfirmed.
+
+| Offset | Hash | Inferred Setting | PC | PS3 | Byte10 | Confidence |
+|--------|------|------------------|:--:|:---:|:------:|:----------:|
+| 0x02D8 | 0x21D9D09F | Uplay Reward #1 (Florentine?) | 0x01 | 0x01 | 0x00 | MEDIUM |
+| 0x02EA | 0x36A2C4DC | Uplay Reward #2 (Armor Altair?) | 0x01 | 0x01 | 0x00 | MEDIUM |
+| 0x02FC | 0x52C3A915 | Uplay Reward #3 (Altair Robes?) | 0x01 | 0x01 | 0x00 | MEDIUM |
+| 0x030E | 0x0E8D040F | Uplay Reward #4 (Hellequin?) | 0x01 | 0x01 | 0x00 | LOW |
+
+**Note:** Hellequin is a multiplayer character, NOT a costume. It would not appear in the
+costume bitfield at 0x369. The 4th Uplay reward hash remains unconfirmed.
+
+**Confirmed (Costume Bitfield 0x369):**
+- Bit 0 (0x01): Florentine Noble Attire
+- Bit 1 (0x02): Armor of Altair
+- Bit 2 (0x04): Altair's Robes
+- Bit 3 (0x08): Drachen Armor (preorder, not Uplay)
+
+#### Unknown Type 0x0E Records
+
+| Offset | Hash | PC | PS3 | Notes |
+|--------|------|:--:|:---:|-------|
+| 0x0320 | 0xC25CE923 | 0x00 | 0x00 | Unknown |
+| 0x0332 | 0x196CAF1F | 0x00 | 0x00 | Unknown |
+| 0x0344 | 0x55BEEF7D | 0x00 | 0x00 | Unknown |
+| 0x0455 | 0x11A757F6 | 0x00 | 0x00 | Unknown |
+| 0x0467 | 0x2F4ACE81 | 0x00 | 0x00 | Unknown |
+
+#### Unknown Initialization (PC=0, PS3=random)
+
+| Offset | Hash | PC | PS3 | Notes |
+|--------|------|:--:|:---:|-------|
+| 0x04A4 | 0x886B92CC | 0x00 | 0x01 | Uninitialized memory on PS3 |
+| 0x04B6 | 0x49F3B683 | 0x00 | 0x01 | Uninitialized memory on PS3 |
+| 0x04C8 | 0x707E8A46 | 0x00 | 0x00 | Uninitialized memory on PS3 |
+| 0x04DA | 0x67059E05 | 0x00 | 0x01 | Uninitialized memory on PS3 |
+| 0x04EC | 0x0364F3CC | 0x00 | 0x01 | Uninitialized memory on PS3 |
+
+### 5.5.3 Type 0x11 - Integer Settings (4 records)
+
+Byte 0x10 contains the actual integer value, not a flag.
+
+| Offset | Hash | Value (Byte10) | PC | PS3 | Notes |
+|--------|------|----------------|:--:|:---:|-------|
+| 0x00FE | 0xC00434A6 | 10 | ✓ | ✓ | Unknown purpose |
+| 0x0356 | 0x9C81BB39 | 7 | ✓ | ✓ | Unknown purpose |
+| 0x03E9 | 0x7ACF45C6 | 7 | ✓ | ✓ | Unknown purpose |
+| 0x0479 | 0xD4C878C7 | 6 | ✓ | ✓ | Unknown purpose |
+
+### 5.5.4 Type 0x00 - Complex/Container Records (18 records)
+
+These records have variable data in the trailing bytes region.
+
+| Offset | Hash | Value | Byte10 | Notes |
+|--------|------|:-----:|:------:|-------|
+| 0x0026 | 0x8E000003 | 0x00 | 0x78 | Internal structure |
+| 0x0062 | (see Type 0x15) | - | - | - |
+| 0x008D | 0x1550CC97 | 0x01 | 0x2E | Language-related |
+| 0x00A6 | 0x1150CC97 | 0x01 | 0xD5 | Language-related |
+| 0x00BF | 0xD8000000 | 0x00 | 0x00 | Internal |
+| 0x00D4 | 0x6F000000 | 0x00 | 0x00 | Internal |
+| 0x00E9 | 0x6A000000 | 0x00 | 0x00 | Internal |
+| 0x0110 | 0xE6000000 | 0x00 | 0x00 | Internal |
+| 0x0125 | 0x8C000000 | 0x00 | 0x00 | Internal |
+| 0x0368 | 0x3D000000 | 0x3F | 0x02 | Internal |
+| 0x03FB | 0x95000000 | 0x00 | 0x00 | Internal |
+| 0x0410 | 0xDE000000 | 0x00 | 0x00 | Internal |
+| 0x0425 | 0xF7000000 | 0x00 | 0x00 | Internal |
+| 0x043A | 0x00000000 | 0x06 | 0x0C | Internal |
+| 0x048B | 0x0E000000 | 0x00 | 0x52 | Internal |
+
+### 5.5.5 Type 0x15 - Float-Related (1 record)
+
+| Offset | Hash | Value | Byte10 | PC | PS3 |
+|--------|------|:-----:|:------:|:--:|:---:|
+| 0x0062 | 0xB3AB00A8 | 0x01 | 0x19 (25) | ✓ | ✓ |
+
+### 5.5.6 Type 0x12/0x16 - Platform-Specific (1 record each)
+
+Same setting, different type codes per platform:
+
+| Platform | Type | Offset | Hash | Value | Byte10 |
+|----------|:----:|--------|------|:-----:|:------:|
+| PC | 0x16 | 0x04FE | 0xD9E10623 | 0x00 | 0x1D (29) |
+| PS3 | 0x12 | 0x04FE | 0xD9E10623 | 0x01 | 0x1D (29) |
+
+### 5.5.7 Type 0x1E - Special (1 record)
+
+| Offset | Hash | Value | Byte10 | Notes |
+|--------|------|:-----:|:------:|-------|
+| 0x03A0 | 0x010B0B1D | 0x79 (121) | 0x00 | Non-boolean, unusual structure |
+
+### 5.5.8 Property Hash Structure
 
 ```c
-/* Section 2 Property Record - 18 bytes */
+/* Section 2 Property Record - 18 bytes (Type 0x0E / Boolean)
+ * Note: 0x0B marker is at START of each record, not end.
+ * Structure: [marker 1B][value 1B][type 1B][padding 3B][hash 4B][padding 8B]
+ */
 typedef struct {
-    uint8_t      value;           /* +0x00: Setting value */
-    uint8_t      type_marker;     /* +0x01: 0x0E, 0x11, 0x15, or 0x17 */
-    uint8_t      padding[3];      /* +0x02-0x04: Zeros */
-    OPTIONS_Hash property_hash;   /* +0x05-0x08: Property ID (LE) */
-    uint8_t      zero_pad[8];     /* +0x09-0x10: Padding */
-    uint8_t      next_marker;     /* +0x11: 0x0B */
+    uint8_t      marker;          /* +0x00: 0x0B = record start marker */
+    uint8_t      value;           /* +0x01: Setting value (0x00 or 0x01 for bool) */
+    uint8_t      type;            /* +0x02: 0x0E, 0x11, 0x15, 0x16, 0x17, etc. */
+    uint8_t      padding1[3];     /* +0x03-0x05: Always zeros */
+    OPTIONS_Hash property_hash;   /* +0x06-0x09: Property identifier hash (LE) */
+    uint8_t      padding2[8];     /* +0x0A-0x11: Zero padding (may contain data for non-0x0E types) */
 } Section2_PropertyRecord;
+
+_Static_assert(sizeof(Section2_PropertyRecord) == 18, "Must be 18 bytes");
+```
+
+**Visual Layout:**
+```
+Offset:  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F 10 11
+         ─────────────────────────────────────────────────────
+Type 0E: 0B VV 0E 00 00 00 HH HH HH HH 00 00 00 00 00 00 00 00
+         │  │  │  └──┬──┘  └────┬────┘  └────────┬────────────┘
+         │  │  │     │          │                │
+         │  │  │     │          │                └─ 8 zero bytes (padding2)
+         │  │  │     │          └─ 4-byte hash (little-endian)
+         │  │  │     └─ 3 zero bytes (padding1)
+         │  │  └─ Type marker (0x0E = boolean)
+         │  └─ Value (0x00 or 0x01)
+         └─ Record start marker (always 0x0B)
 ```
 
 ---
@@ -377,7 +496,7 @@ Six new hashes were discovered in Section 3's property record region through bin
 |--------|------------|----------|---------|--------|
 | 0x1A | `0xBF4C2013` | Both | Property Record 1 | Unresolved |
 | 0x2F | `0x3B546966` | Both | Property Record 2 | Unresolved |
-| 0x41 | `0x4DBC7DA7` | Both | Property Record 3 | Unresolved |
+| 0x41 | `0x4DBC7DA7` | Both | Popup Dismissed Flag (one-time notification shown) | Resolved |
 | 0x53 | `0x5B95F10B` | Both | Property Record 4 | Unresolved |
 | 0x65 | `0x2A4E8A90` | Both | Property Record 5 | Unresolved |
 | 0x77 | `0x496F8780` | PC only | Property Record 6 | Unresolved |

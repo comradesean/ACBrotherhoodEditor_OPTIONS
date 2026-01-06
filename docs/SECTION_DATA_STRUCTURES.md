@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Section Data Structures
 
-**Document Version:** 1.2
-**Date:** 2025-12-27
-**Status:** Complete C Structure Definitions (Phase 1 + Phase 2 Updates)
+**Document Version:** 1.3
+**Date:** 2026-01-06
+**Status:** Complete C Structure Definitions (Phase 1 + Phase 2 + Record Type Analysis)
 
 This document provides complete C structure definitions for all decompressed section data in the AC Brotherhood OPTIONS file format.
 
@@ -114,33 +114,217 @@ _Static_assert(sizeof(PS3_Section1_Prefix) == 6, "PS3_Section1_Prefix must be 6 
 
 **Uncompressed Size:** 1310 bytes (PC) / 1306 bytes (PS3)
 
-### Property Record Structure (18 bytes) - Phase 2 Discovery
+**Note:** The 4-byte size difference is due to Type 0x16 record being PC-only (see platform differences below).
 
-Section 2 uses 18-byte property records for ALL settings. The "17-byte reserved" gaps between settings are actually the trailing portion of these records:
+### Property Record Structure (18 bytes) - Phase 2/3 Discovery
+
+Section 2 uses 18-byte property records. Records start with 0x0B marker and structure varies by type.
+
+**Important:** Bytes 0x0A-0x11 are **type-specific data fields**, not padding. Only Type 0x0E
+treats most of these bytes as unused (zeros). Other types store actual values here.
 
 ```c
-/* Section 2 Property Record - 18 bytes
- * Each setting in Section 2 follows this structure.
- * The value byte is at the START, followed by type and hash.
+/* Universal Record Layout - 18 bytes
+ * Common fields: marker (0x00), value (0x01), type (0x02), padding (0x03-0x05), hash (0x06-0x09)
+ * Type-specific: data region (0x0A-0x11) - interpretation varies by type
  */
 typedef struct {
-    uint8_t      value;           /* +0x00: Setting value (bool, byte, or float LSB) */
-    uint8_t      type_marker;     /* +0x01: 0x0E=standard, 0x11=alt, 0x15=special */
-    uint8_t      padding[3];      /* +0x02-0x04: Always zeros */
-    OPTIONS_Hash property_hash;   /* +0x05-0x08: Property identifier hash (LE) */
-    uint8_t      zero_pad[8];     /* +0x09-0x10: Zero padding */
-    uint8_t      next_marker;     /* +0x11: 0x0B = next record start marker */
+    uint8_t      marker;          /* +0x00: 0x0B = record start marker */
+    uint8_t      value;           /* +0x01: Primary value (meaning varies by type) */
+    uint8_t      type;            /* +0x02: Record type identifier */
+    uint8_t      padding[3];      /* +0x03-0x05: Always zeros */
+    OPTIONS_Hash property_hash;   /* +0x06-0x09: Property identifier hash (LE) */
+    uint8_t      type_data[8];    /* +0x0A-0x11: Type-specific data region */
 } Section2_PropertyRecord;
 
-_Static_assert(sizeof(Section2_PropertyRecord) == 18, "Section2_PropertyRecord must be 18 bytes");
-
-/* Type Markers:
- * 0x0E (14): Standard property/setting (most common)
- * 0x11 (17): Alternative type (floats, nested structures)
- * 0x15 (21): Special records (language-related)
- * 0x17 (23): Unique structure (possibly keyboard bindings)
- */
+_Static_assert(sizeof(Section2_PropertyRecord) == 18, "Must be 18 bytes");
 ```
+
+### Record Types and Their Structures
+
+Section 2 contains 62 records per platform. There are 8 distinct types across both platforms
+(Type 0x12 is PS3-only, Type 0x16 is PC-only; both represent the same setting with hash 0xD9E10623):
+
+| Type | Count | Byte 0x10 Usage | Byte 0x11 | Platform | Description |
+|------|-------|-----------------|-----------|----------|-------------|
+| 0x0E | 37 | Flag (0x00 or 0x03) | Always 0x00 | Both | Boolean toggles |
+| 0x00 | 18 | Variable data | Variable | Both | Complex/container records |
+| 0x11 | 4 | **Integer value** (6,7,10) | Always 0x00 | Both | Integer settings |
+| 0x12 | 1 | Length (0x1D=29) | Always 0x00 | **PS3 only** | Same as 0x16, hash 0xD9E10623 |
+| 0x15 | 1 | Size/count (0x19=25) | Always 0x00 | Both | Float-related |
+| 0x16 | 1 | Length (0x1D=29) | Always 0x00 | **PC only** | Same as 0x12, hash 0xD9E10623 |
+| 0x04 | 1 | Variable | Variable | Both | Terminal/controller record |
+| 0x1E | 1 | 0x00 | 0x00 | Both | Special (value=121) |
+
+### Type-Specific Structure Definitions
+
+```c
+/* Type 0x0E (Boolean) - 37 records
+ * Used for: HUD toggles, invert settings, blood toggle, etc.
+ * Bytes 0x0A-0x0F are always zero.
+ * Byte 0x10 is a flag field (usually 0x00, occasionally 0x03).
+ */
+typedef struct {
+    uint8_t      marker;          /* +0x00: 0x0B */
+    uint8_t      value;           /* +0x01: 0x00=OFF, 0x01=ON (also 0x02, 0x05 seen) */
+    uint8_t      type;            /* +0x02: 0x0E */
+    uint8_t      padding1[3];     /* +0x03-0x05: 00 00 00 */
+    OPTIONS_Hash hash;            /* +0x06-0x09: Property hash (LE) */
+    uint8_t      reserved[6];     /* +0x0A-0x0F: Always 00 00 00 00 00 00 */
+    uint8_t      flag;            /* +0x10: Usually 0x00, sometimes 0x03 */
+    uint8_t      padding2;        /* +0x11: Always 0x00 */
+} Record_Type0E;
+
+/* Type 0x00 (Complex/Container) - 18 records
+ * Used for: Language settings, volume levels, etc.
+ * Entire data region (0x0A-0x11) contains variable data.
+ * Byte 0x10 values seen: 0x00, 0x02, 0x03, 0x0C, 0x2E, 0x52, 0x78, 0xD5, 0xE8
+ */
+typedef struct {
+    uint8_t      marker;          /* +0x00: 0x0B */
+    uint8_t      value;           /* +0x01: Variable */
+    uint8_t      type;            /* +0x02: 0x00 */
+    uint8_t      extended[3];     /* +0x03-0x05: May contain data (not always zero) */
+    OPTIONS_Hash hash;            /* +0x06-0x09: Property hash (LE) */
+    uint8_t      extra_data[8];   /* +0x0A-0x11: Variable data (hashes, values, etc.) */
+} Record_Type00;
+
+/* Type 0x11 (Integer) - 4 records
+ * Byte 0x10 IS the integer value, not a flag.
+ * Known values: 0x06 (6), 0x07 (7), 0x0A (10)
+ */
+typedef struct {
+    uint8_t      marker;          /* +0x00: 0x0B */
+    uint8_t      value;           /* +0x01: Variable (0x00 or 0x01) */
+    uint8_t      type;            /* +0x02: 0x11 */
+    uint8_t      padding1[3];     /* +0x03-0x05: 00 00 00 */
+    OPTIONS_Hash hash;            /* +0x06-0x09: Property hash (LE) */
+    uint8_t      reserved[6];     /* +0x0A-0x0F: 00 00 00 00 00 00 */
+    uint8_t      int_value;       /* +0x10: THE INTEGER VALUE (6, 7, or 10) */
+    uint8_t      padding2;        /* +0x11: Always 0x00 */
+} Record_Type11;
+
+/* Type 0x15 (Float-related) - 1 record
+ * Byte 0x10 = 0x19 (25) - possibly precision or range indicator
+ * Data region contains float-related bytes.
+ */
+typedef struct {
+    uint8_t      marker;          /* +0x00: 0x0B */
+    uint8_t      value;           /* +0x01: 0x01 */
+    uint8_t      type;            /* +0x02: 0x15 */
+    uint8_t      padding1[3];     /* +0x03-0x05: 00 00 00 */
+    OPTIONS_Hash hash;            /* +0x06-0x09: 0xB3AB00A8 */
+    uint8_t      float_data[6];   /* +0x0A-0x0F: Float-related data */
+    uint8_t      size_or_count;   /* +0x10: 0x19 (25) */
+    uint8_t      padding2;        /* +0x11: 0x00 */
+} Record_Type15;
+
+/* Type 0x12 (PS3) / Type 0x16 (PC) - Same setting, different type codes
+ * Both platforms have this record at offset 0x04FE with hash 0xD9E10623.
+ * PC uses Type 0x16 with Value=0, PS3 uses Type 0x12 with Value=1.
+ * Byte 0x10 = 0x1D (29) on both - likely string length or index.
+ */
+typedef struct {
+    uint8_t      marker;          /* +0x00: 0x0B */
+    uint8_t      value;           /* +0x01: PC=0x00, PS3=0x01 */
+    uint8_t      type;            /* +0x02: PC=0x16, PS3=0x12 */
+    uint8_t      padding1[3];     /* +0x03-0x05: 00 00 00 */
+    OPTIONS_Hash hash;            /* +0x06-0x09: 0xD9E10623 */
+    uint8_t      reserved[6];     /* +0x0A-0x0F: 00 00 00 00 00 00 */
+    uint8_t      str_length;      /* +0x10: 0x1D (29) - string length/index */
+    uint8_t      padding2;        /* +0x11: 0x00 */
+} Record_Type12_16;  /* Type varies by platform */
+
+/* Type 0x1E (Special) - 1 record
+ * VALUE field = 121 (0x79) - not a boolean.
+ * Unusual structure with non-zero padding at 0x03.
+ */
+typedef struct {
+    uint8_t      marker;          /* +0x00: 0x0B */
+    uint8_t      value;           /* +0x01: 0x79 (121) */
+    uint8_t      type;            /* +0x02: 0x1E */
+    uint8_t      special[3];      /* +0x03-0x05: 0x32 00 00 (non-standard) */
+    OPTIONS_Hash hash;            /* +0x06-0x09: 0x010B0B1D (unusual pattern) */
+    uint8_t      reserved[8];     /* +0x0A-0x11: 00 00 00 00 00 00 00 00 */
+} Record_Type1E;
+```
+
+### Byte 0x10-0x11 Analysis by Type
+
+**Type 0x0E (Boolean):**
+- Byte 0x10: 94.6% = 0x00, two records = 0x03 (flag field)
+- Byte 0x11: Always 0x00
+
+| Offset | Hash | Setting | Byte 0x10 |
+|--------|------|---------|-----------|
+| 0x0170 | 0x56932719 | Invert 1P Y axis | 0x03 |
+| 0x0182 | 0x962BD533 | Action Camera Frequency | 0x03 |
+
+Consistent across PC and PS3. Purpose of 0x03 flag unknown.
+
+**Type 0x11 (Integer):**
+- Byte 0x10: **IS the stored integer value** (not a flag)
+- Values seen: 0x06 (6), 0x07 (7), 0x0A (10)
+
+| Offset | Hash | Byte 0x10 (Value) |
+|--------|------|-------------------|
+| 0x00FE | 0xC00434A6 | 0x0A (10) |
+| 0x0356 | 0x9C81BB39 | 0x07 (7) |
+| 0x03E9 | 0x7ACF45C6 | 0x07 (7) |
+| 0x0479 | 0xD4C878C7 | 0x06 (6) |
+
+**Type 0x00 (Complex):**
+- Byte 0x10: Highly variable (0x00, 0x02, 0x03, 0x0C, 0x2E, 0x52, 0x78, 0xD5, 0xE8)
+- Byte 0x11: Usually 0x00, but can contain data (0x06, 0x0C, 0x96, 0xE3 seen)
+
+**Type 0x15/0x16:**
+- Byte 0x10 appears to be a size/length field (0x19=25, 0x1D=29)
+
+**TODO:** Test changing settings in-game to all possible values and re-extract
+the save file to determine if byte 0x10 changes dynamically or remains static.
+This would clarify whether flags are set at build time or updated at runtime.
+
+### Section 2 Platform Differences
+
+| Aspect | PC | PS3 |
+|--------|:--:|:---:|
+| Size | 1310 bytes | 1306 bytes |
+| Platform flag (0x0E) | 0x0C | 0x08 |
+| Type 0x11 records | ✓ (4 records) | ✓ (identical) |
+| Type 0x15 record | ✓ (identical) | ✓ (identical) |
+| Hash 0xD9E10623 | Type **0x16**, Value=0 | Type **0x12**, Value=1 |
+| DLC flags (0x0516-0x0519) | 01 01 01 01 | 00 00 00 00 |
+| Trailing bytes | 4 extra bytes | None |
+
+**Type 0x16 (PC) vs Type 0x12 (PS3) - Same Setting, Different Types:**
+```
+Offset: 0x04FE
+Hash:   0xD9E10623 (same on both)
+
+PC:  0B 00 16 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
+PS3: 0B 01 12 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
+         ^^
+     Value/Type differ, everything else identical
+```
+
+**4-Byte Size Difference Explained:**
+- PC has 4 extra trailing bytes at 0x051A-0x051D: `00 00 00 00`
+- PS3 ends at 0x0519 (1306 bytes)
+- PC ends at 0x051D (1310 bytes)
+
+### Unknown Initialization Records (PS3)
+
+Five Type 0x0E records at end of Section 2 show random initialization on PS3:
+
+| Offset | Hash | PC Value | PS3 Value |
+|--------|------|----------|-----------|
+| 0x4A4 | 0x886B92CC | 0 | Random |
+| 0x4B6 | 0x49F3B683 | 0 | Random |
+| 0x4C8 | 0x707E8A46 | 0 | Random |
+| 0x4DA | 0x67059E05 | 0 | Random |
+| 0x4EC | 0x0364F3CC | 0 | Random |
+
+These appear to be uninitialized memory on PS3 - values vary between fresh saves.
 
 ### Known Property Hashes (Section 2)
 

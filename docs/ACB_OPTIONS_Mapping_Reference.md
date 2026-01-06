@@ -36,38 +36,55 @@
 
 ### Unlockable Content
 
-#### Templar Lair Unlocks
-| Address | Value Change | Description |
-|---------|-------------|-------------|
-| `0x291` | `0x00` → `0x01` | Mercati di Traiano (Trajan's Market) - "Shopaholic" |
-| `0x2a3` | `0x00` → `0x01` | Tivoli Aqueducts - "Liquid Gold" |
+#### Templar Lair Unlocks (CONFIRMED)
+| Address | Hash | Value Change | Description |
+|---------|------|-------------|-------------|
+| `0x291` | `0x788F42CC` | `0x00` → `0x01` | Mercati di Traiano (Trajan's Market) - "Shopaholic" |
+| `0x2a3` | `0x6FF4568F` | `0x00` → `0x01` | Tivoli Aqueducts - "Liquid Gold" |
 
-#### Costume Unlocks
+#### Unknown Unlock Slots
+| Address | Hash | Value Change | Description |
+|---------|------|-------------|-------------|
+| `0x2b5` | `0x0B953B46` | `0x00` → `0x01` | Unknown - possibly cut content |
+| `0x2c7` | `0x1854EC5A` | `0x00` → `0x01` | Unknown - possibly cut content |
+
+#### Costume Unlocks (CONFIRMED)
 **Address:** `0x369` (Bitwise Operator)
 
-| Binary | Hex Value | Outfit Name |
-|--------|-----|--------|
-| `000001` | `0x01` | Florentine Noble Attire |
-| `000010` | `0x02` | Armor of Altair |
-| `000100` | `0x04` | Altair's Robes |
-| `001000` | `0x08` | Drachen Armor |
-| `010000` | `0x10` | Desmond |
-| `100000` | `0x20` | Raiden |
-| `111111` | `0x3f` | **ALL OUTFITS** |
+| Binary | Hex Value | Outfit Name | Source |
+|--------|-----|--------|--------|
+| `000001` | `0x01` | Florentine Noble Attire | Uplay (20 pts) |
+| `000010` | `0x02` | Armor of Altair | Uplay (20 pts) |
+| `000100` | `0x04` | Altair's Robes | Uplay (20 pts) |
+| `001000` | `0x08` | Drachen Armor | Pre-order DLC |
+| `010000` | `0x10` | Desmond | In-game unlock |
+| `100000` | `0x20` | Raiden | 100% sync bonus |
+| `111111` | `0x3f` | **ALL OUTFITS** | - |
 
-#### Unknown Toggles
+#### Uplay Reward Unlock Records (INFERRED - not confirmed)
+
+These 4 records follow the Templar Lairs. We have the hashes but the mapping to specific
+rewards is **inferred based on position only**, not confirmed through testing.
+
+| Address | Hash | Value Change | Inferred Reward | Confidence |
+|---------|------|-------------|-----------------|:----------:|
+| `0x2d9` | `0x21D9D09F` | `0x00` → `0x01` | Florentine Noble? | MEDIUM |
+| `0x2eb` | `0x36A2C4DC` | `0x00` → `0x01` | Armor of Altair? | MEDIUM |
+| `0x2fd` | `0x52C3A915` | `0x00` → `0x01` | Altair's Robes? | MEDIUM |
+| `0x30f` | `0x0E8D040F` | `0x00` → `0x01` | Hellequin MP? | LOW |
+
+**Important:** Hellequin is a **multiplayer character**, NOT a costume. It does NOT
+appear in the costume bitfield at 0x369. The 4th reward hash mapping is especially uncertain.
+
+#### DLC/Update Flags
 | Address | Value Change | Description |
 |---------|-------------|-------------|
-| `0x2d9` | `0x00` → `0x01` | UNKNOWN |
-| `0x2eb` | `0x00` → `0x01` | UNKNOWN |
-| `0x2fd` | `0x00` → `0x01` | UNKNOWN |
-| `0x30f` | `0x00` → `0x01` | UNKNOWN |
-| `0x516` | `0x00` → `0x01` | UNKNOWN |
-| `0x517` | `0x00` → `0x01` | UNKNOWN |
-| `0x518` | `0x00` → `0x01` | UNKNOWN |
-| `0x519` | `0x00` → `0x01` | UNKNOWN |
+| `0x516` | `0x00` → `0x01` | Animus Project Update 1.0 |
+| `0x517` | `0x00` → `0x01` | Animus Project Update 2.0 |
+| `0x518` | `0x00` → `0x01` | Animus Project Update 3.0 |
+| `0x519` | `0x00` → `0x01` | Da Vinci Disappearance DLC |
 
-*Note: Multiplayer characters (Harlequin, Hellequin, or Officer) are all UNKNOWN.*
+*Note: Other multiplayer characters (Harlequin, Officer) location UNKNOWN.*
 
 ---
 
@@ -198,6 +215,14 @@ Hex Values:   80 40 20 10 08 04 02 01
 
 ---
 
-*Last updated: 12/25/2025  
-*Game: Assassin's Creed Brotherhood*  
+## References
+
+For detailed hash information and record structures, see:
+- `HASH_RESOLUTION_TABLE.md` - Complete hash reference with PC/PS3 comparison
+- `SECTION_DATA_STRUCTURES.md` - C structure definitions for all record types
+
+---
+
+*Last updated: 2026-01-06*
+*Game: Assassin's Creed Brotherhood*
 *All addresses are hexadecimal offsets from their section's base*
