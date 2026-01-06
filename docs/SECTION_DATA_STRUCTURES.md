@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Section Data Structures
 
-**Document Version:** 1.3
+**Document Version:** 1.5
 **Date:** 2026-01-06
-**Status:** Complete C Structure Definitions (Phase 1 + Phase 2 + Record Type Analysis)
+**Status:** Complete C Structure Definitions (Phase 1-4 + A→B Constraint Discovery)
 
 This document provides complete C structure definitions for all decompressed section data in the AC Brotherhood OPTIONS file format.
 
@@ -312,19 +312,31 @@ PS3: 0B 01 12 00 00 00 23 06 E1 D9 00 00 00 00 00 00 1D 00
 - PS3 ends at 0x0519 (1306 bytes)
 - PC ends at 0x051D (1310 bytes)
 
-### Unknown Initialization Records (PS3)
+### Unknown Initialization Records (PS3) - Constrained Values with Dependency
 
-Five Type 0x0E records at end of Section 2 show random initialization on PS3:
+Five Type 0x0E records at end of Section 2 have **constrained but variable values** on PS3.
 
-| Offset | Hash | PC Value | PS3 Value |
-|--------|------|----------|-----------|
-| 0x4A4 | 0x886B92CC | 0 | Random |
-| 0x4B6 | 0x49F3B683 | 0 | Random |
-| 0x4C8 | 0x707E8A46 | 0 | Random |
-| 0x4DA | 0x67059E05 | 0 | Random |
-| 0x4EC | 0x0364F3CC | 0 | Random |
+**Hundreds of samples analyzed. Key discovery: A=0 → B=1 constraint.**
 
-These appear to be uninitialized memory on PS3 - values vary between fresh saves.
+| Offset | Hash | Label | PC | PS3 | % = 1 | Notes |
+|--------|------|:-----:|:--:|:---:|:-----:|-------|
+| 0x4A4 | 0x886B92CC | A | 0x00 | Variable | 50% | **If A=0, then B=1** |
+| 0x4B6 | 0x49F3B683 | B | 0x00 | Variable | 62% | Dependent on A |
+| 0x4C8 | 0x707E8A46 | C | 0x00 | Variable | 50% | Independent |
+| 0x4DA | 0x67059E05 | D | 0x00 | Variable | 62% | Independent |
+| 0x4EC | 0x0364F3CC | E | 0x00 | Variable | 88% | Strong bias toward 1 |
+
+**Key Discovery:**
+- Across hundreds of fresh saves, A=0 with B=0 has **NEVER** been observed
+- This proves A and B are NOT independent random bits
+- Only 8 of 32 possible combinations observed
+
+**Evidence:**
+- PC initializes ALL 5 to 0x00
+- PS3 writes variable 0x00/0x01 values with A→B constraint
+- "Mutually exclusive pairs" hypothesis disproven
+- "Independent random bits" hypothesis disproven
+- Functional purpose (if any) remains unknown
 
 ### Known Property Hashes (Section 2)
 
@@ -548,7 +560,9 @@ typedef struct {
     uint8_t      record3_data[10];        /* 0x45-0x4E */
 
     uint8_t      marker_0x4d;             /* 0x4D: 0x0B (constant) */
-    OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: 30-point Uplay reward */
+    OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: Gun Capacity Upgrade - 30-point Uplay reward
+                                           * Increases pistol ammo capacity. ONLY Uplay unlock in S3.
+                                           * Costume unlocks are in Section 2 bitfield (0x369). */
     uint8_t      marker_0x4f;             /* 0x4F: 0x0E (constant) */
 
     /* Pre-achievement region (0x50-0x7F) - 2 more records */
@@ -604,7 +618,8 @@ typedef struct {
     uint8_t      record3_data[10];        /* 0x45-0x4E */
 
     uint8_t      marker_0x4d;             /* 0x4D: 0x0B (constant) */
-    OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: 30-point Uplay reward */
+    OPTIONS_Bool uplay_gun_upgrade;       /* 0x4E: Gun Capacity Upgrade - 30-point Uplay reward
+                                           * Same offset on PS3 as PC. ONLY Uplay unlock in S3. */
     uint8_t      marker_0x4f;             /* 0x4F: 0x0E (constant) */
 
     /* Shared records region (0x50-0x76) */

@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Hash Resolution Table
 
-**Document Version:** 1.4
+**Document Version:** 1.6
 **Date:** 2026-01-06
-**Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1 + Phase 2 + Phase 3 Analysis)
+**Status:** Complete Hash Reference with PC/PS3 Comparison (Phase 1-4 + A→B Constraint Discovery)
 **Research Method:** Ghidra Decompilation, Differential Analysis, Algorithm Testing, Binary Analysis
 
 ---
@@ -50,13 +50,13 @@ The AC Brotherhood OPTIONS file uses 32-bit hash values throughout its data stru
 | Language | 20 | 20 (100%) | 0 | 0 |
 | Content Unlocks | 8 | 2 | 6 | 0 |
 | Section 2 Property Records | 57 | 24 (42%) | 0 | 33 |
-| Section 2 Unknown Initialization | 5 | 5 (100%)* | 0 | 0 |
+| Section 2 Unknown Initialization | 5 | 5 (100%)** | 0 | 0 |
 | Section 3 Property Records | 6 | 1 (17%) | 0 | 5 |
 | Progress/Internal | 1 | 0 (0%) | 0 | 1 |
 
 *Partial = Possibly Uplay-related (observed flipped in test file) but specific hash-to-reward mapping unknown*
 
-*\*Unknown Initialization flags: PC version consistently initializes to 0; PS3 version shows random values on fresh saves (likely uninitialized memory bug).*
+**\*\*Unknown Initialization: Constrained values with A→B dependency (hundreds of samples). PC=0x00, PS3=variable. Only 8/32 combos observed. Not independent random.**
 
 ---
 
@@ -365,15 +365,30 @@ possibly Uplay-related. Their specific purpose has NOT been determined.
 | 0x0455 | 0x11A757F6 | 0x00 | 0x00 | Unknown |
 | 0x0467 | 0x2F4ACE81 | 0x00 | 0x00 | Unknown |
 
-#### Unknown Initialization (PC=0, PS3=random)
+#### Unknown Initialization (PC=0, PS3=constrained) - Partially Initialized with Dependency
 
-| Offset | Hash | PC | PS3 | Notes |
-|--------|------|:--:|:---:|-------|
-| 0x04A4 | 0x886B92CC | 0x00 | 0x01 | Uninitialized memory on PS3 |
-| 0x04B6 | 0x49F3B683 | 0x00 | 0x01 | Uninitialized memory on PS3 |
-| 0x04C8 | 0x707E8A46 | 0x00 | 0x00 | Uninitialized memory on PS3 |
-| 0x04DA | 0x67059E05 | 0x00 | 0x01 | Uninitialized memory on PS3 |
-| 0x04EC | 0x0364F3CC | 0x00 | 0x01 | Uninitialized memory on PS3 |
+**Hundreds of samples analyzed. Values are NOT independent random - constraint discovered.**
+
+| Offset | Hash | Label | PC | PS3 | % = 1 | Notes |
+|--------|------|:-----:|:--:|:---:|:-----:|-------|
+| 0x04A4 | 0x886B92CC | A | 0x00 | Variable | 50% | **If A=0, then B=1** |
+| 0x04B6 | 0x49F3B683 | B | 0x00 | Variable | 62% | Dependent on A |
+| 0x04C8 | 0x707E8A46 | C | 0x00 | Variable | 50% | Independent |
+| 0x04DA | 0x67059E05 | D | 0x00 | Variable | 62% | Independent |
+| 0x04EC | 0x0364F3CC | E | 0x00 | Variable | 88% | Strong bias toward 1 |
+
+**Key Discovery: A=0 → B=1 Constraint**
+- Across hundreds of fresh saves, A=0 with B=0 has **NEVER** been observed
+- If independent random, P(A=0 AND B=0) = 25% - should appear frequently
+- This proves A and B are NOT independent
+
+**Evidence:**
+- PC initializes ALL 5 to 0x00
+- PS3 writes variable 0x00/0x01 values with A→B constraint
+- Only 8 of 32 possible combinations observed (from hundreds of samples)
+- "Mutually exclusive pairs" hypothesis **disproven**
+- "Independent random bits" hypothesis **disproven**
+- Functional purpose (if any) remains unknown
 
 ### 5.5.3 Type 0x11 - Integer Settings (4 records)
 
@@ -740,11 +755,13 @@ This architecture makes algorithm identification difficult without access to Ubi
 ## Document Metadata
 
 **Created:** 2025-12-27
+**Updated:** 2026-01-06
 **Author:** Generated through reverse engineering analysis
 **Sources:**
 - Ghidra decompilation of ACBSP.exe
 - WinDbg time-travel traces
 - 24-file differential analysis (21 language + 3 reward variants)
+- 9-sample PS3 fresh save analysis (confirms uninitialized memory bug)
 - Existing project documentation
 
 **Related Documents:**

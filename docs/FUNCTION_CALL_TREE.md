@@ -709,7 +709,7 @@ FUN_005e4b10 (Read from Disk)
 
 | Offset | Field | Function Reference |
 |--------|-------|-------------------|
-| 0x4E | Uplay Gun Upgrade | (Unknown) |
+| 0x4E | Gun Capacity Upgrade (30-pt Uplay) | (Unknown) - ONLY Uplay unlock in Section 3 |
 | 0x9D (PC) / 0x5A (PS3) | DLC Sync Flag | FUN_0084ca20, FUN_0084cb60 |
 
 ---

@@ -104,9 +104,9 @@ The costume bitfield tracks unlocked alternate costumes/outfits for Ezio.
 
 | Offset | Bit | Mask | Name | Values | Description |
 |--------|-----|------|------|--------|-------------|
-| 0x369 | 0 | 0x01 | florentine_noble | 0=locked, 1=unlocked | Florentine Noble Attire (Uplay 20pts) |
-| 0x369 | 1 | 0x02 | armor_of_altair | 0=locked, 1=unlocked | Armor of Altair (Uplay 20pts) |
-| 0x369 | 2 | 0x04 | altairs_robes | 0=locked, 1=unlocked | Altair's Robes (Uplay 20pts) |
+| 0x369 | 0 | 0x01 | florentine_noble | 0=locked, 1=unlocked | Florentine Noble Attire |
+| 0x369 | 1 | 0x02 | armor_of_altair | 0=locked, 1=unlocked | Armor of Altair |
+| 0x369 | 2 | 0x04 | altairs_robes | 0=locked, 1=unlocked | Altair's Robes |
 | 0x369 | 3 | 0x08 | drachen_armor | 0=locked, 1=unlocked | Drachen Armor (Pre-order DLC) |
 | 0x369 | 4 | 0x10 | desmond | 0=locked, 1=unlocked | Desmond's Outfit (In-game unlock) |
 | 0x369 | 5 | 0x20 | raiden | 0=locked, 1=unlocked | Raiden Outfit (100% sync bonus) |
@@ -136,17 +136,11 @@ data[0x369] |= 0x10;
 data[0x369] &= ~0x20;
 ```
 
-#### Relationship to Unlock Records
+#### Costume Unlock Mechanism
 
-The costume bitfield has a direct relationship with Uplay unlock records in Section 2:
+The costume bitfield at 0x369 is the **authoritative control** for costume unlocks. Setting the appropriate bit unlocks the corresponding costume.
 
-| Unlock Record (Offset) | Hash | Costume Bit |
-|------------------------|------|-------------|
-| 0x2D9 | 0x0021D9D0 | Bit 0 (0x01) - Florentine Noble |
-| 0x2EB | 0x0036A2C4 | Bit 1 (0x02) - Armor of Altair |
-| 0x2FD | 0x0052C3A9 | Bit 2 (0x04) - Altair's Robes |
-
-When a Uplay reward is unlocked, both the unlock record and the corresponding costume bit should be set.
+**Note:** The unlock records at offsets 0x2D9, 0x2EB, 0x2FD, and 0x30F are Uplay-related but their specific purpose is **UNKNOWN**. They were observed to flip in Uplay test files. They do NOT directly control costume unlocks - the costume bitfield at 0x369 is the mechanism for that.
 
 ---
 

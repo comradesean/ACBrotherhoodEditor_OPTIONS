@@ -90,8 +90,10 @@ DLC (3 Animus Projects + Da Vinci Disappearance), but this has NOT been confirme
 ### Equipment Upgrade & DLC
 | Address | Value Change | Description |
 |---------|-------------|-------------|
-| `0x4e` | `0x00` → `0x01` | Gun Capacity Upgrade |
+| `0x4e` | `0x00` → `0x01` | Gun Capacity Upgrade (30-point Uplay reward) |
 | `0x9D` | `0x00` → `0x01` | UNKNOWN DLC (Prevents load when disabled - possibly Copernicus Conspiracy?)  (probably not: Da Vinci Disappearance?) |
+
+**Note:** The Gun Capacity Upgrade is the ONLY Uplay unlock stored in Section 3. All costume-related Uplay unlocks (Florentine Noble Attire, Armor of Altair, Altair's Robes) are stored in Section 2's costume bitfield at offset 0x369.
 
 ### Achievement Unlocks (Bitwise)
 **Address Range:** `0x84` → `0x8a` (7 bytes) 

@@ -122,12 +122,14 @@ Section 2 contains 18-byte records for unlockable content. Each record follows t
 ### Uplay Rewards Context
 
 The following Uplay rewards exist for AC Brotherhood:
-- Theme (10 pts)
-- Florentine Noble Attire (20 pts) - Costume
-- Armor of Altair (20 pts) - Armor
-- Altair's Robes (20 pts) - Costume
-- Gun Capacity Upgrade (30 pts) - Upgrade (in Section 3)
-- Hellequin MP Character (40 pts) - Multiplayer
+- Theme (10 pts) - Not stored in OPTIONS file
+- Florentine Noble Attire (20 pts) - Section 2 costume bitfield (0x369, bit 0)
+- Armor of Altair (20 pts) - Section 2 costume bitfield (0x369, bit 1)
+- Altair's Robes (20 pts) - Section 2 costume bitfield (0x369, bit 2)
+- **Gun Capacity Upgrade (30 pts)** - **Section 3 offset 0x4E** (NOT Section 2)
+- Hellequin MP Character (40 pts) - Multiplayer (storage location unknown)
+
+**Important:** The Gun Capacity Upgrade is the ONLY Uplay equipment reward stored in Section 3. This is distinct from costume unlocks which use Section 2's bitfield.
 
 ---
 
