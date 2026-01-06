@@ -621,7 +621,7 @@ Section 4 is PS3-exclusive and contains DualShock 3 controller mapping data.
 
 | Component | Offset | Size | Description |
 |-----------|--------|------|-------------|
-| Header | 0x00-0x60 | 97 bytes | Section header + initialization records |
+| Header | 0x00-0x60 | 97 bytes | Section header + property records |
 | Records | 0x61-0x605 | 1445 bytes | 17 button mapping records (85 bytes each) |
 | Trailer | 0x606-0x76E | 361 bytes | Property records + zero padding |
 
