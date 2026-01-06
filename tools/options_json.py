@@ -395,13 +395,17 @@ def parse_section4_records(data: bytes) -> list:
 # OPTIONS TO JSON
 # =============================================================================
 
-def options_to_json(input_file: str, format_type: str = None) -> dict:
+def options_to_json(input_file: str, format_type: str = None, verbose: bool = False) -> dict:
     """
     Convert OPTIONS binary file to JSON structure.
+
+    Stores only essential data - headers, checksums, and CRCs are recalculated
+    during reconstruction.
 
     Args:
         input_file: Path to OPTIONS file
         format_type: 'PC', 'PS3', or None for auto-detect
+        verbose: Include parsed record details (for debugging/inspection)
 
     Returns:
         Dictionary suitable for JSON serialization
@@ -415,21 +419,12 @@ def options_to_json(input_file: str, format_type: str = None) -> dict:
 
     result = {
         'format': format_type,
-        'file_size': len(data),
         'sections': [],
     }
 
-    # Parse format-specific metadata
-    if format_type == 'PC':
-        # Preserve the footer byte - this is the network interface count
-        # retrieved from the uPlay service at save time (varies per machine)
-        if len(data) >= 5:
-            result['pc_network_interface_count'] = data[-1]
-    elif format_type == 'PS3':
-        result['ps3_prefix'] = {
-            'data_size': struct.unpack('>I', data[0:4])[0],
-            'crc32': f"0x{struct.unpack('>I', data[4:8])[0]:08X}",
-        }
+    # PC-only: preserve network interface count (footer byte from uPlay)
+    if format_type == 'PC' and len(data) >= 5:
+        result['pc_network_interface_count'] = data[-1]
 
     # Find and decompress sections
     sections = find_sections(data, format_type)
@@ -437,41 +432,38 @@ def options_to_json(input_file: str, format_type: str = None) -> dict:
 
     for i, section_info in enumerate(sections):
         section_num = i + 1
-
-        # Decompress section
         decompressed = decompressor.decompress(section_info['compressed_data'])
-
-        # Get section hash from decompressed data
-        section_hash = 0
-        if len(decompressed) >= 14:
-            section_hash = struct.unpack('<I', decompressed[10:14])[0]
 
         section = {
             'section_number': section_num,
-            'section_hash': f"0x{section_hash:08X}",
-            'section_name': SECTION_HASHES.get(section_hash, f"unknown_0x{section_hash:08X}"),
-            'header': {
-                'offset': section_info['header_offset'],
-                'field0': f"0x{section_info['field0']:08X}",
-                'field1': f"0x{section_info['field1']:08X}",
-                'field2': f"0x{section_info['field2']:08X}",
-            },
-            'compressed_size': section_info['compressed_size'],
-            'uncompressed_size': section_info['uncompressed_size'],
-            'checksum': f"0x{section_info['checksum']:08X}",
-            'records': [],
-            'raw_data': decompressed.hex(),
+            'data': decompressed.hex(),
         }
 
-        # Parse records based on section type
-        if section_num == 1:
-            section['records'] = parse_section1_records(decompressed)
-        elif section_num == 2:
-            section['records'] = parse_section2_records(decompressed)
-        elif section_num == 3:
-            section['records'] = parse_section3_records(decompressed)
-        elif section_num == 4:
-            section['records'] = parse_section4_records(decompressed)
+        # Verbose mode: add parsed details for inspection
+        if verbose:
+            section_hash = 0
+            if len(decompressed) >= 14:
+                section_hash = struct.unpack('<I', decompressed[10:14])[0]
+
+            section['_info'] = {
+                'hash': f"0x{section_hash:08X}",
+                'name': SECTION_HASHES.get(section_hash, "unknown"),
+                'size': len(decompressed),
+            }
+
+            records = []
+            if section_num == 1:
+                records = parse_section1_records(decompressed)
+            elif section_num == 2:
+                records = parse_section2_records(decompressed)
+            elif section_num == 3:
+                records = parse_section3_records(decompressed)
+            elif section_num == 4:
+                records = parse_section4_records(decompressed)
+
+            if records:
+                section['_info']['record_count'] = len(records)
+                section['_records'] = records
 
         result['sections'].append(section)
 
@@ -570,8 +562,8 @@ def json_to_options(json_data: dict, output_file: str) -> int:
     for section in json_data['sections']:
         section_num = section['section_number']
 
-        # Get raw data from JSON
-        raw_data = bytes.fromhex(section['raw_data'])
+        # Get raw data from JSON (support both 'data' and legacy 'raw_data' keys)
+        raw_data = bytes.fromhex(section.get('data', section.get('raw_data', '')))
 
         # Compress the section
         compressed_data = compress(raw_data)
@@ -645,6 +637,8 @@ Examples:
                        help='Convert JSON to binary OPTIONS file')
     parser.add_argument('--pretty', action='store_true',
                        help='Pretty-print JSON output with indentation')
+    parser.add_argument('--verbose', '-v', action='store_true',
+                       help='Include parsed record details in JSON output')
 
     args = parser.parse_args()
 
@@ -670,14 +664,17 @@ Examples:
         print(f"Converting OPTIONS to JSON")
         print(f"  Input: {args.input}")
 
-        json_data = options_to_json(args.input, format_type)
+        json_data = options_to_json(args.input, format_type, verbose=args.verbose)
 
         print(f"  Detected format: {json_data['format']}")
-        print(f"  Sections found: {len(json_data['sections'])}")
+        print(f"  Sections: {len(json_data['sections'])}")
 
         for section in json_data['sections']:
-            record_count = len(section['records'])
-            print(f"    Section {section['section_number']}: {section['section_name']} ({record_count} records)")
+            size = len(section['data']) // 2
+            if '_info' in section:
+                print(f"    Section {section['section_number']}: {section['_info']['name']} ({size} bytes, {section['_info'].get('record_count', 0)} records)")
+            else:
+                print(f"    Section {section['section_number']}: {size} bytes")
 
         with open(args.output, 'w') as f:
             if args.pretty:
