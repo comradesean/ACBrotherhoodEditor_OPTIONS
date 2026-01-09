@@ -1,8 +1,8 @@
 # AC Brotherhood OPTIONS - Section Data Structures
 
-**Document Version:** 1.8
+**Document Version:** 1.9
 **Date:** 2026-01-06
-**Status:** Complete C Structure Definitions (Phase 1-4 + Section 1 Record Structure Update)
+**Status:** Complete C Structure Definitions (Phase 1-4 + Section 2 Parsing Algorithm)
 
 This document provides complete C structure definitions for all decompressed section data in the AC Brotherhood OPTIONS file format.
 
@@ -145,6 +145,36 @@ _Static_assert(sizeof(PS3_Section1_Prefix) == 6, "PS3_Section1_Prefix must be 6 
 **Uncompressed Size:** 1310 bytes (PC) / 1306 bytes (PS3)
 
 **Note:** The 4-byte size difference is due to Type 0x16 record being PC-only (see platform differences below).
+
+### Section 2 Structure Overview
+
+Section 2 consists of:
+1. **98-byte header** (0x00-0x61) - Contains section hash and metadata
+2. **Record region** - Variable-size records (18, 21, or 25 bytes depending on type)
+3. **Gap sections** - Embedded metadata/references between record groups
+4. **14-byte footer record** (Type 0x04) - Terminal record
+
+### Record Parsing Algorithm
+
+Records are parsed front-to-back starting at offset 0x62 (after 98-byte header). Each record
+begins with 0x0B marker, and the **type byte at +2** determines record size:
+
+| Type @ +2 | Secondary Check | Record Size | Description |
+|-----------|-----------------|-------------|-------------|
+| 0x0E, 0x11, 0x15, 0x16, 0x17, 0x22 | N/A | 18 bytes | Standard records |
+| 0x04 | N/A | 14 bytes | Footer/terminal record |
+| 0x00 | byte @ +5 in {0x11, 0x0E, 0x17, 0x42, 0x13} | 21 bytes | Extended records |
+| 0x00 | byte @ +5 = 0xB5 | 25 bytes | Extended records |
+| 0x00 | byte @ +5 = 0x00 | **VARIABLE** | Gap section - scan forward |
+
+**Gap Handling:** When type=0x00 AND byte@+5=0x00, this is NOT a record marker. It signals
+the start of an embedded metadata section. The parser should scan forward byte-by-byte until
+finding the next 0x0B with a valid type pattern.
+
+**Section 2 Parse Results (PC):**
+- 55 valid records parsed
+- 3 gap sections detected (129, 27, and 25 bytes)
+- Gaps contain hash references and cross-section metadata
 
 ### Property Record Structure (18 bytes) - Phase 2/3 Discovery
 
@@ -903,15 +933,11 @@ static const uint32_t SENSITIVITY_VALUES[] = {
 
 1. **Byte Order:** All multi-byte values are little-endian unless otherwise noted
 2. **Reserved Fields:** Marked as `reserved` - purpose unknown, modify at own risk
-3. **Version Flags (0x0E-0x0F):** Identifies game version, not platform:
+3. **Version Flags (0x0E-0x0F):** Believed to identify game version:
    - 0x08 = Version 1.0 (disc/launch version)
    - 0x0C = Version 1.05 (latest patch)
    - PC always uses 0x0C (v1.05); PS3 may have 0x08 (v1.0) or 0x0C (v1.05)
-4. **Record Sizes by Section:**
-   - **Section 1:** 21-byte records (with exceptions: Record 6 = 18 bytes, Record 7 = 29 bytes)
-   - **Sections 2 & 3:** 18-byte records (consistent throughout)
-5. **PS3 Differences:** PS3 uses PSN Trophy API for achievements, hence smaller Section 3
-6. **Section 1 Purpose:** The specific purpose of Section 1 records is unknown
+4. **PS3 Differences:** PS3 uses PSN Trophy API for achievements, hence smaller Section 3
 
 ---
 
