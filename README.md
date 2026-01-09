@@ -4,99 +4,86 @@ Reverse-engineered LZSS compression/decompression tools for Assassin's Creed Bro
 
 ## Tools
 
-### PC Tools
+### Unified Tools (Recommended)
 | Tool | Description |
 |------|-------------|
-| `lzss_decompressor_pc.py` | Decompress PC OPTIONS files (3 sections) with header/checksum validation |
-| `lzss_compressor_pc.py` | Compress data using the exact game LZSS algorithm |
-| `options_serializer_pc.py` | Rebuild complete PC OPTIONS files from decompressed sections |
-
-### PS3 Tools
-| Tool | Description |
-|------|-------------|
-| `lzss_decompressor_ps3.py` | Decompress PS3 OPTIONS files (4 sections) with CRC32/header validation |
-| `options_serializer_ps3.py` | Rebuild complete PS3 OPTIONS files from decompressed sections |
+| `options_unpack.py` | Extract and decompress sections from OPTIONS files (auto-detects PC/PS3) |
+| `options_pack.py` | Rebuild OPTIONS files from decompressed sections (supports PC and PS3) |
 
 ## Usage
 
-### PC OPTIONS Files
+### Unified Tools (Recommended)
 
-#### Decompress a PC OPTIONS file
+#### Unpack an OPTIONS file
 ```bash
-# Decompress all 3 sections
-python lzss_decompressor_pc.py OPTIONS.bin
+# Auto-detect format, extract all sections
+python options_unpack.py OPTIONS.bin
 
-# Decompress specific section (1, 2, or 3)
-python lzss_decompressor_pc.py OPTIONS.bin 2
+# Extract specific section (1-4)
+python options_unpack.py OPTIONS.bin 2
+
+# Force specific format
+python options_unpack.py OPTIONS.bin --pc
+python options_unpack.py OPTIONS.PS3 --ps3
+
+# Custom output directory
+python options_unpack.py OPTIONS.bin -o ./output/
 ```
-Outputs: `section1.bin`, `section2.bin`, `section3.bin`
+Outputs: `section1.bin`, `section2.bin`, `section3.bin`, and optionally `section4.bin`
 
-#### Rebuild a PC OPTIONS file
+#### Pack sections into an OPTIONS file
 ```bash
-python options_serializer_pc.py section1.bin section2.bin section3.bin -o OPTIONS.bin
-```
+# PC format (3 sections)
+python options_pack.py section1.bin section2.bin section3.bin -o OPTIONS.bin --pc
 
-#### Compress a single file
-```bash
-python lzss_compressor_pc.py input.bin output.bin
-```
-
-### PS3 OPTIONS Files
-
-#### Decompress a PS3 OPTIONS file
-```bash
-# Decompress all 4 sections
-python lzss_decompressor_ps3.py OPTIONS.PS3
-
-# Decompress specific section (1, 2, 3, or 4)
-python lzss_decompressor_ps3.py OPTIONS.PS3 2
-```
-Outputs: `section1.bin`, `section2.bin`, `section3.bin`, `section4.bin`
-
-Section 4 contains DualShock 3 controller mappings (PS3-only).
-
-#### Rebuild a PS3 OPTIONS file
-```bash
-# With all 4 sections (includes controller mappings)
-python options_serializer_ps3.py section1.bin section2.bin section3.bin section4.bin -o OPTIONS.PS3
-
-# With 3 sections only (no controller mappings)
-python options_serializer_ps3.py section1.bin section2.bin section3.bin -o OPTIONS.PS3
+# PS3 format (4 sections)
+python options_pack.py section1.bin section2.bin section3.bin section4.bin -o OPTIONS.PS3 --ps3
 
 # With validation (decompresses and verifies output)
-python options_serializer_ps3.py section1.bin section2.bin section3.bin section4.bin -o OPTIONS.PS3 --validate
+python options_pack.py section1.bin section2.bin section3.bin -o OPTIONS.bin --pc --validate
 ```
+
+## Section Structure
+
+Each OPTIONS file contains 3 or 4 compressed sections. Section 4 is optional on both PC and PS3.
+
+| Section | Name | Description |
+|---------|------|-------------|
+| 1 | SaveGame | Core save game data |
+| 2 | AssassinGlobalProfileData | Global profile settings |
+| 3 | AssassinSingleProfileData | Single-player profile data |
+| 4 | AssassinMultiProfileData | Multiplayer profile data (optional) |
 
 ## File Structure
 
-### PC OPTIONS File (3 sections)
+### PC OPTIONS File
 ```
 [Section 1: 44-byte header + LZSS compressed data]
 [Section 2: 44-byte header + LZSS compressed data]
 [Section 3: 44-byte header + LZSS compressed data]
-[Footer: 01 00 00 00 0C]
+[8-byte gap marker (if Section 4 present)]
+[Section 4: 44-byte header + LZSS compressed data (optional)]
+[Footer: 01 00 00 00 XX]
 ```
 
-### PS3 OPTIONS File (4 sections)
+### PS3 OPTIONS File
 ```
 [8-byte prefix: size (BE) + CRC32 (BE)]
 [Section 1: 44-byte header + LZSS compressed data]
 [Section 2: 44-byte header + LZSS compressed data]
 [Section 3: 44-byte header + LZSS compressed data]
-[8-byte gap marker: size (BE) + type 0x08 (BE)]
-[Section 4: 44-byte header + LZSS compressed data]
+[8-byte gap marker (if Section 4 present)]
+[Section 4: 44-byte header + LZSS compressed data (optional)]
 [Zero padding to 51,200 bytes]
 ```
-
-PS3 files have no footer. Section 4 contains DualShock 3 controller mappings.
 
 ## Documentation
 
 See `docs/` for detailed reverse engineering notes:
 - `LZSS_LOGIC_FLOW_ANALYSIS.md` - Compression algorithm details
-- `PS3_OPTIONS_FORMAT.md` - Standalone PS3 format specification
-- `PS3_vs_PC_STRUCTURE_ANALYSIS.md` - PC/PS3 format differences and Section 4 analysis
-- `ACB_OPTIONS_Header_Complete_Specification.md` - File format specifications
+- `PS3_OPTIONS_FORMAT.md` - PS3 format specification
+- `PS3_vs_PC_STRUCTURE_ANALYSIS.md` - PC/PS3 format differences
+- `ACB_OPTIONS_Header_Complete_Specification.md` - Complete header specification
 
 ## Requirements
 
