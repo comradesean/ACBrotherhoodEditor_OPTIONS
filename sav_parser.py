@@ -39,6 +39,7 @@ import sys
 import os
 import struct
 import argparse
+import json
 from lzss_decompressor_final import LZSSDecompressor, adler32
 
 # =============================================================================
@@ -653,6 +654,19 @@ def parse_savegame(filepath: str, output_dir: str = None, scan_types: bool = Fal
     results['block5'] = {
         'raw': block5_data
     }
+
+    # =========================================================================
+    # Save metadata for round-trip serialization
+    # =========================================================================
+    metadata = {
+        'block1_field4': block1_header.field4,
+        'block2_field4': block2_header.field4,
+        'source_file': os.path.basename(filepath)
+    }
+    metadata_file = os.path.join(output_dir, "sav_metadata.json")
+    with open(metadata_file, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    results['metadata'] = metadata
 
     # =========================================================================
     # Summary

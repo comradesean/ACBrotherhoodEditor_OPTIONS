@@ -3,14 +3,198 @@
 LZSS Compressor - EXACT 1:1 Implementation
 Uses lazy matching to match game encoder perfectly
 
-Implements tiebreaking optimization Scenario 1 (Match-Follow-Match):
-When a 3-byte match is followed by another match, and the previous token
-has bottom 2 bits == 0, we can set those bits to 3 and encode the 3-byte
-match as literals instead. This allows better compression in certain patterns.
+Implements:
+1. Hash chain based match finder (same as game)
+2. Cached match length optimization for early termination
+3. Lazy matching with exact game adjustment formulas
+4. Tiebreaking optimization Scenario 1 (Match-Follow-Match)
 """
 
 # Debug counter for Scenario 1 optimization
 scenario1_counter = 0
+
+# Hash chain match finder state (game-accurate implementation)
+class HashChainMatchFinder:
+    """
+    Hash chain based match finder matching game's FUN_01b8de10/FUN_01b8df10.
+
+    Uses same hash function and data structures as the game:
+    - 14-bit hash from 3-byte window
+    - Hash chain linking positions with same hash
+    - Cached match length for early termination optimization
+    """
+
+    HASH_SIZE = 16384  # 0x3FFF + 1 (14-bit hash)
+    MAX_CHAIN_DEPTH = 2048  # 0x800
+    GOOD_ENOUGH_LEN = 2048  # 0x800 - stop searching if match is this long
+
+    def __init__(self, data):
+        self.data = data
+        self.data_len = len(data)
+
+        # hash_head[hash] = most recent position with this hash (or -1)
+        self.hash_head = [-1] * self.HASH_SIZE
+
+        # chain_link[pos] = next older position with same hash (or -1)
+        self.chain_link = [-1] * self.data_len
+
+        # Current position being encoded
+        self.current_pos = 0
+
+    def _compute_hash(self, pos):
+        """
+        Compute 14-bit hash from 3 bytes at position.
+        Game formula: (((b0 << 5) ^ b1) << 5) ^ b2) * 0x9f5f >> 5) & 0x3fff
+        """
+        if pos + 2 >= self.data_len:
+            return 0
+
+        b0 = self.data[pos]
+        b1 = self.data[pos + 1]
+        b2 = self.data[pos + 2]
+
+        h = ((b0 << 5) ^ b1)
+        h = ((h << 5) ^ b2)
+        h = (h * 0x9f5f) >> 5
+        h = h & 0x3fff
+
+        return h
+
+    def advance_to(self, pos):
+        """
+        Advance the hash chain to cover all positions up to pos.
+        Must be called sequentially - positions cannot be skipped.
+        """
+        while self.current_pos < pos:
+            # Add current_pos to its hash chain
+            if self.current_pos + 2 < self.data_len:
+                h = self._compute_hash(self.current_pos)
+                # Link to previous head
+                self.chain_link[self.current_pos] = self.hash_head[h]
+                # Become new head
+                self.hash_head[h] = self.current_pos
+            self.current_pos += 1
+
+    def find_match(self, pos, max_match_length=2048):
+        """
+        Find best match at position using hash chain traversal.
+
+        Implements game's early termination conditions:
+        1. match_len == max_length (hit limit)
+        2. match_len >= GOOD_ENOUGH_LEN (good enough)
+        3. match_len > match_len_cache[candidate] (can't do better)
+        """
+        # Ensure hash chains are built up to this position
+        self.advance_to(pos)
+
+        if pos < 2:
+            return 0, 0
+
+        # Calculate hash for current position
+        h = self._compute_hash(pos)
+
+        # Get head of chain (most recent position with same hash)
+        candidate = self.hash_head[h]
+
+        best_length = 0
+        best_offset = 0
+
+        max_length = min(max_match_length, self.data_len - pos)
+        chain_count = 0
+
+        # Walk the hash chain for 3+ byte matches
+        while candidate >= 0 and chain_count < self.MAX_CHAIN_DEPTH:
+            chain_count += 1
+
+            # Calculate offset
+            offset = pos - candidate
+
+            # Check offset limits (max 8192, and can't reference prefix bytes 0-1)
+            if offset > 8192 or candidate < 2:
+                candidate = self.chain_link[candidate] if candidate < len(self.chain_link) else -1
+                continue
+
+            # Quick rejection: check bytes at best_length-1, best_length, 0, 1
+            # Game does: [best-1], [best], [0], [1]
+            match_possible = True
+            if best_length >= 2:
+                if self.data[candidate + best_length - 1] != self.data[pos + best_length - 1]:
+                    match_possible = False
+                elif candidate + best_length < self.data_len and pos + best_length < self.data_len:
+                    if self.data[candidate + best_length] != self.data[pos + best_length]:
+                        match_possible = False
+
+            if match_possible:
+                if pos + 1 >= self.data_len or candidate + 1 >= self.data_len:
+                    match_possible = False
+                elif self.data[candidate] != self.data[pos]:
+                    match_possible = False
+                elif self.data[candidate + 1] != self.data[pos + 1]:
+                    match_possible = False
+
+            if match_possible:
+                # Extend match
+                length = 2
+                while (length < max_length and
+                       pos + length < self.data_len and
+                       candidate + length < self.data_len and
+                       self.data[candidate + length] == self.data[pos + length]):
+                    length += 1
+
+                if length > best_length:
+                    best_length = length
+                    best_offset = offset
+
+                    # Early termination 1: hit maximum length
+                    if best_length >= max_length:
+                        break
+
+                    # Early termination 2: good enough
+                    if best_length >= self.GOOD_ENOUGH_LEN:
+                        break
+
+                    # Note: Early termination 3 (cached length optimization) was tested
+                    # but the game does NOT use it. The game exhaustively searches
+                    # the entire hash chain (up to MAX_CHAIN_DEPTH) to find the
+                    # longest match, regardless of cached lengths at candidates.
+
+            # Follow chain to older position
+            candidate = self.chain_link[candidate] if candidate < len(self.chain_link) else -1
+
+        # If we didn't find a 3+ byte match via hash chain, try to find 2-byte matches
+        # The game uses a separate mechanism for 2-byte matches since they require
+        # only matching the first 2 bytes, not the same 3-byte hash.
+        # Scan backward for 2-byte matches within short match range (offset <= 256)
+        if best_length < 2 and pos + 1 < self.data_len:
+            b0 = self.data[pos]
+            b1 = self.data[pos + 1]
+
+            # Scan back up to 256 positions for 2-byte match
+            max_scan = min(256, pos - 2)  # Can't reference prefix (pos 0-1)
+            for offset in range(1, max_scan + 1):
+                check_pos = pos - offset
+                if check_pos < 2:
+                    break
+                if self.data[check_pos] == b0 and self.data[check_pos + 1] == b1:
+                    # Found 2-byte match, now extend it
+                    length = 2
+                    while (length < max_length and
+                           pos + length < self.data_len and
+                           check_pos + length < self.data_len and
+                           self.data[check_pos + length] == self.data[pos + length]):
+                        length += 1
+
+                    if length > best_length:
+                        best_length = length
+                        best_offset = offset
+                        # For 2-byte scan, take first match found (smallest offset)
+                        break
+
+        return best_length, best_offset
+
+
+# Global match finder instance (initialized per compression)
+_match_finder = None
 
 def add_bit(output, bit_accum, bit_counter, flag_byte_ptr, bit_value):
     """Add single bit - exact Ghidra implementation"""
@@ -118,12 +302,17 @@ def find_optimal_match_length(buffered_data, pos, match_length, match_offset):
     """
     Find optimal length for a match by looking ahead within it.
 
-    The game sometimes truncates long matches early if a significantly better
-    match exists at a position within the current match. This improves overall
-    compression by allowing the compressor to take advantage of better opportunities.
+    NOTE: This optimization was DISABLED because it doesn't match game behavior.
+    The game takes the full match length without truncation optimization.
+    The optimization was incorrectly truncating matches (e.g., 316 bytes to 30 bytes)
+    which caused compression mismatches with different save files.
 
-    Returns the optimal length (may be shorter than match_length).
+    Returns the original match_length unchanged.
     """
+    # DISABLED: Always return the full match length to match game behavior
+    return match_length
+
+    # Original (disabled) optimization code below:
     if match_length < 50:  # Only optimize long matches
         return match_length
 
@@ -147,8 +336,11 @@ def find_optimal_match_length(buffered_data, pos, match_length, match_offset):
         if future_pos >= len(buffered_data):
             break
 
-        # Find best match at this position
-        future_length, future_offset = find_best_match(buffered_data, future_pos)
+        # Find best match at this position using hash chain finder
+        if _match_finder is not None:
+            future_length, future_offset = _match_finder.find_match(future_pos)
+        else:
+            future_length, future_offset = find_best_match(buffered_data, future_pos)
 
         if future_length < 50:  # Not a significantly better match
             continue
@@ -191,12 +383,18 @@ def peek_next_decision(buffered_data, pos, curr_length):
     if next_pos >= len(buffered_data):
         return (False, 0, 0)
 
-    # Find best match at next position
-    next_length, next_offset = find_best_match(buffered_data, next_pos)
+    # Find best match at next position using hash chain finder
+    if _match_finder is not None:
+        next_length, next_offset = _match_finder.find_match(next_pos)
+    else:
+        next_length, next_offset = find_best_match(buffered_data, next_pos)
 
     # Apply same lazy matching logic as main loop would
     if next_length >= 2 and next_pos + 1 < len(buffered_data):
-        lookahead_length, lookahead_offset = find_best_match(buffered_data, next_pos + 1)
+        if _match_finder is not None:
+            lookahead_length, lookahead_offset = _match_finder.find_match(next_pos + 1)
+        else:
+            lookahead_length, lookahead_offset = find_best_match(buffered_data, next_pos + 1)
 
         # Determine match types
         next_is_short = (2 <= next_length <= 5 and next_offset <= 256)
@@ -243,11 +441,14 @@ def compress_lzss_lazy(data):
     - And next decision will be a match (token >= 0x10)
     - Then: set prev token's bits to 3, encode current as 3 literals
     """
-    global scenario1_counter
+    global scenario1_counter, _match_finder
     scenario1_counter = 0
 
     # Add 2-byte zero prefix
     buffered_data = bytearray([0x00, 0x00]) + bytearray(data)
+
+    # Initialize hash chain match finder for this compression
+    _match_finder = HashChainMatchFinder(buffered_data)
 
     output = bytearray()
     bit_accum = 0
@@ -265,16 +466,16 @@ def compress_lzss_lazy(data):
     pos = 2
 
     while pos < len(buffered_data):
-        # Find best match at current position
-        curr_length, curr_offset = find_best_match(buffered_data, pos)
+        # Find best match at current position using hash chain
+        curr_length, curr_offset = _match_finder.find_match(pos)
         
         # Force literal at the very first position (game behavior)
         if pos == 2:
             curr_length = 0
         
-        # LAZY MATCHING with exact game logic  
+        # LAZY MATCHING with exact game logic
         if curr_length >= 2 and pos + 1 < len(buffered_data):
-            next_length, next_offset = find_best_match(buffered_data, pos + 1)
+            next_length, next_offset = _match_finder.find_match(pos + 1)
             
             # Determine match types
             curr_is_short = (2 <= curr_length <= 5 and curr_offset <= 256)

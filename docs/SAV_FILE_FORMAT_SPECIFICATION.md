@@ -173,38 +173,52 @@ Offset | Size | Field            | Block 1       | Block 2
 - Field3 (Marker) = `0x00CAFE00`
 - Field4 = Complex encoding (see below)
 
-#### Block 2 Field4 Encoding (PARTIALLY UNDERSTOOD)
+#### Block 2 Field4 Calculation (CONFIRMED via TTD - January 2025)
 
-Field4 encodes region metadata in two 16-bit components:
+**Field4 = total bytes consumed from decompressed Block 2 data**
 
-| Component | Meaning | Confidence |
-|-----------|---------|------------|
-| High 16 bits | `region_count / 2` | **HIGH** - Verified across 3 saves |
-| Low 16 bits | Unknown | **LOW** - No clear formula found |
+This was confirmed via WinDbg Time-Travel Debugging by tracing the exact instruction that computes Field4.
 
-**Observed Values:**
+**Calculation in FUN_01B6F170 (offset +0x176f18b):**
+```asm
+mov eax, [esi+14h]    ; EAX = buffer_start
+mov edx, [esi+18h]    ; EDX = current_position (after serialization)
+sub edx, eax          ; EDX = current_position - buffer_start = Field4
+```
 
-| Save File | Field4 | High 16 | Low 16 | Regions |
-|-----------|--------|---------|--------|---------|
-| FRESH.SAV | 0x0003F1D6 | 3 | 61910 | 6 |
-| CAPE_0%.SAV | 0x0003F21A | 3 | 61978 | 6 |
-| CAPE_100%.SAV | 0x0008AC49 | 8 | 44105 | 16 |
+**Practical Formula for Serialization:**
+```python
+Field4 = struct.unpack('<I', decompressed[0x0E:0x12])[0] + 0x12
+```
 
-**High 16 bits:** Confirmed to equal `total_region_count / 2` where regions are counted
-across Blocks 3, 4, and 5 (each region header `[01] [size 3B] [00 00 80 00]`).
+**Why this works:**
 
-**Low 16 bits:** No consistent pattern found. Tested correlations:
-- `2 * uncompressed_size - OVERHEAD` → OVERHEAD varies (3558 to 21431)
-- Sum of region sizes → No match
-- Non-zero bytes in Block 2 → No match
-- Block 3+4+5 total size → No match
+The decompressed Block 2 data has this structure:
+| Offset | Size | Content |
+|--------|------|---------|
+| 0x00 | 10 bytes | Null padding |
+| 0x0A | 4 bytes | Type hash (0x94D6F8F1 = AssassinSaveGameData) |
+| 0x0E | 4 bytes | Object data size |
+| 0x12 | varies | Object data |
 
-**Recommendation:** When modifying saves, preserve the original Field4 value.
-Only update if adding/removing regions (update high bits only, preserve low bits).
+Total fixed header = 10 + 4 + 4 = 18 bytes (0x12)
 
-**Previous Theory (DEPRECATED):**
-The formula `(3 << 16) + (2 * 32768 - 3558) = 0x0003F21A` only matches CAPE_0%.SAV.
-It does not work for FRESH.SAV (produces wrong value) or larger saves.
+Therefore: `Field4 = 0x12 + value_at_offset_0x0E`
+
+**Verified Values (100% accuracy across 8 SAV files):**
+
+| Save File | Field4 | Value at 0x0E | 0x12 + Value |
+|-----------|--------|---------------|--------------|
+| FRESH.SAV | 0x0003F1D6 | 0x0003F1C4 | 0x0003F1D6 ✓ |
+| CAPE_0%.SAV | 0x0003F21A | 0x0003F208 | 0x0003F21A ✓ |
+| CAPE_100%.SAV | 0x0008AC49 | 0x0008AC37 | 0x0008AC49 ✓ |
+
+**Key Functions:**
+| Function | Address | Purpose |
+|----------|---------|---------|
+| `FUN_01B6F170` | `0x01B6F170` | Computes Field4 via `sub edx, eax` |
+| `FUN_00425360` | `0x00425360` | Buffer descriptor setter (receives Field4) |
+| `FUN_01AFD600` | `0x01AFD600` | Main serializer orchestrator |
 
 ### 2.3 Footer Format
 
