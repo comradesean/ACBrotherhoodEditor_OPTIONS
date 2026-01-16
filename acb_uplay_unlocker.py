@@ -168,17 +168,24 @@ def find_sections(data: bytes, platform: str) -> list:
 # =============================================================================
 
 def get_trailing_data(data: bytes, platform: str, sections: list) -> bytes:
-    """Extract trailing data after sections (PS3 only)."""
-    if platform != 'PS3' or not sections:
+    """Extract trailing data after sections (footer for PC, trailing data for PS3)."""
+    if not sections:
         return b''
 
-    prefix_size = struct.unpack('>I', data[0:4])[0]
     last_section = sections[-1]
-    sections_end = last_section['data_offset'] + last_section['compressed_size'] - 8  # -8 for PS3 prefix offset
 
-    if prefix_size > sections_end:
-        return data[8 + sections_end:8 + prefix_size]
-    return b''
+    if platform == 'PS3':
+        prefix_size = struct.unpack('>I', data[0:4])[0]
+        sections_end = last_section['data_offset'] + last_section['compressed_size'] - 8  # -8 for PS3 prefix offset
+        if prefix_size > sections_end:
+            return data[8 + sections_end:8 + prefix_size]
+        return b''
+    else:
+        # PC: Extract the 5-byte footer after the last section
+        sections_end = last_section['data_offset'] + last_section['compressed_size']
+        if sections_end + 5 <= len(data):
+            return data[sections_end:sections_end + 5]
+        return PC_FOOTER  # Fallback to default if not found
 
 
 # =============================================================================
@@ -279,8 +286,14 @@ def save_options_file(filepath: str, sections: list, platform: str, trailing_dat
         if padding > 0:
             output.extend(bytes(padding))
     else:
+        # PC format
         output.extend(section_data)
-        output.extend(PC_FOOTER)
+        # PC has a 5-byte footer. Not 100% sure, but we've seen files without this footer
+        # when AssassinMultiProfileData (section 4) exists - skip footer in that case.
+        has_section4 = len(sections) >= 4
+        if not has_section4:
+            # Use extracted footer (preserves hardware device count) or default
+            output.extend(trailing_data if trailing_data else PC_FOOTER)
 
     with open(filepath, 'wb') as f:
         f.write(output)
