@@ -1,0 +1,1410 @@
+{
+  "exe_path": "/mnt/f/Downloads/AC B B12901844~AG/Assassins Creed Brotherhood/ACBSP.exe",
+  "file_size": 48193480,
+  "image_base": "0x00400000",
+  "block_hash_matches": {
+    "0xBDBE3B52": {
+      "name": "Block1_PlayerProfile",
+      "count": 7,
+      "matches": [
+        {
+          "hash_value": 3183360850,
+          "hash_name": "Block1_PlayerProfile",
+          "file_offset": 1976726,
+          "virtual_address": 6174102,
+          "section_name": ".text",
+          "context_before": "31 6A 01 6A 00 57 B9 7C 24 A6 02 E8 3A 8D 51 01 57 B9 7C 24 A6 02 8B D8 E8 0D 83 51 01 50 53 68",
+          "context_after": "6A 00 68 08 14 3F 02 8B CE E8 78 68 52 01 8B 5E 20 56 8B CF C7 46 20 00 00 00 00 E8 D6 49 53 01",
+          "descriptor_likelihood": "low",
+          "notes": "No special markers found"
+        },
+        {
+          "hash_value": 3183360850,
+          "hash_name": "Block1_PlayerProfile",
+          "file_offset": 33424672,
+          "virtual_address": 37622048,
+          "section_name": ".rdata",
+          "context_before": "33 7B D5 53 42 01 26 00 C2 ED 95 8C 9A 43 B9 FB 6F C1 42 FD 9D 55 89 8B BA 50 87 1A E0 B2 00 3C",
+          "context_after": "86 6F 80 B7 44 37 81 41 A3 5A 1B 65 E1 93 15 E3 6E 40 1D DB A4 1D CC FC C9 EE 56 74 ED 83 B0 7D",
+          "descriptor_likelihood": "medium",
+          "notes": "In .rdata section"
+        },
+        {
+          "hash_value": 3183360850,
+          "hash_name": "Block1_PlayerProfile",
+          "file_offset": 37615160,
+          "virtual_address": 41813560,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 C0 5D 46 00 30 65 41 00 2D 00 01 08 01 00 00 00 9A 99 19 3F 00 00 00 00 E9 1E DE 87",
+          "context_after": "00 00 1C 00 00 00 F0 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 A0 EF 03 28 52 3B BE BD",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 3183360850,
+          "hash_name": "Block1_PlayerProfile",
+          "file_offset": 37615192,
+          "virtual_address": 41813592,
+          "section_name": ".data",
+          "context_before": "52 3B BE BD 00 00 1C 00 00 00 F0 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 A0 EF 03 28",
+          "context_after": "00 00 1C 00 00 00 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 64 D8 7D CE 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 3183360850,
+          "hash_name": "Block1_PlayerProfile",
+          "file_offset": 37666760,
+          "virtual_address": 41865160,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 08 D0 7E 02 00 00 00 00 B8 CC 7E 02 00 00 00 00 08 14 3F 02 7D 60 96 BB",
+          "context_after": "5C 00 00 00 03 00 00 00 4C 00 00 00 00 00 00 00 00 00 00 00 FF 7F FF 7F 60 3F 5E 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 3183360850,
+          "hash_name": "Block1_PlayerProfile",
+          "file_offset": 37989848,
+          "virtual_address": 42188248,
+          "section_name": ".data",
+          "context_before": "39 50 B5 B4 00 00 13 00 00 00 C0 3C 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 E8 41 D6 9E",
+          "context_after": "00 00 1D 0E 00 00 50 3D 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 62 6D A8 2D 52 3B BE BD",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 3183360850,
+          "hash_name": "Block1_PlayerProfile",
+          "file_offset": 37989880,
+          "virtual_address": 42188280,
+          "section_name": ".data",
+          "context_before": "52 3B BE BD 00 00 1D 0E 00 00 50 3D 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 62 6D A8 2D",
+          "context_after": "00 00 1C 00 00 00 70 3D 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 08 47 68 FB 92 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        }
+      ]
+    },
+    "0x94D6F8F1": {
+      "name": "Block2_GameState",
+      "count": 6,
+      "matches": [
+        {
+          "hash_value": 2497116401,
+          "hash_name": "Block2_GameState",
+          "file_offset": 19989186,
+          "virtual_address": 24186562,
+          "section_name": ".text",
+          "context_before": "31 6A 00 6A 00 57 B9 7C 24 A6 02 E8 0E B4 3E 00 57 B9 7C 24 A6 02 8B D8 E8 E1 A9 3E 00 50 53 68",
+          "context_after": "6A 00 68 3C DE 53 02 8B CE E8 4C 8F 3F 00 8B 5E 20 56 8B CF C7 46 20 00 00 00 00 E8 1A 28 ED FE",
+          "descriptor_likelihood": "low",
+          "notes": "No special markers found"
+        },
+        {
+          "hash_value": 2497116401,
+          "hash_name": "Block2_GameState",
+          "file_offset": 34195604,
+          "virtual_address": 38392980,
+          "section_name": ".rdata",
+          "context_before": "77 C0 5C E1 94 4C C9 1F D7 F1 E0 3A 80 DC 5F 93 27 7B 93 D8 ED DF B9 0A 37 DB 9F 16 B3 00 57 DF",
+          "context_after": "66 6D 87 C9 3B 80 5C 57 03 00 00 00 80 00 00 00 AC 74 DC 9E DB 7B 62 71 B7 BE 5D 03 31 19 A8 88",
+          "descriptor_likelihood": "medium",
+          "notes": "In .rdata section"
+        },
+        {
+          "hash_value": 2497116401,
+          "hash_name": "Block2_GameState",
+          "file_offset": 37989592,
+          "virtual_address": 42187992,
+          "section_name": ".data",
+          "context_before": "66 66 66 3F 00 00 A0 3F 00 00 E0 3F 00 00 A0 BF 00 00 40 40 00 00 00 00 00 00 00 00 D3 2C DB 0E",
+          "context_after": "00 00 13 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2B 4B 00 3A F1 F8 D6 94",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 2497116401,
+          "hash_name": "Block2_GameState",
+          "file_offset": 37989624,
+          "virtual_address": 42188024,
+          "section_name": ".data",
+          "context_before": "F1 F8 D6 94 00 00 13 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2B 4B 00 3A",
+          "context_after": "00 00 13 00 00 00 60 12 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 38 48 CD 1E 27 DF 72 3A",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 2497116401,
+          "hash_name": "Block2_GameState",
+          "file_offset": 37989720,
+          "virtual_address": 42188120,
+          "section_name": ".data",
+          "context_before": "27 DF 72 3A 00 00 13 00 00 00 10 26 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 5D 5C C1 0D",
+          "context_after": "00 00 13 00 00 00 A0 27 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1B C3 88 1F A8 E1 5A 30",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 2497116401,
+          "hash_name": "Block2_GameState",
+          "file_offset": 39265928,
+          "virtual_address": 43464328,
+          "section_name": ".data",
+          "context_before": "C0 35 97 02 E0 35 97 02 00 36 97 02 78 36 97 02 80 33 97 02 00 00 00 00 3C DE 53 02 86 6F 80 B7",
+          "context_after": "88 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 FF 7F FF 7F 20 19 71 01 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        }
+      ]
+    },
+    "0xA1A85298": {
+      "name": "Block4_GameState2",
+      "count": 6,
+      "matches": [
+        {
+          "hash_value": 2712162968,
+          "hash_name": "Block4_GameState2",
+          "file_offset": 10934646,
+          "virtual_address": 15132022,
+          "section_name": ".text",
+          "context_before": "53 6A 00 6A 00 56 B9 7C 24 A6 02 E8 5A DD C8 00 56 B9 7C 24 A6 02 8B D8 E8 2D D3 C8 00 50 53 68",
+          "context_after": "6A 00 68 AC FF 4D 02 8B CF E8 98 B8 C9 00 5B 8B 0D B0 30 88 02 51 8D 56 04 52 68 AB 75 90 C6 8B",
+          "descriptor_likelihood": "low",
+          "notes": "No special markers found"
+        },
+        {
+          "hash_value": 2712162968,
+          "hash_name": "Block4_GameState2",
+          "file_offset": 34195128,
+          "virtual_address": 38392504,
+          "section_name": ".rdata",
+          "context_before": "A3 95 B7 63 77 AB 93 2D 45 71 8F 58 9E 6A 8E 65 30 0F 61 C9 B3 DC 66 7F 97 DE 9C 54 3C 31 A4 43",
+          "context_after": "91 75 8B 6D 86 38 CE 08 83 D2 BF C3 A2 BA 4A 04 E3 BD 7E 9E 84 4B 6F 80 90 D0 B2 B2 8E 28 79 78",
+          "descriptor_likelihood": "medium",
+          "notes": "In .rdata section"
+        },
+        {
+          "hash_value": 2712162968,
+          "hash_name": "Block4_GameState2",
+          "file_offset": 38022936,
+          "virtual_address": 42221336,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 07 00 00 00 40 00 E0 A3 BE 00 00 00 00 00 00 00 00 00 0D 02 00 02 B8 57 F2 B7",
+          "context_after": "00 00 1D 0A 00 00 50 00 10 42 BF 00 10 40 BF 00 00 00 00 00 81 02 00 02 67 48 00 41 98 52 A8 A1",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 2712162968,
+          "hash_name": "Block4_GameState2",
+          "file_offset": 38022968,
+          "virtual_address": 42221368,
+          "section_name": ".data",
+          "context_before": "98 52 A8 A1 00 00 1D 0A 00 00 50 00 10 42 BF 00 10 40 BF 00 00 00 00 00 81 02 00 02 67 48 00 41",
+          "context_after": "00 00 1D 0A 00 00 70 00 00 00 00 00 00 00 00 00 00 00 00 00 81 00 00 02 BF 6B 77 90 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 2712162968,
+          "hash_name": "Block4_GameState2",
+          "file_offset": 38281424,
+          "virtual_address": 42479824,
+          "section_name": ".data",
+          "context_before": "70 30 88 02 90 30 88 02 C0 30 88 02 00 00 00 00 70 30 88 02 00 00 00 00 AC FF 4D 02 02 00 00 00",
+          "context_after": "0C 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 FF 7F FF 7F 90 E7 E6 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        },
+        {
+          "hash_value": 2712162968,
+          "hash_name": "Block4_GameState2",
+          "file_offset": 38426448,
+          "virtual_address": 42624848,
+          "section_name": ".data",
+          "context_before": "5E 37 DF E9 00 00 19 00 00 00 20 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 3A F5 77 93",
+          "context_after": "00 00 1D 0A 00 00 30 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 EC 0E D5 E4 AF CC 99 25",
+          "descriptor_likelihood": "medium",
+          "notes": "In .data section"
+        }
+      ]
+    }
+  },
+  "property_hash_matches": {
+    "0xBB6621D2": {
+      "name": "Unknown_Prop_1",
+      "count": 2,
+      "matches": [
+        {
+          "hash_value": 3144032722,
+          "hash_name": "Unknown_Prop_1",
+          "file_offset": 37666300,
+          "virtual_address": 41864700,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 70 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        },
+        {
+          "hash_value": 3144032722,
+          "hash_name": "Unknown_Prop_1",
+          "file_offset": 39383996,
+          "virtual_address": 43582396,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 70 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        }
+      ]
+    },
+    "0x28550876": {
+      "name": "Unknown_Prop_2",
+      "count": 1,
+      "matches": [
+        {
+          "hash_value": 676661366,
+          "hash_name": "Unknown_Prop_2",
+          "file_offset": 37666332,
+          "virtual_address": 41864732,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 80 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        }
+      ]
+    },
+    "0x28F5132B": {
+      "name": "Unknown_Prop_3",
+      "count": 2,
+      "matches": [
+        {
+          "hash_value": 687149867,
+          "hash_name": "Unknown_Prop_3",
+          "file_offset": 37666524,
+          "virtual_address": 41864924,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 D0 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        },
+        {
+          "hash_value": 687149867,
+          "hash_name": "Unknown_Prop_3",
+          "file_offset": 38062412,
+          "virtual_address": 42260812,
+          "section_name": ".data",
+          "context_before": "10 57 C6 00 C0 4C C6 00 02 00 00 84 94 00 00 00",
+          "context_after": "00 00 00 00 00 00 0A 00 00 00 00 00 10 23 B9 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        }
+      ]
+    },
+    "0x8C00191B": {
+      "name": "Unknown_Prop_4",
+      "count": 2,
+      "matches": [
+        {
+          "hash_value": 2348816667,
+          "hash_name": "Unknown_Prop_4",
+          "file_offset": 37666556,
+          "virtual_address": 41864956,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 E0 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        },
+        {
+          "hash_value": 2348816667,
+          "hash_name": "Unknown_Prop_4",
+          "file_offset": 39278428,
+          "virtual_address": 43476828,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 40 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        }
+      ]
+    },
+    "0x7111FCC2": {
+      "name": "Unknown_Prop_5",
+      "count": 2,
+      "matches": [
+        {
+          "hash_value": 1897004226,
+          "hash_name": "Unknown_Prop_5",
+          "file_offset": 37666428,
+          "virtual_address": 41864828,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "47 3E B6 FB 00 00 12 00 00 00 A0 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        },
+        {
+          "hash_value": 1897004226,
+          "hash_name": "Unknown_Prop_5",
+          "file_offset": 37985076,
+          "virtual_address": 42183476,
+          "section_name": ".data",
+          "context_before": "A0 EF AA 41 0A 00 00 00 F1 A5 27 88 0B 00 00 00",
+          "context_after": "D8 AA 83 02 C5 3B 1B 04 0C 00 00 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        }
+      ]
+    },
+    "0x6C448E95": {
+      "name": "Unknown_Prop_6",
+      "count": 1,
+      "matches": [
+        {
+          "hash_value": 1816432277,
+          "hash_name": "Unknown_Prop_6",
+          "file_offset": 37666460,
+          "virtual_address": 41864860,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "A0 CB DA 5F 00 00 12 00 00 00 B0 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        }
+      ]
+    },
+    "0xEB76C432": {
+      "name": "Unknown_Prop_7",
+      "count": 3,
+      "matches": [
+        {
+          "hash_value": 3950429234,
+          "hash_name": "Unknown_Prop_7",
+          "file_offset": 37666492,
+          "virtual_address": 41864892,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 C0 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        },
+        {
+          "hash_value": 3950429234,
+          "hash_name": "Unknown_Prop_7",
+          "file_offset": 38060884,
+          "virtual_address": 42259284,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 07 00 00 00 10 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        },
+        {
+          "hash_value": 3950429234,
+          "hash_name": "Unknown_Prop_7",
+          "file_offset": 38063596,
+          "virtual_address": 42261996,
+          "section_name": ".data",
+          "context_before": "00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02",
+          "context_after": "00 00 00 00 00 00 0A 00 00 00 10 00 00 00 00 00",
+          "descriptor_likelihood": "medium",
+          "notes": ""
+        }
+      ]
+    }
+  },
+  "descriptor_candidates": [],
+  "string_matches": [
+    {
+      "string": "SaveGameManager",
+      "file_offset": 33450256,
+      "virtual_address": "0x023E7510",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameManagerBackgroundThread",
+      "file_offset": 33450272,
+      "virtual_address": "0x023E7520",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame::SaveToFile",
+      "file_offset": 33450590,
+      "virtual_address": "0x023E765E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame::Update",
+      "file_offset": 33450622,
+      "virtual_address": "0x023E767E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameManager",
+      "file_offset": 33450648,
+      "virtual_address": "0x023E7698",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameDataObject",
+      "file_offset": 33490932,
+      "virtual_address": "0x023F13F4",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 33490952,
+      "virtual_address": "0x023F1408",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameWriter::WriteFile called with params: path = %s, filename = %s\n",
+      "file_offset": 33491088,
+      "virtual_address": "0x023F1490",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameWriter::ReadFile called with params: path = %s, filename = %s\n",
+      "file_offset": 33491192,
+      "virtual_address": "0x023F14F8",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameObject",
+      "file_offset": 33531340,
+      "virtual_address": "0x023FB1CC",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameComponent",
+      "file_offset": 33531416,
+      "virtual_address": "0x023FB218",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34201730,
+      "virtual_address": "0x0249EC82",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameDataManager",
+      "file_offset": 34360408,
+      "virtual_address": "0x024C5858",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 34360465,
+      "virtual_address": "0x024C5891",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameLoadedEvent",
+      "file_offset": 34395970,
+      "virtual_address": "0x024CE342",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameMenuComponent",
+      "file_offset": 34448820,
+      "virtual_address": "0x024DB1B4",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameClip",
+      "file_offset": 34450024,
+      "virtual_address": "0x024DB668",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameClip",
+      "file_offset": 34531684,
+      "virtual_address": "0x024EF564",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34698292,
+      "virtual_address": "0x02518034",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData_TotalMoneyLost",
+      "file_offset": 34698344,
+      "virtual_address": "0x02518068",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData_TotalMoneyWon",
+      "file_offset": 34698380,
+      "virtual_address": "0x0251808C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData_GameHasBeenPlayedBefore",
+      "file_offset": 34698416,
+      "virtual_address": "0x025180B0",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34853444,
+      "virtual_address": "0x0253DE44",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34854195,
+      "virtual_address": "0x0253E133",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 34855963,
+      "virtual_address": "0x0253E81B",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 34855991,
+      "virtual_address": "0x0253E837",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "GameStateData",
+      "file_offset": 33581068,
+      "virtual_address": "0x0240740C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "GameStateData",
+      "file_offset": 33581103,
+      "virtual_address": "0x0240742F",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "Profile",
+      "file_offset": 33448155,
+      "virtual_address": "0x023E6CDB",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileAmbience",
+      "file_offset": 33455348,
+      "virtual_address": "0x023E88F4",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "Profile",
+      "file_offset": 33455398,
+      "virtual_address": "0x023E8926",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileChangeEvent",
+      "file_offset": 34461448,
+      "virtual_address": "0x024DE308",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileCameraActivator",
+      "file_offset": 34529755,
+      "virtual_address": "0x024EEDDB",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileCameraSettings",
+      "file_offset": 34529927,
+      "virtual_address": "0x024EEE87",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileCamera",
+      "file_offset": 34530039,
+      "virtual_address": "0x024EEEF7",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileCondition",
+      "file_offset": 34559520,
+      "virtual_address": "0x024F6220",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileData",
+      "file_offset": 34853370,
+      "virtual_address": "0x0253DDFA",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileData",
+      "file_offset": 34853581,
+      "virtual_address": "0x0253DECD",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileData",
+      "file_offset": 34853662,
+      "virtual_address": "0x0253DF1E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileCurveBlendingPolicy",
+      "file_offset": 34877438,
+      "virtual_address": "0x02543BFE",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileModifier",
+      "file_offset": 34878031,
+      "virtual_address": "0x02543E4F",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "Profile",
+      "file_offset": 35001194,
+      "virtual_address": "0x02561F6A",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileIntW",
+      "file_offset": 37586072,
+      "virtual_address": "0x027D9098",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileSectionNamesW",
+      "file_offset": 37586096,
+      "virtual_address": "0x027D90B0",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileStringW",
+      "file_offset": 37586130,
+      "virtual_address": "0x027D90D2",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileStringW",
+      "file_offset": 37586160,
+      "virtual_address": "0x027D90F0",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileSectionA",
+      "file_offset": 37590642,
+      "virtual_address": "0x027DA272",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileSectionNamesA",
+      "file_offset": 37590670,
+      "virtual_address": "0x027DA28E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "ProfileStringA",
+      "file_offset": 37590706,
+      "virtual_address": "0x027DA2B2",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameManager",
+      "file_offset": 33450256,
+      "virtual_address": "0x023E7510",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameManagerBackgroundThread",
+      "file_offset": 33450272,
+      "virtual_address": "0x023E7520",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame::SaveToFile",
+      "file_offset": 33450590,
+      "virtual_address": "0x023E765E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveToFile",
+      "file_offset": 33450600,
+      "virtual_address": "0x023E7668",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame::Update",
+      "file_offset": 33450622,
+      "virtual_address": "0x023E767E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameManager",
+      "file_offset": 33450648,
+      "virtual_address": "0x023E7698",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveEntities.txt",
+      "file_offset": 33464636,
+      "virtual_address": "0x023EAD3C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameDataObject",
+      "file_offset": 33490932,
+      "virtual_address": "0x023F13F4",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 33490952,
+      "virtual_address": "0x023F1408",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameWriter::WriteFile called with params: path = %s, filename = %s\n",
+      "file_offset": 33491088,
+      "virtual_address": "0x023F1490",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameWriter::ReadFile called with params: path = %s, filename = %s\n",
+      "file_offset": 33491192,
+      "virtual_address": "0x023F14F8",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 33492656,
+      "virtual_address": "0x023F1AB0",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 33492675,
+      "virtual_address": "0x023F1AC3",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 33492695,
+      "virtual_address": "0x023F1AD7",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 33492721,
+      "virtual_address": "0x023F1AF1",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 33492748,
+      "virtual_address": "0x023F1B0C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameObject",
+      "file_offset": 33531340,
+      "virtual_address": "0x023FB1CC",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameComponent",
+      "file_offset": 33531416,
+      "virtual_address": "0x023FB218",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveFilterOptions",
+      "file_offset": 33531604,
+      "virtual_address": "0x023FB2D4",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameData",
+      "file_offset": 33619981,
+      "virtual_address": "0x02410C0D",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "Savegame",
+      "file_offset": 33620015,
+      "virtual_address": "0x02410C2F",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34199233,
+      "virtual_address": "0x0249E2C1",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34199255,
+      "virtual_address": "0x0249E2D7",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveDataDelta",
+      "file_offset": 34199289,
+      "virtual_address": "0x0249E2F9",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34201730,
+      "virtual_address": "0x0249EC82",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameDataManager",
+      "file_offset": 34360408,
+      "virtual_address": "0x024C5858",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 34360465,
+      "virtual_address": "0x024C5891",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34364573,
+      "virtual_address": "0x024C689D",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34366940,
+      "virtual_address": "0x024C71DC",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34366967,
+      "virtual_address": "0x024C71F7",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveCitizenBuilderLoadInfo",
+      "file_offset": 34367036,
+      "virtual_address": "0x024C723C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveCitizenData",
+      "file_offset": 34367064,
+      "virtual_address": "0x024C7258",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameData",
+      "file_offset": 34374594,
+      "virtual_address": "0x024C8FC2",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34379597,
+      "virtual_address": "0x024CA34D",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavedInfo",
+      "file_offset": 34379618,
+      "virtual_address": "0x024CA362",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34382776,
+      "virtual_address": "0x024CAFB8",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34382797,
+      "virtual_address": "0x024CAFCD",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34382816,
+      "virtual_address": "0x024CAFE0",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34382840,
+      "virtual_address": "0x024CAFF8",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34387332,
+      "virtual_address": "0x024CC184",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34387356,
+      "virtual_address": "0x024CC19C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameLoadedEvent",
+      "file_offset": 34395970,
+      "virtual_address": "0x024CE342",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34396745,
+      "virtual_address": "0x024CE649",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34412558,
+      "virtual_address": "0x024D240E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34412594,
+      "virtual_address": "0x024D2432",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34412622,
+      "virtual_address": "0x024D244E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameMenuComponent",
+      "file_offset": 34448820,
+      "virtual_address": "0x024DB1B4",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameClip",
+      "file_offset": 34450024,
+      "virtual_address": "0x024DB668",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveCitizenclip",
+      "file_offset": 34450176,
+      "virtual_address": "0x024DB700",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveCitizenMapMarker",
+      "file_offset": 34450328,
+      "virtual_address": "0x024DB798",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34461677,
+      "virtual_address": "0x024DE3ED",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveCitizen",
+      "file_offset": 34517453,
+      "virtual_address": "0x024EBDCD",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveAndLoad",
+      "file_offset": 34521381,
+      "virtual_address": "0x024ECD25",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameClip",
+      "file_offset": 34531684,
+      "virtual_address": "0x024EF564",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveCitizen",
+      "file_offset": 34594719,
+      "virtual_address": "0x024FEB9F",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34698292,
+      "virtual_address": "0x02518034",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData_TotalMoneyLost",
+      "file_offset": 34698344,
+      "virtual_address": "0x02518068",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData_TotalMoneyWon",
+      "file_offset": 34698380,
+      "virtual_address": "0x0251808C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData_GameHasBeenPlayedBefore",
+      "file_offset": 34698416,
+      "virtual_address": "0x025180B0",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34853444,
+      "virtual_address": "0x0253DE44",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveData",
+      "file_offset": 34853526,
+      "virtual_address": "0x0253DE96",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGameData",
+      "file_offset": 34854195,
+      "virtual_address": "0x0253E133",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 34855963,
+      "virtual_address": "0x0253E81B",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveGame",
+      "file_offset": 34855991,
+      "virtual_address": "0x0253E837",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameData",
+      "file_offset": 34856014,
+      "virtual_address": "0x0253E84E",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveCitizen",
+      "file_offset": 34866422,
+      "virtual_address": "0x025410F6",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveAndLoad",
+      "file_offset": 34869446,
+      "virtual_address": "0x02541CC6",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SaveObjects.txt",
+      "file_offset": 34946507,
+      "virtual_address": "0x025549CB",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavedMotion",
+      "file_offset": 35417164,
+      "virtual_address": "0x025C784C",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameId@SavegameInfo@orbitclient@mg@@QAEIXZ",
+      "file_offset": 37587632,
+      "virtual_address": "0x027D96B0",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameInfo@orbitclient@mg@@QAEIXZ",
+      "file_offset": 37587643,
+      "virtual_address": "0x027D96BB",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameInfo@orbitclient@mg@@QAEIXZ",
+      "file_offset": 37587691,
+      "virtual_address": "0x027D96EB",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameInfo@orbitclient@mg@@QAEPBGXZ",
+      "file_offset": 37587739,
+      "virtual_address": "0x027D971B",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameList@OrbitClient@orbitclient@mg@@QAEXIPAVIGetSavegameListListener@23@I@Z",
+      "file_offset": 37587784,
+      "virtual_address": "0x027D9748",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameListListener@23@I@Z",
+      "file_offset": 37587837,
+      "virtual_address": "0x027D977D",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameWriter@orbitclient@mg@@QAEX_N@Z",
+      "file_offset": 37588251,
+      "virtual_address": "0x027D991B",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameWriter@orbitclient@mg@@QAEXIPAVISavegameWriteListener@23@PAXI@Z",
+      "file_offset": 37588301,
+      "virtual_address": "0x027D994D",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameWriteListener@23@PAXI@Z",
+      "file_offset": 37588341,
+      "virtual_address": "0x027D9975",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameWriter@orbitclient@mg@@QAE_NPAG@Z",
+      "file_offset": 37588385,
+      "virtual_address": "0x027D99A1",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameWriter@OrbitClient@orbitclient@mg@@QAEXIPAVIGetSavegameWriterListener@23@II_N@Z",
+      "file_offset": 37588434,
+      "virtual_address": "0x027D99D2",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameWriterListener@23@II_N@Z",
+      "file_offset": 37588489,
+      "virtual_address": "0x027D9A09",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "Savegame@OrbitClient@orbitclient@mg@@QAEXIPAVIRemoveSavegameListener@23@II@Z",
+      "file_offset": 37588531,
+      "virtual_address": "0x027D9A33",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameListener@23@II@Z",
+      "file_offset": 37588583,
+      "virtual_address": "0x027D9A67",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameReader@orbitclient@mg@@QAEXXZ",
+      "file_offset": 37588675,
+      "virtual_address": "0x027D9AC3",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameReader@orbitclient@mg@@QAEXIPAVISavegameReadListener@23@IPAXI@Z",
+      "file_offset": 37588722,
+      "virtual_address": "0x027D9AF2",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameReadListener@23@IPAXI@Z",
+      "file_offset": 37588762,
+      "virtual_address": "0x027D9B1A",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameReader@OrbitClient@orbitclient@mg@@QAEXIPAVIGetSavegameReaderListener@23@II@Z",
+      "file_offset": 37588800,
+      "virtual_address": "0x027D9B40",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "SavegameReaderListener@23@II@Z",
+      "file_offset": 37588855,
+      "virtual_address": "0x027D9B77",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "MissionHistory",
+      "file_offset": 33492628,
+      "virtual_address": "0x023F1A94",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    },
+    {
+      "string": "PlayerDataItem",
+      "file_offset": 34466732,
+      "virtual_address": "0x024DF7AC",
+      "section_name": ".rdata",
+      "nearby_hashes": []
+    }
+  ],
+  "function_xrefs": {
+    "SaveGame_serializer": {
+      "function_va": "0x005E3560",
+      "nearby_hashes": [
+        {
+          "hash": "0xBDBE3B52",
+          "name": "Block1_PlayerProfile",
+          "distance": 54
+        }
+      ]
+    }
+  },
+  "hex_dumps": []
+}

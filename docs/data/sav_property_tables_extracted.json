@@ -1,0 +1,460 @@
+{
+  "savegame_descriptor": {
+    "target_va": "0x023E1120",
+    "hex_dump": "  023E10E0: 34 4A A6 A7 94 EC D9 90 FC 06 1E 56 1D FE 9A D6  4J.........V....\n  023E10F0: 90 FE FF 0E 33 23 33 92 CD 85 BA 65 C5 54 95 4B  ....3#3....e.T.K\n  023E1100: 33 7B D5 53 42 01 26 00 C2 ED 95 8C 9A 43 B9 FB  3{.SB.&......C..\n  023E1110: 6F C1 42 FD 9D 55 89 8B BA 50 87 1A E0 B2 00 3C  o.B..U...P.....<\n  023E1120: 52 3B BE BD 86 6F 80 B7 44 37 81 41 A3 5A 1B 65  R;...o..D7.A.Z.e\n  023E1130: E1 93 15 E3 6E 40 1D DB A4 1D CC FC C9 EE 56 74  ....n@........Vt\n  023E1140: ED 83 B0 7D 68 BF 2B AC 40 AD 35 34 44 44 2F 0E  ...}h.+.@.54DD/.\n  023E1150: 92 50 45 96 20 DC 8C 33 48 8B BE 03 DB 6D EF EC  .PE. ..3H....m..\n  023E1160: EA E7 0B 06 CD DC 8F D8 FC FD 64 68 DE 0E 19 BB  ..........dh....\n  023E1170: 50 EE 1C 07 72 F0 9C 20 FF AB F8 C8 7C CB AE 24  P...r.. ....|..$\n  023E1180: 19 A4 1E C1 D4 B9 9F 70 0D AA 8B 78 C0 3F CA 71  .......p...x.?.q\n  023E1190: 76 34 EC 4A 9E 1A 12 60 5E 41 84 09 71 A7 AD 92  v4.J...`^A..q..."
+  },
+  "property_tables": {
+    "savegame_properties": [
+      {
+        "va": "0x027ECDC0",
+        "flags": "0x00500000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 07 00 00 00 50 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 6B 1F C7 F5",
+        "index": 0
+      },
+      {
+        "va": "0x027ECDE0",
+        "flags": "0x00600000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 07 00 00 00 60 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 D2 21 66 BB",
+        "index": 1
+      },
+      {
+        "va": "0x027ECE00",
+        "flags": "0x00700000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 07 00 00 00 70 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 76 08 55 28",
+        "index": 2
+      },
+      {
+        "va": "0x027ECE20",
+        "flags": "0x00800000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 07 00 00 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 E4 2B 03 34",
+        "index": 3
+      },
+      {
+        "va": "0x027ECE40",
+        "flags": "0x01240000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 00 00 00 00 24 01 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 67 50 BD 78",
+        "index": 4
+      },
+      {
+        "va": "0x027ECE60",
+        "flags": "0x00900000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 1A 00 00 00 90 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 C2 FC 11 71",
+        "index": 5
+      },
+      {
+        "va": "0x027ECE80",
+        "flags": "0x00A00000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "47 3E B6 FB 00 00 12 00 00 00 A0 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 95 8E 44 6C",
+        "index": 6
+      },
+      {
+        "va": "0x027ECEA0",
+        "flags": "0x00B00000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "A0 CB DA 5F 00 00 12 00 00 00 B0 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 32 C4 76 EB",
+        "index": 7
+      },
+      {
+        "va": "0x027ECEC0",
+        "flags": "0x00C00000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 07 00 00 00 C0 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 2B 13 F5 28",
+        "index": 8
+      },
+      {
+        "va": "0x027ECEE0",
+        "flags": "0x00D00000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x02000001",
+        "raw": "00 00 00 00 00 00 07 00 00 00 D0 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 02 1B 19 00 8C",
+        "index": 9
+      },
+      {
+        "va": "0x027ECF00",
+        "flags": "0x00E00000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x0200",
+        "raw": "00 00 00 00 00 00 07 00 00 00 E0 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 00 71 69 62 1F",
+        "index": 10
+      },
+      {
+        "va": "0x027ECF20",
+        "flags": "0x00F00000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x027ECCB8",
+        "raw": "86 6F 80 B7 00 00 1D 0A 00 00 F0 00 00 00 00 00 00 00 00 00 00 00 00 00 B8 CC 7E 02 D8 CC 7E 02",
+        "index": 11
+      },
+      {
+        "va": "0x027ECF40",
+        "flags": "0x027ECD38",
+        "property_hash": "0x027ECD58",
+        "property_name": "",
+        "type_ref": "0x027ECD78",
+        "type_ref_name": "",
+        "type_info": "0xCD98",
+        "type_desc": "unknown",
+        "struct_offset": "0x027ECDB8",
+        "raw": "F8 CC 7E 02 18 CD 7E 02 38 CD 7E 02 58 CD 7E 02 78 CD 7E 02 98 CD 7E 02 B8 CD 7E 02 D8 CD 7E 02",
+        "index": 12
+      },
+      {
+        "va": "0x027ECF60",
+        "flags": "0x027ECE38",
+        "property_hash": "0x027ECE58",
+        "property_name": "",
+        "type_ref": "0x027ECE78",
+        "type_ref_name": "",
+        "type_info": "0xCE98",
+        "type_desc": "unknown",
+        "struct_offset": "0x027ECEB8",
+        "raw": "F8 CD 7E 02 18 CE 7E 02 38 CE 7E 02 58 CE 7E 02 78 CE 7E 02 98 CE 7E 02 B8 CE 7E 02 D8 CE 7E 02",
+        "index": 13
+      },
+      {
+        "va": "0x027ECF80",
+        "flags": "0x027ECFB8",
+        "property_hash": "0x027ECF90",
+        "property_name": "",
+        "type_ref": "0x02000001",
+        "type_ref_name": "",
+        "type_info": "0x2013",
+        "type_desc": "unknown",
+        "struct_offset": "0x0000",
+        "raw": "F8 CE 7E 02 18 CF 7E 02 B8 CF 7E 02 90 CF 7E 02 01 00 00 02 13 20 4C BF 00 00 00 00 00 00 07 00",
+        "index": 14
+      },
+      {
+        "va": "0x027ECFA0",
+        "flags": "0x00000000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x027ED008",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x027ECCB8",
+        "raw": "00 00 10 00 00 00 00 00 00 00 00 00 00 00 00 00 08 D0 7E 02 00 00 00 00 B8 CC 7E 02 00 00 00 00",
+        "index": 15
+      },
+      {
+        "va": "0x027ECFC0",
+        "flags": "0xBDBE3B52",
+        "property_hash": "0x0000005C",
+        "property_name": "",
+        "type_ref": "0x00000003",
+        "type_ref_name": "",
+        "type_info": "0x004C",
+        "type_desc": "unknown",
+        "struct_offset": "0x0000",
+        "raw": "08 14 3F 02 7D 60 96 BB 52 3B BE BD 5C 00 00 00 03 00 00 00 4C 00 00 00 00 00 00 00 00 00 00 00",
+        "index": 16
+      },
+      {
+        "va": "0x027ECFE0",
+        "flags": "0x00000000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x0000",
+        "raw": "FF 7F FF 7F 60 3F 5E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 30 34 5E 00",
+        "index": 17
+      },
+      {
+        "va": "0x027ED000",
+        "flags": "0x027ECF90",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x023F13F4",
+        "type_ref_name": "",
+        "type_info": "0x0002",
+        "type_desc": "unknown",
+        "struct_offset": "0xB7806F86",
+        "raw": "30 65 41 00 14 00 00 04 90 CF 7E 02 00 00 00 00 F4 13 3F 02 02 00 00 00 86 6F 80 B7 18 00 00 00",
+        "index": 18
+      },
+      {
+        "va": "0x027ED020",
+        "flags": "0x00000000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x7FFF7FFF",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x0000",
+        "raw": "06 00 00 00 08 00 00 00 00 00 00 00 00 00 00 00 FF 7F FF 7F 00 00 00 00 00 00 00 00 00 00 00 00",
+        "index": 19
+      },
+      {
+        "va": "0x027ED040",
+        "flags": "0x00000000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00416530",
+        "type_ref_name": "",
+        "type_info": "0x0001",
+        "type_desc": "unknown",
+        "struct_offset": "0x023F1474",
+        "raw": "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 30 65 41 00 01 00 00 00 74 14 3F 02 00 00 00 00",
+        "index": 20
+      },
+      {
+        "va": "0x027ED060",
+        "flags": "0x027ED0C0",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00000000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x027ED0E0",
+        "raw": "80 D0 7E 02 A0 D0 7E 02 C0 D0 7E 02 00 00 00 00 00 00 00 00 00 00 00 00 E0 D0 7E 02 00 00 00 00",
+        "index": 21
+      },
+      {
+        "va": "0x027ED080",
+        "flags": "0x18B8C0DE",
+        "property_hash": "0x00140000",
+        "property_name": "",
+        "type_ref": "0x00400000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x00597820",
+        "raw": "09 00 00 02 A6 09 E2 FE DE C0 B8 18 00 00 14 00 00 00 40 00 00 00 00 00 20 78 59 00 00 00 00 00",
+        "index": 22
+      },
+      {
+        "va": "0x027ED0A0",
+        "flags": "0x00000000",
+        "property_hash": "0x00000000",
+        "property_name": "",
+        "type_ref": "0x00700000",
+        "type_ref_name": "",
+        "type_info": "0x0000",
+        "type_desc": "embedded",
+        "struct_offset": "0x0000",
+        "raw": "00 00 00 00 D2 B4 4B 54 00 00 00 00 00 00 00 00 00 00 70 00 00 00 00 00 00 00 00 00 00 00 00 00",
+        "index": 23
+      },
+      {
+        "va": "0x027ED0C0",
+        "flags": "0xFE1B9D2A",
+        "property_hash": "0x0A1D0000",
+        "property_name": "",
+        "type_ref": "0x00500000",
+        "type_ref_name": "",
+        "type_info": "0x5C50",
+        "type_desc": "unknown",
+        "struct_offset": "0x005E5C00",
+        "raw": "0D 02 00 02 29 4A DC 25 2A 9D 1B FE 00 00 1D 0A 00 00 50 00 50 5C 5E 00 00 5C 5E 00 00 00 00 00",
+        "index": 24
+      }
+    ]
+  },
+  "serializer_analysis": {
+    "function_va": "0x005E3560",
+    "type_hash_push_offset": "0x005E3595",
+    "related_pointers": [
+      {
+        "offset_from_type_push": 0,
+        "va": "0x005E3595",
+        "value": "0xBDBE3B52",
+        "is_va": false
+      },
+      {
+        "offset_from_type_push": 7,
+        "va": "0x005E359C",
+        "value": "0x023F1408",
+        "is_va": true
+      },
+      {
+        "offset_from_type_push": 16,
+        "va": "0x005E35A5",
+        "value": "0x5E8B0152",
+        "is_va": false
+      }
+    ]
+  },
+  "type_locations": {
+    "SaveGame": [
+      {
+        "file_offset": 1976726,
+        "va": "0x005E3596",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "31 6A 01 6A 00 57 B9 7C 24 A6 02 E8 3A 8D 51 01 57 B9 7C 24 A6 02 8B D8 E8 0D 83 51 01 50 53 68 52 3B BE BD 6A 00 68 08 14 3F 02 8B CE E8 78 68 52 01 8B 5E 20 56 8B CF C7 46 20 00 00 00 00 E8 D6 49 53 01 89 5E 20 8B 0D 54 CF 7E 02 51 8D 57 10 52 8B CE E8 21 6C 52 01 A1 58 CF 7E 02 50 8D"
+      },
+      {
+        "file_offset": 33424672,
+        "va": "0x023E1120",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "33 7B D5 53 42 01 26 00 C2 ED 95 8C 9A 43 B9 FB 6F C1 42 FD 9D 55 89 8B BA 50 87 1A E0 B2 00 3C 52 3B BE BD 86 6F 80 B7 44 37 81 41 A3 5A 1B 65 E1 93 15 E3 6E 40 1D DB A4 1D CC FC C9 EE 56 74 ED 83 B0 7D 68 BF 2B AC 40 AD 35 34 44 44 2F 0E 92 50 45 96 20 DC 8C 33 48 8B BE 03 DB 6D EF EC"
+      },
+      {
+        "file_offset": 37615160,
+        "va": "0x027E0638",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "00 00 00 00 C0 5D 46 00 30 65 41 00 2D 00 01 08 01 00 00 00 9A 99 19 3F 00 00 00 00 E9 1E DE 87 52 3B BE BD 00 00 1C 00 00 00 F0 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 A0 EF 03 28 52 3B BE BD 00 00 1C 00 00 00 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 64 D8 7D CE"
+      },
+      {
+        "file_offset": 37615192,
+        "va": "0x027E0658",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "52 3B BE BD 00 00 1C 00 00 00 F0 05 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 A0 EF 03 28 52 3B BE BD 00 00 1C 00 00 00 00 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 64 D8 7D CE 00 00 00 00 00 00 00 00 00 00 10 06 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 04 CD 0C F4"
+      },
+      {
+        "file_offset": 37666760,
+        "va": "0x027ECFC8",
+        "is_potential_descriptor": true,
+        "descriptor_info": {
+          "pattern": "ManagedObject+TypeHash",
+          "base_hash": "0xBB96607D",
+          "type_hash": "0xBDBE3B52"
+        },
+        "hex_context": "00 00 00 00 00 00 00 00 08 D0 7E 02 00 00 00 00 B8 CC 7E 02 00 00 00 00 08 14 3F 02 7D 60 96 BB 52 3B BE BD 5C 00 00 00 03 00 00 00 4C 00 00 00 00 00 00 00 00 00 00 00 FF 7F FF 7F 60 3F 5E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 30 34 5E 00 30 65 41 00 14 00 00 04"
+      },
+      {
+        "file_offset": 37989848,
+        "va": "0x0283BDD8",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "39 50 B5 B4 00 00 13 00 00 00 C0 3C 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 E8 41 D6 9E 52 3B BE BD 00 00 1D 0E 00 00 50 3D 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 62 6D A8 2D 52 3B BE BD 00 00 1C 00 00 00 70 3D 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 08 47 68 FB 92"
+      },
+      {
+        "file_offset": 37989880,
+        "va": "0x0283BDF8",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "52 3B BE BD 00 00 1D 0E 00 00 50 3D 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 62 6D A8 2D 52 3B BE BD 00 00 1C 00 00 00 70 3D 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 08 47 68 FB 92 00 00 00 00 00 00 07 00 00 00 80 3D 00 00 00 00 00 00 00 00 00 00 00 00 80 00 00 08 BA 24 37 59"
+      }
+    ],
+    "GameState": [
+      {
+        "file_offset": 19989186,
+        "va": "0x01710EC2",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "31 6A 00 6A 00 57 B9 7C 24 A6 02 E8 0E B4 3E 00 57 B9 7C 24 A6 02 8B D8 E8 E1 A9 3E 00 50 53 68 F1 F8 D6 94 6A 00 68 3C DE 53 02 8B CE E8 4C 8F 3F 00 8B 5E 20 56 8B CF C7 46 20 00 00 00 00 E8 1A 28 ED FE 89 5E 20 A1 20 36 97 02 50 8D 4F 18 51 8B CE E8 66 95 3F 00 8B 15 24 36 97 02 52 8D"
+      },
+      {
+        "file_offset": 34195604,
+        "va": "0x0249D494",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "77 C0 5C E1 94 4C C9 1F D7 F1 E0 3A 80 DC 5F 93 27 7B 93 D8 ED DF B9 0A 37 DB 9F 16 B3 00 57 DF F1 F8 D6 94 66 6D 87 C9 3B 80 5C 57 03 00 00 00 80 00 00 00 AC 74 DC 9E DB 7B 62 71 B7 BE 5D 03 31 19 A8 88 71 C6 B6 38 AC 63 F6 BB 87 54 FE 68 F1 AE 91 92 48 68 6D F5 B9 49 CB 7A 60 DD D8 8A"
+      },
+      {
+        "file_offset": 37989592,
+        "va": "0x0283BCD8",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "66 66 66 3F 00 00 A0 3F 00 00 E0 3F 00 00 A0 BF 00 00 40 40 00 00 00 00 00 00 00 00 D3 2C DB 0E F1 F8 D6 94 00 00 13 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2B 4B 00 3A F1 F8 D6 94 00 00 13 00 00 00 60 12 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 38 48 CD 1E"
+      },
+      {
+        "file_offset": 37989624,
+        "va": "0x0283BCF8",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "F1 F8 D6 94 00 00 13 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2B 4B 00 3A F1 F8 D6 94 00 00 13 00 00 00 60 12 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 38 48 CD 1E 27 DF 72 3A 00 00 13 00 00 00 80 24 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 A5 A6 E7 4E"
+      },
+      {
+        "file_offset": 37989720,
+        "va": "0x0283BD58",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "27 DF 72 3A 00 00 13 00 00 00 10 26 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 5D 5C C1 0D F1 F8 D6 94 00 00 13 00 00 00 A0 27 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 1B C3 88 1F A8 E1 5A 30 00 00 13 00 00 00 C0 39 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 41 20 A1 04"
+      },
+      {
+        "file_offset": 39265928,
+        "va": "0x02973688",
+        "is_potential_descriptor": false,
+        "descriptor_info": {},
+        "hex_context": "C0 35 97 02 E0 35 97 02 00 36 97 02 78 36 97 02 80 33 97 02 00 00 00 00 3C DE 53 02 86 6F 80 B7 F1 F8 D6 94 88 04 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 FF 7F FF 7F 20 19 71 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 F0 0C 71 01 30 65 41 00 15 00 00 08"
+      }
+    ]
+  }
+}

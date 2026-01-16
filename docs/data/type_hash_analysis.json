@@ -1,0 +1,263 @@
+{
+  "metadata": {
+    "description": "Consolidated type hash analysis for AC Brotherhood Scimitar Engine",
+    "generated": "December 2025",
+    "source_files": [
+      "type_hash_analysis.json",
+      "common_parent_analysis.json",
+      "unknown1_analysis.json",
+      "container_collection_final.json",
+      "propertyref_analysis.json",
+      "propertyref_deep_analysis.json"
+    ],
+    "notes": "This file consolidates all type hash analysis data into a single reference"
+  },
+  "core_types": {
+    "4223024711": {
+      "hash": "0xFBB63E47",
+      "name": "World",
+      "code_references": 88,
+      "first_code_ref": "0x00446748"
+    },
+    "159662430": {
+      "hash": "0x0984415E",
+      "name": "PropertyReference",
+      "code_references": 461,
+      "first_code_ref": "0x00446468"
+    },
+    "414761182": {
+      "hash": "0x18B8C0DE",
+      "name": "ValueBind",
+      "code_references": 26,
+      "first_code_ref": "0x0044647F",
+      "notes": "Formerly Unknown1 - used with PropertyReference for value binding"
+    },
+    "3231715473": {
+      "hash": "0xC0A01091",
+      "name": "LinkBind",
+      "code_references": 15,
+      "first_code_ref": "0x00446495",
+      "notes": "Formerly Unknown2 - used with PropertyReference for link binding"
+    },
+    "3332013873": {
+      "hash": "0xC69A7F31",
+      "name": "Unknown3",
+      "code_references": 1,
+      "first_code_ref": "0x00421384"
+    },
+    "3183360850": {
+      "hash": "0xBDBE3B52",
+      "name": "SaveGame",
+      "code_references": 1,
+      "first_code_ref": "0x005E3595"
+    },
+    "2712162968": {
+      "hash": "0xA1A85298",
+      "name": "PhysicalInventoryItem",
+      "code_references": 1,
+      "first_code_ref": "0x00E6E575"
+    },
+    "2118318207": {
+      "hash": "0x7E42F87F",
+      "name": "CommonParent",
+      "code_references": 786,
+      "first_code_ref": "0x0056DFA9"
+    },
+    "470169515": {
+      "hash": "0x1C0637AB",
+      "name": "OPTIONS",
+      "code_references": 2,
+      "first_code_ref": "0x01BE030F"
+    },
+    "4162874103": {
+      "hash": "0xF8206AF7",
+      "name": "SubObject",
+      "code_references": 42,
+      "first_code_ref": "0x00761948"
+    }
+  },
+  "analysis_notes": {
+    "world_serializer": "0x004976D0",
+    "type_lookup": "0x01AEAF70",
+    "options_descriptor": "0x02991180",
+    "savegame_descriptor": "0x027E0638"
+  },
+  "common_parent": {
+    "type_hash": "0x7E42F87F",
+    "name": "CommonParent",
+    "is_root": true,
+    "parent_hash": "0x7E42F87F (SELF)",
+    "property_count": 0,
+    "code_references": 786,
+    "derived_type_count": 745,
+    "descriptor_locations": [
+      "0x027E655C",
+      "0x0285B504",
+      "0x0286FBFC",
+      "0x02877DE4",
+      "0x02877E14",
+      "0x0287D42C"
+    ],
+    "managed_object": {
+      "type_hash": "0xBB96607D",
+      "inherits_from_common_parent": false
+    },
+    "derived_types_sample": [
+      {"type_hash": "0x2CA0C297", "prop_count": 0, "va": "0x027DE4D4"},
+      {"type_hash": "0x26B44237", "prop_count": 0, "va": "0x027E61F4"},
+      {"type_hash": "0x93ABCDAC", "prop_count": 0, "va": "0x02801154"},
+      {"type_hash": "0x3587DFA7", "prop_count": 0, "va": "0x02801194"},
+      {"type_hash": "0x5A65BB97", "prop_count": 0, "va": "0x028011B4"},
+      {"type_hash": "0x604DFB21", "prop_count": 0, "va": "0x028011D4"},
+      {"type_hash": "0x9BED4831", "prop_count": 0, "va": "0x028011F4"},
+      {"type_hash": "0x97953F80", "prop_count": 0, "va": "0x02801214"},
+      {"type_hash": "0x6CC9A7D6", "prop_count": 0, "va": "0x02801234"},
+      {"type_hash": "0xDBCAE15E", "prop_count": 0, "va": "0x02801E54"}
+    ],
+    "notes": "CommonParent is the root base class for 745+ derived types. Sample of 10 shown above."
+  },
+  "property_reference": {
+    "hash": "0x0984415E",
+    "push_count": 461,
+    "code_locations_sample": [
+      "0x45869", "0x96249", "0x96260", "0x96d1b", "0xc3d9f",
+      "0x109a2b", "0x11a312", "0x144ce3", "0x178138", "0x178238",
+      "0x1785e8", "0x281c85", "0x28433f", "0x2843b1", "0x2843c8",
+      "0x285c28", "0x29e0de", "0x2b3843", "0x2b671d", "0x2bcabc"
+    ],
+    "call_targets": [
+      {"target": "0x26930", "count": 391},
+      {"target": "0x49360", "count": 41},
+      {"target": "0x16f5e40", "count": 26},
+      {"target": "0x1708da0", "count": 3}
+    ],
+    "patterns": {
+      "LEA_before": 76,
+      "MOV_ECX_ESI": 429,
+      "MOV_ECX_EDI": 23,
+      "calls": 461
+    },
+    "common_functions": [
+      "0x334900", "0x404a00", "0x9c1700", "0xed4500", "0xdf4ca0",
+      "0xeb24a0", "0x338fe0", "0x45790", "0x336990", "0x336b10",
+      "0xd08c90", "0x4fdeb0", "0xfad430", "0x339550", "0x82c4d0",
+      "0xcf80d0", "0xdfeff0"
+    ],
+    "related_strings": [
+      {"offset": "0x1ffd060", "string": "PropertySheet"},
+      {"offset": "0x21c91a3", "string": "PropertyValue"},
+      {"offset": "0x25c68c7", "string": "PropertyValue@@"}
+    ],
+    "notes": "PropertyReference is used 461 times, primarily calling function 0x26930 (391 times)"
+  },
+  "value_link_binds": {
+    "value_bind": {
+      "hash": "0x18B8C0DE",
+      "name": "ValueBind",
+      "push_count": 26,
+      "push_locations": [
+        "0x4587f", "0x2aa250", "0x2aa283", "0x33493b", "0x3369f8",
+        "0x336b4b", "0x33901b", "0x339599", "0x404a7c", "0x4fe0ba",
+        "0x4fe0ed", "0x82c513", "0x93c5c8", "0x9c1865", "0x9c18b2",
+        "0xcf83e1", "0xd08d9e", "0xd08dd1", "0xd08e38", "0xd08e85",
+        "0xdf4d42", "0xdff02b", "0xeb27e9", "0xed485b", "0xed48a8",
+        "0xfad473"
+      ]
+    },
+    "link_bind": {
+      "hash": "0xC0A01091",
+      "name": "LinkBind",
+      "push_count": 15,
+      "push_locations": [
+        "0x45895", "0x336a0f", "0x336b62", "0x404a96", "0x404aaf",
+        "0x9c187f", "0x9c18cc", "0xd08deb", "0xd08e05", "0xd08e52",
+        "0xd08e9f", "0xdff042", "0xf2daf5", "0xf2db3e", "0xfad48a"
+      ]
+    },
+    "propertyref_relationship_sample": [
+      {"value_bind_at": "0x4587f", "nearby_propertyref": [{"at": "0x45868", "distance": -23}]},
+      {"value_bind_at": "0x33493b", "nearby_propertyref": [{"at": "0x334924", "distance": -23}]},
+      {"value_bind_at": "0x3369f8", "nearby_propertyref": [{"at": "0x3369e1", "distance": -23}]},
+      {"value_bind_at": "0x336b4b", "nearby_propertyref": [{"at": "0x336b34", "distance": -23}]},
+      {"value_bind_at": "0x33901b", "nearby_propertyref": [{"at": "0x339004", "distance": -23}]}
+    ],
+    "call_targets": {
+      "0x26930": 53,
+      "0x16f5e40": 4,
+      "0x16f32d0": 4,
+      "0x4fe3f0": 2,
+      "0x1708da0": 2,
+      "0x16f58f0": 2
+    },
+    "context_sample": [
+      {
+        "push_addr": "0x4587f",
+        "calls_after": [
+          {"call_at": "0x45886", "target": "0x26930"},
+          {"call_at": "0x4589c", "target": "0x26930"},
+          {"call_at": "0x458b3", "target": "0x16f5e40"}
+        ],
+        "has_lea": true,
+        "has_mov_ecx": true,
+        "other_hashes": ["0x984415e", "0xc0a01091"]
+      },
+      {
+        "push_addr": "0x33493b",
+        "calls_after": [
+          {"call_at": "0x334942", "target": "0x26930"},
+          {"call_at": "0x334959", "target": "0x26930"},
+          {"call_at": "0x3349a8", "target": "0x16f32d0"}
+        ],
+        "has_lea": true,
+        "has_mov_ecx": true,
+        "other_hashes": ["0x984415e"],
+        "has_function_prologue": true
+      }
+    ],
+    "notes": "ValueBind (Unknown1) and LinkBind (Unknown2) work with PropertyReference for property binding operations. ValueBind always appears ~23 bytes after a PropertyReference push."
+  },
+  "container_types": {
+    "ContainerType": {
+      "hash": "0xA9E0C685",
+      "name": "ContainerType (inferred - no string found)",
+      "usage": "World property 10",
+      "property_hash": "0x86755862",
+      "struct_offset": "0x0350",
+      "flags": "0x1D0B",
+      "code_references": ["0x00096E25 (PUSH instruction)"],
+      "descriptor_locations": [
+        "0x023E1508 (property descriptor)",
+        "0x023E15E0 (type descriptor)"
+      ],
+      "notes": [
+        "Used for container/array storage in World objects",
+        "Different flags pattern (0x1D0B) compared to CollectionType (0x13)",
+        "Larger struct offset (0x0350) suggests array/list storage"
+      ]
+    },
+    "CollectionType": {
+      "hash": "0x11598A66",
+      "name": "CollectionType",
+      "name_location": "0x021C5EBC",
+      "usage": "World properties 11, 12, 13",
+      "properties": [
+        {"index": 11, "hash": "0xF62F1895", "struct_offset": "0x01D0"},
+        {"index": 12, "hash": "0xF29FD531", "struct_offset": "0x0250"},
+        {"index": 13, "hash": "0xF2BCAC14", "struct_offset": "0x02D0"}
+      ],
+      "flags": "0x13",
+      "descriptor_locations": [
+        "0x023E1528 (property 11 descriptor)",
+        "0x023E1548 (property 12 descriptor)",
+        "0x023E1568 (property 13 descriptor)",
+        "0x024252D4 (self-referential type descriptor)"
+      ],
+      "notes": [
+        "Type name 'CollectionType' found in .rdata",
+        "Has self-referential descriptor (hash appears twice)",
+        "Used for collections in World objects",
+        "Struct offsets spaced 0x80 bytes apart (0x1D0, 0x250, 0x2D0)"
+      ]
+    }
+  }
+}
