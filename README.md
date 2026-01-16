@@ -4,43 +4,63 @@ Reverse-engineered LZSS compression/decompression tools for Assassin's Creed Bro
 
 ## Tools
 
-### Unified Tools (Recommended)
+### Unlock Utilities
 | Tool | Description |
 |------|-------------|
-| `options_unpack.py` | Extract and decompress sections from OPTIONS files (auto-detects PC/PS3) |
-| `options_pack.py` | Rebuild OPTIONS files from decompressed sections (supports PC and PS3) |
+| `acb_uplay_unlocker.py` | Unlock uPlay rewards in OPTIONS files |
+| `acb_facebookcape_unlocker.py` | Unlock Facebook cape in OPTIONS files |
+
+### OPTIONS File Tools
+| Tool | Description |
+|------|-------------|
+| `tools/options_unpack.py` | Extract and decompress sections from OPTIONS files (auto-detects PC/PS3) |
+| `tools/options_pack.py` | Rebuild OPTIONS files from decompressed sections (supports PC and PS3) |
+
+### GUI Editor (WIP)
+| Tool | Description |
+|------|-------------|
+| `tools/acb-options-editor/` | Qt6/C++ GUI editor for OPTIONS files (work in progress) |
 
 ## Usage
 
-### Unified Tools (Recommended)
+### Unlock Utilities
+```bash
+# Unlock uPlay rewards
+python acb_uplay_unlocker.py OPTIONS
+
+# Unlock Facebook cape
+python acb_facebookcape_unlocker.py OPTIONS
+```
+
+### OPTIONS File Tools
 
 #### Unpack an OPTIONS file
 ```bash
 # Auto-detect format, extract all sections
-python options_unpack.py OPTIONS.bin
+python tools/options_unpack.py OPTIONS.bin
 
 # Extract specific section (1-4)
-python options_unpack.py OPTIONS.bin 2
+python tools/options_unpack.py OPTIONS.bin 2
 
 # Force specific format
-python options_unpack.py OPTIONS.bin --pc
-python options_unpack.py OPTIONS.PS3 --ps3
+python tools/options_unpack.py OPTIONS.bin --pc
+python tools/options_unpack.py OPTIONS.PS3 --ps3
 
 # Custom output directory
-python options_unpack.py OPTIONS.bin -o ./output/
+python tools/options_unpack.py OPTIONS.bin -o ./output/
 ```
 Outputs: `section1.bin`, `section2.bin`, `section3.bin`, and optionally `section4.bin`
 
 #### Pack sections into an OPTIONS file
 ```bash
 # PC format (3 sections)
-python options_pack.py section1.bin section2.bin section3.bin -o OPTIONS.bin --pc
+python tools/options_pack.py section1.bin section2.bin section3.bin -o OPTIONS.bin --pc
 
 # PS3 format (4 sections)
-python options_pack.py section1.bin section2.bin section3.bin section4.bin -o OPTIONS.PS3 --ps3
+python tools/options_pack.py section1.bin section2.bin section3.bin section4.bin -o OPTIONS.PS3 --ps3
 
 # With validation (decompresses and verifies output)
-python options_pack.py section1.bin section2.bin section3.bin -o OPTIONS.bin --pc --validate
+python tools/options_pack.py section1.bin section2.bin section3.bin -o OPTIONS.bin --pc --validate
 ```
 
 ## Section Structure
