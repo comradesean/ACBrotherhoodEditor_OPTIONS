@@ -1878,6 +1878,8 @@ Example from SAV data:
 | `0x01B6F730` | FUN_01B6F730 | Stream reader object creator (0x38 bytes) |
 | `0x01B49250` | FUN_01B49250 | Parser object creator (0x1058 bytes) |
 | `0x01AEDD90` | FUN_01AEDD90 | Parser state pusher (0x12d8 bytes) |
+| `0x01B6F170` | FUN_01B6F170 | **Block 2 Field4 Calculator** - `sub edx, eax` at +0x1B (CONFIRMED TTD) |
+| `0x01B7B050` | FUN_01B7B050 | Block serialization wrapper - receives Field4 as param_2 |
 
 ### Functions That Are NOT Deserializers
 

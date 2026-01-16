@@ -39,7 +39,33 @@ import sys
 import os
 import struct
 import argparse
-from lzss_decompressor_final import LZSSDecompressor, adler32
+import json
+from lzss import LZSSDecompressor
+
+
+def adler32(data: bytes) -> int:
+    """
+    Calculate Adler-32 checksum using AC Brotherhood's non-standard variant.
+
+    The game uses Adler-32 with ZERO SEED (s1=0, s2=0) instead of the
+    standard Adler-32 seed (s1=1, s2=0).
+
+    Args:
+        data: Bytes to checksum
+
+    Returns:
+        Adler-32 checksum as 32-bit integer (zero seed variant)
+    """
+    MOD_ADLER = 65521
+    s1 = 0  # NON-STANDARD: standard Adler-32 uses s1=1
+    s2 = 0
+
+    for byte in data:
+        s1 = (s1 + byte) % MOD_ADLER
+        s2 = (s2 + s1) % MOD_ADLER
+
+    return (s2 << 16) | s1
+
 
 # =============================================================================
 # Scimitar Engine Type System - Hash Definitions
