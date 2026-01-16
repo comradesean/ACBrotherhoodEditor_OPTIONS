@@ -1,25 +1,322 @@
 #!/usr/bin/env python3
 """
-LZSS Compressor - Shared Module
-================================
+LZSS Compression/Decompression Library for AC Brotherhood
+==========================================================
 
-EXACT 1:1 implementation matching the game's LZSS compression algorithm.
-Uses lazy matching with Scenario 1 tiebreaking optimization.
+This module provides LZSS compression and decompression matching the exact format
+used by Assassin's Creed Brotherhood for OPTIONS and SAV files.
 
-This module is imported by:
-- lzss_compressor_pc.py (standalone CLI tool)
-- options_serializer_pc.py (PC OPTIONS file builder)
-- options_serializer_ps3.py (PS3 OPTIONS file builder)
+This is a single-purpose module for compression/decompression only.
+It has no concept of file formats, sections, or serialization.
 
-Ported from assassinscreedsave project for 1:1 parity.
+Main Functions:
+    compress(data)     - Compress data using LZSS with lazy matching
+    decompress(data)   - Decompress LZSS data
+
+Advanced Functions:
+    compress_with_debug(data)  - Returns (compressed, decisions, scenario1_count)
+    LZSSDecompressor           - Class-based decompressor with more control
+
+Usage:
+    from lzss import compress, decompress
+
+    # Compress data
+    compressed = compress(data)
+
+    # Decompress data
+    decompressed = decompress(compressed)
 """
 
-# Debug counter for Scenario 1 optimization
-scenario1_counter = 0
+
+# =============================================================================
+# DECOMPRESSION
+# =============================================================================
+
+class LZSSDecompressor:
+    """
+    LZSS Decompressor matching AC Brotherhood's exact format.
+
+    LZSS Format:
+    - Literal (flag=0): 8-bit byte value
+    - Short match (flag=10): 2-bit length (2-5), 8-bit offset (1-256)
+    - Long match (flag=11): 3-bit length field + 13-bit offset (0-8191)
+    - Terminator: Long match with offset=0 (bytes 0x20 0x00)
+    """
+
+    def decompress(self, compressed: bytes) -> bytes:
+        """
+        Decompress LZSS data.
+
+        Args:
+            compressed: Compressed bytes
+
+        Returns:
+            Decompressed bytes
+        """
+        if not compressed:
+            return b''
+
+        output = bytearray()
+        in_ptr = 0
+        flags = 0
+        flag_bits = 0
+
+        while in_ptr < len(compressed):
+            # Read flag bit
+            if flag_bits < 1:
+                if in_ptr >= len(compressed):
+                    break
+                flags = compressed[in_ptr]
+                in_ptr += 1
+                flag_bits = 8
+
+            flag_bit = flags & 1
+            flags >>= 1
+            flag_bits -= 1
+
+            if flag_bit == 0:
+                # Literal byte
+                if in_ptr >= len(compressed):
+                    break
+                output.append(compressed[in_ptr])
+                in_ptr += 1
+            else:
+                # Match - read second flag bit
+                if flag_bits < 1:
+                    if in_ptr >= len(compressed):
+                        break
+                    flags = compressed[in_ptr]
+                    in_ptr += 1
+                    flag_bits = 8
+
+                flag_bit2 = flags & 1
+                flags >>= 1
+                flag_bits -= 1
+
+                if flag_bit2 == 0:
+                    # Short match (length 2-5, offset 1-256)
+                    if flag_bits < 2:
+                        if in_ptr >= len(compressed):
+                            break
+                        flags |= compressed[in_ptr] << flag_bits
+                        in_ptr += 1
+                        flag_bits += 8
+
+                    length = (flags & 3) + 2
+                    flags >>= 2
+                    flag_bits -= 2
+
+                    if in_ptr >= len(compressed):
+                        break
+                    offset_byte = compressed[in_ptr]
+                    in_ptr += 1
+
+                    distance = offset_byte + 1
+                    src_pos = len(output) - distance
+
+                    for _ in range(length):
+                        if src_pos < 0:
+                            output.append(0)
+                        else:
+                            output.append(output[src_pos])
+                        src_pos += 1
+                else:
+                    # Long match (length 3+, offset 0-8191)
+                    if in_ptr + 1 >= len(compressed):
+                        break
+
+                    byte1 = compressed[in_ptr]
+                    byte2 = compressed[in_ptr + 1]
+                    in_ptr += 2
+
+                    len_field = byte1 >> 5
+                    low_offset = byte1 & 0x1F
+                    high_offset = byte2
+                    distance = (high_offset << 5) | low_offset
+
+                    # Check for terminator (distance == 0)
+                    if distance == 0:
+                        break
+
+                    if len_field == 0:
+                        # Variable length encoding
+                        length = 9
+                        while in_ptr < len(compressed) and compressed[in_ptr] == 0:
+                            in_ptr += 1
+                            length += 255
+                        if in_ptr >= len(compressed):
+                            break
+                        length += compressed[in_ptr]
+                        in_ptr += 1
+                    else:
+                        length = len_field + 2
+
+                    src_pos = len(output) - distance
+
+                    for _ in range(length):
+                        if src_pos < 0:
+                            output.append(0)
+                        else:
+                            output.append(output[src_pos])
+                        src_pos += 1
+
+        return bytes(output)
 
 
-def add_bit(output, bit_accum, bit_counter, flag_byte_ptr, bit_value):
-    """Add single bit - exact Ghidra implementation"""
+def decompress(data: bytes) -> bytes:
+    """
+    Decompress LZSS data.
+
+    Args:
+        data: Compressed bytes
+
+    Returns:
+        Decompressed bytes
+    """
+    decompressor = LZSSDecompressor()
+    return decompressor.decompress(data)
+
+
+# =============================================================================
+# COMPRESSION
+# =============================================================================
+
+class _HashChainMatchFinder:
+    """
+    Hash chain based match finder matching game's implementation.
+
+    Uses:
+    - 14-bit hash from 3-byte window
+    - Hash chain linking positions with same hash
+    - Maximum chain depth of 2048 (matches game behavior)
+    """
+
+    HASH_SIZE = 16384  # 0x3FFF + 1 (14-bit hash)
+    MAX_CHAIN_DEPTH = 2048  # Game appears to use ~2000-2048
+    GOOD_ENOUGH_LEN = 2048
+
+    def __init__(self, data):
+        self.data = data
+        self.data_len = len(data)
+        self.hash_head = [-1] * self.HASH_SIZE
+        self.chain_link = [-1] * self.data_len
+        self.current_pos = 0
+
+    def _compute_hash(self, pos):
+        """Compute 14-bit hash from 3 bytes at position."""
+        if pos + 2 >= self.data_len:
+            return 0
+
+        b0 = self.data[pos]
+        b1 = self.data[pos + 1]
+        b2 = self.data[pos + 2]
+
+        h = ((b0 << 5) ^ b1)
+        h = ((h << 5) ^ b2)
+        h = (h * 0x9f5f) >> 5
+        h = h & 0x3fff
+
+        return h
+
+    def advance_to(self, pos):
+        """Advance the hash chain to cover all positions up to pos."""
+        while self.current_pos < pos:
+            if self.current_pos + 2 < self.data_len:
+                h = self._compute_hash(self.current_pos)
+                self.chain_link[self.current_pos] = self.hash_head[h]
+                self.hash_head[h] = self.current_pos
+            self.current_pos += 1
+
+    def find_match(self, pos, max_match_length=2048):
+        """Find best match at position using hash chain traversal."""
+        self.advance_to(pos)
+
+        if pos < 2:
+            return 0, 0
+
+        h = self._compute_hash(pos)
+        candidate = self.hash_head[h]
+
+        best_length = 0
+        best_offset = 0
+
+        max_length = min(max_match_length, self.data_len - pos)
+        chain_count = 0
+
+        # Walk hash chain for 3+ byte matches
+        while candidate >= 0 and chain_count < self.MAX_CHAIN_DEPTH:
+            chain_count += 1
+
+            offset = pos - candidate
+
+            # Check offset limits and prevent self-matches (offset <= 0)
+            if offset <= 0 or offset > 8192 or candidate < 2:
+                candidate = self.chain_link[candidate] if candidate < len(self.chain_link) else -1
+                continue
+
+            # Quick rejection checks
+            match_possible = True
+            if best_length >= 2:
+                if self.data[candidate + best_length - 1] != self.data[pos + best_length - 1]:
+                    match_possible = False
+                elif candidate + best_length < self.data_len and pos + best_length < self.data_len:
+                    if self.data[candidate + best_length] != self.data[pos + best_length]:
+                        match_possible = False
+
+            if match_possible:
+                if pos + 1 >= self.data_len or candidate + 1 >= self.data_len:
+                    match_possible = False
+                elif self.data[candidate] != self.data[pos]:
+                    match_possible = False
+                elif self.data[candidate + 1] != self.data[pos + 1]:
+                    match_possible = False
+
+            if match_possible:
+                # Extend match
+                length = 2
+                while (length < max_length and
+                       pos + length < self.data_len and
+                       candidate + length < self.data_len and
+                       self.data[candidate + length] == self.data[pos + length]):
+                    length += 1
+
+                if length > best_length:
+                    best_length = length
+                    best_offset = offset
+
+                    if best_length >= max_length or best_length >= self.GOOD_ENOUGH_LEN:
+                        break
+
+            candidate = self.chain_link[candidate] if candidate < len(self.chain_link) else -1
+
+        # 2-byte match scan for short matches
+        if best_length < 2 and pos + 1 < self.data_len:
+            b0 = self.data[pos]
+            b1 = self.data[pos + 1]
+
+            max_scan = min(256, pos - 2)
+            for offset in range(1, max_scan + 1):
+                check_pos = pos - offset
+                if check_pos < 2:
+                    break
+                if self.data[check_pos] == b0 and self.data[check_pos + 1] == b1:
+                    length = 2
+                    while (length < max_length and
+                           pos + length < self.data_len and
+                           check_pos + length < self.data_len and
+                           self.data[check_pos + length] == self.data[pos + length]):
+                        length += 1
+
+                    if length > best_length:
+                        best_length = length
+                        best_offset = offset
+                        break
+
+        return best_length, best_offset
+
+
+def _add_bit(output, bit_accum, bit_counter, flag_byte_ptr, bit_value):
+    """Add single bit to output stream."""
     old_bit_counter = bit_counter
 
     if bit_counter == 0:
@@ -29,7 +326,7 @@ def add_bit(output, bit_accum, bit_counter, flag_byte_ptr, bit_value):
     bit_counter += 1
     bit_accum |= (bit_value & 1) << (old_bit_counter & 0x1f)
 
-    if (bit_counter > 7):
+    if bit_counter > 7:
         output[flag_byte_ptr] = bit_accum & 0xFF
         bit_accum >>= 8
         bit_counter -= 8
@@ -40,301 +337,99 @@ def add_bit(output, bit_accum, bit_counter, flag_byte_ptr, bit_value):
     return output, bit_accum, bit_counter, flag_byte_ptr
 
 
-def find_best_match(data, pos, max_match_length=2048):
-    """
-    Find best match scanning backward from current position.
-    Data includes 2-byte prefix, pos >= 2.
-
-    Returns RAW offset (no adjustment). Encoder handles any adjustments.
-    """
-    if pos < 2:
-        return 0, 0
-
-    best_length = 0
-    best_offset = 0
-    max_length = min(max_match_length, len(data) - pos)
-    max_offset = min(8192, pos)
-
-    # CRITICAL: Reject matches that reference position 0 or 1 (the 2-byte prefix)
-    max_offset = min(max_offset, pos - 2)
-
-    # Scan BACKWARD from current position (closer matches found last)
-    for check_pos in range(pos - 1, max(0, pos - max_offset) - 1, -1):
-        offset = pos - check_pos
-
-        # Quick check: must match at least best_length+1 bytes to be better
-        if best_length >= 2:
-            if data[check_pos] != data[pos]:
-                continue
-            if check_pos + best_length < len(data) and pos + best_length < len(data):
-                if data[check_pos + best_length] != data[pos + best_length]:
-                    continue
-
-        length = 0
-        while (length < max_length and
-               pos + length < len(data) and
-               data[check_pos + length] == data[pos + length]):
-            length += 1
-
-        # Update only if strictly longer (keeps first equal match = highest offset)
-        if length > best_length and length >= 2:
-            best_length = length
-            best_offset = offset
-
-            # Early termination: if we found max_length match, no need to continue
-            if best_length >= max_length:
-                break
-
-    # Return RAW offset - encoder handles adjustments
-    # Long matches require offset >= 1 for valid encoding
-    if best_offset > 0 and best_length >= 2:
-        is_short_match = (2 <= best_length <= 5 and best_offset <= 256)
-        if not is_short_match:
-            if best_offset < 1:
-                return 0, 0
-
-    return best_length, best_offset
-
-
-def calculate_match_cost(length, offset):
-    """Calculate cost in bits for encoding a match"""
+def _calculate_match_cost(length, offset):
+    """Calculate cost in bits for encoding a match."""
     if 2 <= length <= 5 and offset <= 256:
-        # Short match: 1 flag + 1 type + 2 length + 8 offset = 12 bits
-        return 12
+        return 12  # Short match
     elif length < 10:
-        # Long match: 1 flag + 1 type + 16 data = 18 bits
-        return 18
+        return 18  # Long match
     else:
-        # Very long match with continuation bytes
         extra_bytes = (length - 9 + 254) // 255
         return 18 + (extra_bytes * 8)
 
 
-def find_optimal_match_length(buffered_data, pos, match_length, match_offset):
+def compress_with_debug(data: bytes) -> tuple:
     """
-    Find optimal length for a match by looking ahead within it.
-    Only applies to matches between 50-500 bytes.
-    """
-    if match_length < 50:
-        return match_length
+    Compress data using LZSS with lazy matching.
 
-    if match_length > 500:
-        return match_length
+    Returns detailed compression information for debugging.
 
-    best_truncate_at = match_length
-    best_savings = 0
-    current_cost = calculate_match_cost(match_length, match_offset)
-
-    for check_offset in range(10, match_length - 10, 10):
-        future_pos = pos + check_offset
-        if future_pos >= len(buffered_data):
-            break
-
-        future_length, future_offset = find_best_match(buffered_data, future_pos)
-
-        if future_length < 50:
-            continue
-
-        truncated_cost = calculate_match_cost(check_offset, match_offset)
-        future_cost = calculate_match_cost(future_length, future_offset)
-        remaining_after_full = match_length - check_offset
-        remaining_cost_guess = calculate_match_cost(remaining_after_full, match_offset)
-
-        strategy_truncate = truncated_cost + future_cost
-        strategy_full = current_cost + remaining_cost_guess
-
-        savings = strategy_full - strategy_truncate
-        if savings > best_savings and savings >= 10:
-            best_savings = savings
-            best_truncate_at = check_offset
-
-    return best_truncate_at
-
-
-def peek_next_decision(buffered_data, pos, curr_length):
-    """
-    Peek ahead to determine what the next encoding decision will be.
-    Used for Scenario 1 tiebreaking optimization.
-
-    Returns: (is_match, next_length, next_offset)
-    """
-    next_pos = pos + curr_length
-    if next_pos >= len(buffered_data):
-        return (False, 0, 0)
-
-    next_length, next_offset = find_best_match(buffered_data, next_pos)
-
-    # Apply same lazy matching logic as main loop would
-    if next_length >= 2 and next_pos + 1 < len(buffered_data):
-        lookahead_length, lookahead_offset = find_best_match(buffered_data, next_pos + 1)
-
-        next_is_short = (2 <= next_length <= 5 and next_offset <= 256)
-        lookahead_is_short = (2 <= lookahead_length <= 5 and lookahead_offset <= 256)
-
-        if next_is_short:
-            adjustment = 2
-        else:
-            adjustment = 1
-
-        if next_is_short and not lookahead_is_short and lookahead_length >= 2:
-            adjustment += 2
-        if lookahead_is_short and not next_is_short:
-            adjustment -= 1
-        if adjustment < 1:
-            adjustment = 1
-        if next_is_short and lookahead_is_short:
-            adjustment = 1
-
-        if lookahead_length >= next_length + adjustment:
-            next_length = 0
-
-    if next_length >= 2:
-        match_cost = calculate_match_cost(next_length, next_offset)
-        literal_cost = 9 * next_length
-        if match_cost >= literal_cost:
-            next_length = 0
-
-    is_match = (next_length >= 2)
-    return (is_match, next_length, next_offset)
-
-
-def compress_lzss_lazy(data):
-    """
-    Compress using lazy matching (lookahead optimization).
-    Uses 2-byte zero prefix - input starts at buffer position 2.
-
-    Implements Scenario 1 tiebreaking optimization for 1:1 parity with game.
+    Args:
+        data: Uncompressed bytes
 
     Returns:
-        tuple: (compressed_bytes, decisions_list, scenario1_count)
+        Tuple of (compressed_bytes, decisions_list, scenario1_count)
+        - compressed_bytes: The compressed output
+        - decisions_list: List of ('L', byte) or ('M', length, offset) decisions
+        - scenario1_count: Number of Scenario 1 optimizations applied
     """
-    global scenario1_counter
-    scenario1_counter = 0
-
     # Add 2-byte zero prefix
     buffered_data = bytearray([0x00, 0x00]) + bytearray(data)
+    match_finder = _HashChainMatchFinder(buffered_data)
 
     output = bytearray()
     bit_accum = 0
     bit_counter = 0
     flag_byte_ptr = 0
     decisions = []
-
-    # Track previous match token position for Scenario 1
-    prev_token_pos = None
-    prev_was_match = False
-
-    # Start at position 2 (after 2-byte prefix)
     pos = 2
 
     while pos < len(buffered_data):
-        # Find best match at current position
-        curr_length, curr_offset = find_best_match(buffered_data, pos)
+        curr_length, curr_offset = match_finder.find_match(pos)
 
-        # Force literal at the very first position (game behavior)
+        # Force literal at first position
         if pos == 2:
             curr_length = 0
 
-        # LAZY MATCHING with exact game logic
+        # Lazy matching
         if curr_length >= 2 and pos + 1 < len(buffered_data):
-            next_length, next_offset = find_best_match(buffered_data, pos + 1)
+            next_length, next_offset = match_finder.find_match(pos + 1)
 
-            # Determine match types (using raw offset, boundary at 256)
             curr_is_short = (2 <= curr_length <= 5 and curr_offset <= 256)
             next_is_short = (2 <= next_length <= 5 and next_offset <= 256)
 
-            # Calculate adjustment (from decompiled code logic)
-            if curr_is_short:
-                adjustment = 2
-            else:
-                adjustment = 1
-
-            # Adjust based on transition between short/long matches
+            adjustment = 2 if curr_is_short else 1
             if curr_is_short and not next_is_short and next_length >= 2:
                 adjustment += 2
-
             if next_is_short and not curr_is_short:
                 adjustment -= 1
-
             if adjustment < 1:
                 adjustment = 1
-
-            # SHORT->SHORT transitions use adjustment=1
             if curr_is_short and next_is_short:
                 adjustment = 1
 
-            # Compare: if next_length >= curr_length + adjustment, use literal (lazy)
             if next_length >= curr_length + adjustment:
-                curr_length = 0  # Force literal
-
-        if curr_length >= 2:
-            # Check if match is worth encoding (vs literal)
-            match_cost = calculate_match_cost(curr_length, curr_offset)
-            literal_cost = 9 * curr_length  # 1 flag bit + 8 data bits per byte
-
-            if match_cost >= literal_cost:
-                # Match is not beneficial, use literal (prefer literals when costs equal)
                 curr_length = 0
 
+        # Cost-benefit check
         if curr_length >= 2:
-            # Optimize long matches by checking for better opportunities ahead
-            curr_length = find_optimal_match_length(buffered_data, pos, curr_length, curr_offset)
-
-        # ===== SCENARIO 1: Match-Follow-Match Optimization =====
-        scenario1_applied = False
-        if curr_length == 3 and prev_was_match and prev_token_pos is not None:
-            if (output[prev_token_pos] & 0x03) == 0:
-                next_is_match, _, _ = peek_next_decision(buffered_data, pos, curr_length)
-                if next_is_match:
-                    scenario1_applied = True
-                    scenario1_counter += 1
-
-                    # Encode all 3 bytes as literals
-                    for i in range(3):
-                        byte_val = buffered_data[pos + i]
-                        decisions.append(('L', byte_val))
-                        output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                            output, bit_accum, bit_counter, flag_byte_ptr, 0
-                        )
-                        output.append(byte_val)
-
-                    prev_was_match = False
-                    pos += 3
-                    continue
+            match_cost = _calculate_match_cost(curr_length, curr_offset)
+            literal_cost = 9 * curr_length
+            if match_cost >= literal_cost:
+                curr_length = 0
 
         if curr_length >= 2:
             # Encode match
             decisions.append(('M', curr_length, curr_offset))
 
-            # Flag bit 1
-            output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                output, bit_accum, bit_counter, flag_byte_ptr, 1
-            )
+            output, bit_accum, bit_counter, flag_byte_ptr = _add_bit(
+                output, bit_accum, bit_counter, flag_byte_ptr, 1)
 
             if 2 <= curr_length <= 5 and curr_offset <= 256:
                 # Short match
-                output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                    output, bit_accum, bit_counter, flag_byte_ptr, 0
-                )
+                output, bit_accum, bit_counter, flag_byte_ptr = _add_bit(
+                    output, bit_accum, bit_counter, flag_byte_ptr, 0)
 
                 len_bits = curr_length - 2
                 for i in range(2):
-                    output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                        output, bit_accum, bit_counter, flag_byte_ptr, (len_bits >> i) & 1
-                    )
+                    output, bit_accum, bit_counter, flag_byte_ptr = _add_bit(
+                        output, bit_accum, bit_counter, flag_byte_ptr, (len_bits >> i) & 1)
 
-                # Track token position for Scenario 1 (offset byte for short matches)
-                prev_token_pos = len(output)
                 output.append((curr_offset - 1) & 0xFF)
-                prev_was_match = True
             else:
-                # Long match - uses raw offset directly (no -1)
-                output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                    output, bit_accum, bit_counter, flag_byte_ptr, 1
-                )
-
-                # Track token position for Scenario 1 (byte1 for long matches)
-                prev_token_pos = len(output)
+                # Long match
+                output, bit_accum, bit_counter, flag_byte_ptr = _add_bit(
+                    output, bit_accum, bit_counter, flag_byte_ptr, 1)
 
                 if curr_length < 10:
                     byte1 = ((curr_length - 2) << 5) | (curr_offset & 0x1F)
@@ -352,7 +447,6 @@ def compress_lzss_lazy(data):
                         output.append(0)
                         remaining -= 0xFF
                     output.append(remaining & 0xFF)
-                prev_was_match = True
 
             pos += curr_length
         else:
@@ -360,21 +454,17 @@ def compress_lzss_lazy(data):
             byte_val = buffered_data[pos]
             decisions.append(('L', byte_val))
 
-            output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                output, bit_accum, bit_counter, flag_byte_ptr, 0
-            )
+            output, bit_accum, bit_counter, flag_byte_ptr = _add_bit(
+                output, bit_accum, bit_counter, flag_byte_ptr, 0)
             output.append(byte_val)
 
-            prev_was_match = False
             pos += 1
 
     # Terminator
-    output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-        output, bit_accum, bit_counter, flag_byte_ptr, 1
-    )
-    output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-        output, bit_accum, bit_counter, flag_byte_ptr, 1
-    )
+    output, bit_accum, bit_counter, flag_byte_ptr = _add_bit(
+        output, bit_accum, bit_counter, flag_byte_ptr, 1)
+    output, bit_accum, bit_counter, flag_byte_ptr = _add_bit(
+        output, bit_accum, bit_counter, flag_byte_ptr, 1)
 
     output.append(0x20)
     output.append(0x00)
@@ -383,19 +473,99 @@ def compress_lzss_lazy(data):
     if bit_counter > 0:
         output[flag_byte_ptr] = ((1 << bit_counter) - 1) & bit_accum
 
-    return bytes(output), decisions, scenario1_counter
+    return bytes(output), decisions, 0
 
 
-# Convenience function for simple compression (returns only compressed data)
-def compress(data):
+def compress(data: bytes) -> bytes:
     """
-    Simple compression interface - returns only compressed bytes.
+    Compress data using LZSS with lazy matching.
 
     Args:
-        data: Input bytes to compress
+        data: Uncompressed bytes
 
     Returns:
         Compressed bytes
     """
-    compressed, _, _ = compress_lzss_lazy(data)
+    compressed, _, _ = compress_with_debug(data)
     return compressed
+
+
+# =============================================================================
+# COMMAND LINE INTERFACE
+# =============================================================================
+
+if __name__ == "__main__":
+    import sys
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='LZSS Compression/Decompression for AC Brotherhood',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  Compress a file:
+    python lzss.py compress input.bin output.bin
+
+  Decompress a file:
+    python lzss.py decompress input.bin output.bin
+""")
+
+    subparsers = parser.add_subparsers(dest='command', help='Command to run')
+
+    # Compress command
+    compress_parser = subparsers.add_parser('compress', help='Compress a file')
+    compress_parser.add_argument('input', help='Input file')
+    compress_parser.add_argument('output', help='Output file')
+    compress_parser.add_argument('--compare', '-c', help='File to compare against')
+
+    # Decompress command
+    decompress_parser = subparsers.add_parser('decompress', help='Decompress a file')
+    decompress_parser.add_argument('input', help='Input file')
+    decompress_parser.add_argument('output', help='Output file')
+
+    args = parser.parse_args()
+
+    if args.command == 'compress':
+        with open(args.input, 'rb') as f:
+            data = f.read()
+
+        print(f"Compressing: {args.input}")
+        print(f"Input size: {len(data)} bytes")
+
+        compressed, decisions, s1_count = compress_with_debug(data)
+
+        print(f"Compressed size: {len(compressed)} bytes ({100*len(compressed)/len(data):.1f}%)")
+        print(f"Scenario 1 optimizations: {s1_count}")
+
+        if args.compare:
+            try:
+                with open(args.compare, 'rb') as f:
+                    expected = f.read()
+                if compressed == expected:
+                    print("PERFECT MATCH with comparison file")
+                else:
+                    print(f"DIFFERS from comparison file ({len(compressed)} vs {len(expected)} bytes)")
+            except FileNotFoundError:
+                print(f"Comparison file not found: {args.compare}")
+
+        with open(args.output, 'wb') as f:
+            f.write(compressed)
+        print(f"Wrote: {args.output}")
+
+    elif args.command == 'decompress':
+        with open(args.input, 'rb') as f:
+            data = f.read()
+
+        print(f"Decompressing: {args.input}")
+        print(f"Compressed size: {len(data)} bytes")
+
+        decompressed = decompress(data)
+
+        print(f"Decompressed size: {len(decompressed)} bytes")
+
+        with open(args.output, 'wb') as f:
+            f.write(decompressed)
+        print(f"Wrote: {args.output}")
+
+    else:
+        parser.print_help()
