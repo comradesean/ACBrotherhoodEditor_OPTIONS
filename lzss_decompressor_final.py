@@ -84,14 +84,16 @@ import sys
 import os
 import struct
 
+# Import core LZSS functionality from shared module
+from lzss import LZSSDecompressor, decompress
+
 
 def adler32(data: bytes) -> int:
     """
     Calculate Adler-32 checksum using AC Brotherhood's non-standard variant.
 
     The game uses Adler-32 with ZERO SEED (s1=0, s2=0) instead of the
-    standard Adler-32 seed (s1=1, s2=0). This is the same algorithm used
-    for Block1 hash validation.
+    standard Adler-32 seed (s1=1, s2=0).
 
     Args:
         data: Bytes to checksum
@@ -99,7 +101,6 @@ def adler32(data: bytes) -> int:
     Returns:
         Adler-32 checksum as 32-bit integer (zero seed variant)
     """
-    # AC Brotherhood uses non-standard zero seed
     MOD_ADLER = 65521
     s1 = 0  # NON-STANDARD: standard Adler-32 uses s1=1
     s2 = 0
@@ -190,147 +191,6 @@ def find_section_headers(data: bytes) -> list:
         search_pos = pattern_pos + len(COMMON_PATTERN)
 
     return headers
-
-
-class LZSSDecompressor:
-    """
-    LZSS Decompressor matching AC Brotherhood's exact format
-    Tested and verified against game decompression output
-    """
-
-    def decompress(self, compressed: bytes) -> bytes:
-        """
-        Decompress LZSS data
-
-        Args:
-            compressed: Compressed bytes from OPTIONS file
-
-        Returns:
-            Decompressed bytes
-        """
-        if not compressed:
-            return b''
-
-        output = bytearray()
-        in_ptr = 0
-        flags = 0
-        flag_bits = 0
-
-        while in_ptr < len(compressed):
-            # Read flag bit
-            if flag_bits < 1:
-                if in_ptr >= len(compressed):
-                    break
-                flags = compressed[in_ptr]
-                in_ptr += 1
-                flag_bits = 8
-
-            flag_bit = flags & 1
-            flags >>= 1
-            flag_bits -= 1
-
-            if flag_bit == 0:
-                # Literal byte
-                if in_ptr >= len(compressed):
-                    break
-                output.append(compressed[in_ptr])
-                in_ptr += 1
-            else:
-                # Match - read second flag bit
-                if flag_bits < 1:
-                    if in_ptr >= len(compressed):
-                        break
-                    flags = compressed[in_ptr]
-                    in_ptr += 1
-                    flag_bits = 8
-
-                flag_bit2 = flags & 1
-                flags >>= 1
-                flag_bits -= 1
-
-                if flag_bit2 == 0:
-                    # Short match (length 2-5, offset 1-256)
-                    if flag_bits < 2:
-                        if in_ptr >= len(compressed):
-                            break
-                        flags |= compressed[in_ptr] << flag_bits
-                        in_ptr += 1
-                        flag_bits += 8
-
-                    length = (flags & 3) + 2
-                    flags >>= 2
-                    flag_bits -= 2
-
-                    if in_ptr >= len(compressed):
-                        break
-                    offset_byte = compressed[in_ptr]
-                    in_ptr += 1
-
-                    distance = offset_byte + 1
-                    src_pos = len(output) - distance
-
-                    for _ in range(length):
-                        if src_pos < 0:
-                            output.append(0)
-                        else:
-                            output.append(output[src_pos])
-                        src_pos += 1
-                else:
-                    # Long match (length 3+, offset 0-8191)
-                    if in_ptr + 1 >= len(compressed):
-                        break
-
-                    byte1 = compressed[in_ptr]
-                    byte2 = compressed[in_ptr + 1]
-                    in_ptr += 2
-
-                    len_field = byte1 >> 5
-                    low_offset = byte1 & 0x1F
-                    high_offset = byte2
-                    distance = (high_offset << 5) | low_offset
-
-                    # CRITICAL BUG FIX: Check for terminator (distance == 0)
-                    # This prevents attempting to copy with offset 0
-                    if distance == 0:
-                        break
-
-                    if len_field == 0:
-                        # Variable length encoding
-                        length = 9
-                        while in_ptr < len(compressed) and compressed[in_ptr] == 0:
-                            in_ptr += 1
-                            length += 255
-                        if in_ptr >= len(compressed):
-                            break
-                        length += compressed[in_ptr]
-                        in_ptr += 1
-                    else:
-                        length = len_field + 2
-
-                    src_pos = len(output) - distance
-
-                    for _ in range(length):
-                        if src_pos < 0:
-                            output.append(0)
-                        else:
-                            output.append(output[src_pos])
-                        src_pos += 1
-
-        return bytes(output)
-
-
-def decompress(data: bytes) -> bytes:
-    """
-    Convenience function for decompression
-
-    Args:
-        data: Compressed bytes
-
-    Returns:
-        Decompressed bytes
-    """
-    decompressor = LZSSDecompressor()
-    return decompressor.decompress(data)
 
 
 # ============================================================================

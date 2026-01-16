@@ -23,7 +23,7 @@ import os
 import argparse
 
 # Import LZSS compressor
-from lzss_compressor_final import compress_lzss_lazy
+from lzss import compress_with_debug as compress_lzss_lazy
 
 # =============================================================================
 # Scimitar Engine Type System - Hash Definitions
@@ -639,30 +639,9 @@ def main():
     # Load blocks
     serializer.load_blocks(args.block1, args.block2, args.block3, args.block4, args.block5)
 
-    # Field4 source priority:
-    # 1. Metadata file (if exists) - for backward compatibility
-    # 2. Compare file (if provided) - for verification workflows
-    # 3. Calculate from Block 2 decompressed data - default, fully accurate
-    metadata_file = os.path.join(os.path.dirname(args.block1), 'sav_metadata.json')
-    if os.path.exists(metadata_file):
-        import json
-        with open(metadata_file, 'r') as f:
-            metadata = json.load(f)
-        serializer.block2_field4 = metadata.get('block2_field4')
-        print(f"\nLoaded Field4 from metadata: 0x{serializer.block2_field4:08X}")
-    elif args.compare and os.path.exists(args.compare):
-        # Extract from compare file (for verification workflows)
-        with open(args.compare, 'rb') as f:
-            compare_data = f.read()
-        block1_comp_size = struct.unpack('<I', compare_data[0x20:0x24])[0]
-        block2_header_offset = 44 + block1_comp_size
-        field4_offset = block2_header_offset + 0x0C
-        serializer.block2_field4 = struct.unpack('<I', compare_data[field4_offset:field4_offset+4])[0]
-        print(f"\nExtracted Field4 from compare file: 0x{serializer.block2_field4:08X}")
-    else:
-        # Calculate from Block 2 decompressed data (formula: val@0x0E + 0x12)
-        calculated_field4 = calculate_block2_field4(serializer.block2_decompressed)
-        print(f"\nCalculated Field4 from Block 2: 0x{calculated_field4:08X}")
+    # Calculate Field4 from Block 2 decompressed data (formula: val@0x0E + 0x12)
+    serializer.block2_field4 = calculate_block2_field4(serializer.block2_decompressed)
+    print(f"\nCalculated Field4 from Block 2: 0x{serializer.block2_field4:08X}")
 
     # Serialize
     output_data = serializer.serialize()
