@@ -118,6 +118,52 @@ def detect_format(data: bytes) -> str:
 
 
 # =============================================================================
+# SHARED PARSING HELPERS
+# =============================================================================
+
+def _find_block3_regions(data: bytes, start_offset: int, total_size: int) -> list:
+    """
+    Find all 4 region headers in Block 3.
+
+    Returns list of (offset, size) tuples for each region.
+    """
+    regions = []
+    search_pos = start_offset
+    for region_num in range(4):
+        while search_pos < total_size - 8:
+            if (data[search_pos] == 0x01 and
+                data[search_pos+4:search_pos+8] == b'\x00\x00\x80\x00'):
+                region_size = struct.unpack('<I', data[search_pos+1:search_pos+4] + b'\x00')[0]
+                if 0 < region_size < 50000:
+                    regions.append((search_pos, region_size))
+                    search_pos = search_pos + 8 + region_size + 5
+                    break
+            search_pos += 1
+    return regions
+
+
+def _patch_block4_in_block3(block3_raw: bytearray, region4_offset: int,
+                            block4_recompressed: bytes) -> None:
+    """
+    Patch Block 3's Region 4 header with new Block 4 size and checksum.
+
+    Modifies block3_raw in place.
+    """
+    # Update size
+    old_b4_size = struct.unpack('<I', bytes(block3_raw[region4_offset+1:region4_offset+4]) + b'\x00')[0]
+    new_b4_size = len(block4_recompressed)
+    if old_b4_size != new_b4_size:
+        size_bytes = struct.pack('<I', new_b4_size)[:3]
+        block3_raw[region4_offset+1:region4_offset+4] = size_bytes
+
+    # Update checksum
+    old_checksum = struct.unpack('<I', bytes(block3_raw[region4_offset+9:region4_offset+13]))[0]
+    new_checksum = adler32_zero_seed(block4_recompressed)
+    if old_checksum != new_checksum:
+        block3_raw[region4_offset+9:region4_offset+13] = struct.pack('<I', new_checksum)
+
+
+# =============================================================================
 # PC SAV PARSING (from cape_unlocker.py)
 # =============================================================================
 
@@ -139,19 +185,7 @@ def parse_pc_sav_blocks(data: bytes) -> dict:
     block3_offset = block2_data_offset + block2_compressed_size
 
     # Find all 4 region headers in Block 3
-    block3_regions = []
-    search_pos = block3_offset
-    for region_num in range(4):
-        while search_pos < total_size - 8:
-            if (data[search_pos] == 0x01 and
-                data[search_pos+4:search_pos+8] == b'\x00\x00\x80\x00'):
-                region_size = struct.unpack('<I', data[search_pos+1:search_pos+4] + b'\x00')[0]
-                if 0 < region_size < 50000:
-                    block3_regions.append((search_pos, region_size))
-                    # Move past header + data + 5-byte gap
-                    search_pos = search_pos + 8 + region_size + 5
-                    break
-            search_pos += 1
+    block3_regions = _find_block3_regions(data, block3_offset, total_size)
 
     # Region 4's declared size equals Block 4's compressed size
     if len(block3_regions) >= 4:
@@ -223,18 +257,7 @@ def parse_ps3_sav_blocks(data: bytes) -> dict:
     b3_offset = b2_data_offset + b2_comp_size
 
     # Find all 4 region headers in Block 3
-    block3_regions = []
-    search_pos = b3_offset
-    for region_num in range(4):
-        while search_pos < total_size - 8:
-            if (sav_data[search_pos] == 0x01 and
-                sav_data[search_pos+4:search_pos+8] == b'\x00\x00\x80\x00'):
-                region_size = struct.unpack('<I', sav_data[search_pos+1:search_pos+4] + b'\x00')[0]
-                if 0 < region_size < 50000:
-                    block3_regions.append((search_pos, region_size))
-                    search_pos = search_pos + 8 + region_size + 5
-                    break
-            search_pos += 1
+    block3_regions = _find_block3_regions(sav_data, b3_offset, total_size)
 
     if len(block3_regions) < 4:
         raise ValueError(f"Could not parse Block 3 headers, found {len(block3_regions)} regions")
@@ -414,71 +437,84 @@ def set_cape_state(data: bytearray, cape_hash: int, expected_id: int, unlocked: 
 # FILE SERIALIZATION
 # =============================================================================
 
-def save_pc_sav(filepath: str, blocks: dict, block1_data: bytearray,
-                block4_data: bytearray, block1_modified: bool, block4_modified: bool):
-    """Save modified PC SAV file."""
+def _build_block1_header(compressed_data: bytes, uncompressed_size: int, is_ps3: bool) -> bytes:
+    """Build 44-byte Block 1 header with correct endianness."""
+    checksum = adler32_zero_seed(compressed_data)
+    comp_size = len(compressed_data)
+
+    if is_ps3:
+        # PS3: first 3 fields big-endian, rest little-endian
+        header = bytearray()
+        header.extend(struct.pack('>I', 0x00000016))
+        header.extend(struct.pack('>I', 0x00FEDBAC))
+        header.extend(struct.pack('>I', comp_size + 32))
+        header.extend(struct.pack('<I', uncompressed_size))
+        header.extend(struct.pack('<I', 0x57FBAA33))
+        header.extend(struct.pack('<I', 0x1004FA99))
+        header.extend(struct.pack('<I', 0x00020001))
+        header.extend(struct.pack('<I', 0x01000080))
+        header.extend(struct.pack('<I', comp_size))
+        header.extend(struct.pack('<I', uncompressed_size))
+        header.extend(struct.pack('<I', checksum))
+        return bytes(header)
+    else:
+        # PC: all little-endian
+        return struct.pack('<11I',
+            0x00000016, 0x00FEDBAC, comp_size + 32, uncompressed_size,
+            0x57FBAA33, 0x1004FA99, 0x00020001, 0x01000080,
+            comp_size, uncompressed_size, checksum)
+
+
+def _recompress_blocks(blocks: dict, block1_data: bytearray, block4_data: bytearray,
+                       block1_modified: bool, block4_modified: bool, is_ps3: bool) -> tuple:
+    """
+    Recompress modified blocks and patch Block 3.
+
+    Returns (block1_header, block1_compressed, block4_compressed, block3_raw, total_size_diff)
+    """
     block3_raw = bytearray(blocks['block3_raw'])
     region4_offset = blocks['region4_offset_in_block3']
     total_size_diff = 0
 
-    # Handle Block 1 (recompress if modified)
+    # Handle Block 1
     if block1_modified:
-        block1_recompressed = compress(bytes(block1_data))
-        block1_checksum = adler32_zero_seed(block1_recompressed)
-        block1_header = struct.pack('<11I',
-            0x00000016,              # Field1
-            0x00FEDBAC,              # Field2
-            len(block1_recompressed) + 32,  # Field3
-            len(block1_data),        # Field4
-            0x57FBAA33,              # Magic1
-            0x1004FA99,              # Magic2
-            0x00020001,              # Magic3
-            0x01000080,              # Magic4
-            len(block1_recompressed),  # Compressed size
-            len(block1_data),        # Uncompressed size
-            block1_checksum          # Checksum
-        )
-        block1_header_and_data = block1_header + block1_recompressed
-        total_size_diff += len(block1_recompressed) - len(blocks['block1_compressed'])
+        block1_compressed = compress(bytes(block1_data))
+        block1_header = _build_block1_header(block1_compressed, len(block1_data), is_ps3)
+        total_size_diff += len(block1_compressed) - len(blocks['block1_compressed'])
     else:
-        block1_header_and_data = blocks['block1_header'] + blocks['block1_compressed']
+        block1_header = blocks['block1_header']
+        block1_compressed = blocks['block1_compressed']
 
-    # Handle Block 4 (recompress if modified)
+    # Handle Block 4
     if block4_modified:
-        block4_recompressed = compress(bytes(block4_data))
-
-        # Patch Block 3's Region 4 header with new Block 4 size
-        old_b4_size = struct.unpack('<I', bytes(block3_raw[region4_offset+1:region4_offset+4]) + b'\x00')[0]
-        new_b4_size = len(block4_recompressed)
-        if old_b4_size != new_b4_size:
-            size_bytes = struct.pack('<I', new_b4_size)[:3]
-            block3_raw[region4_offset+1:region4_offset+4] = size_bytes
-
-        # Update Block 4 checksum
-        old_checksum = struct.unpack('<I', bytes(block3_raw[region4_offset+9:region4_offset+13]))[0]
-        new_checksum = adler32_zero_seed(block4_recompressed)
-        if old_checksum != new_checksum:
-            block3_raw[region4_offset+9:region4_offset+13] = struct.pack('<I', new_checksum)
-
-        total_size_diff += len(block4_recompressed) - len(blocks['block4_compressed'])
+        block4_compressed = compress(bytes(block4_data))
+        _patch_block4_in_block3(block3_raw, region4_offset, block4_compressed)
+        total_size_diff += len(block4_compressed) - len(blocks['block4_compressed'])
     else:
-        block4_recompressed = blocks['block4_compressed']
+        block4_compressed = blocks['block4_compressed']
 
-    # Get Block 2 header+data
+    return block1_header, block1_compressed, block4_compressed, block3_raw, total_size_diff
+
+
+def save_pc_sav(filepath: str, blocks: dict, block1_data: bytearray,
+                block4_data: bytearray, block1_modified: bool, block4_modified: bool):
+    """Save modified PC SAV file."""
+    block1_header, block1_compressed, block4_compressed, block3_raw, total_size_diff = \
+        _recompress_blocks(blocks, block1_data, block4_data, block1_modified, block4_modified, is_ps3=False)
+
+    # Get Block 2 header+data and patch Field1 if size changed
     block2_header_and_data = bytearray(blocks['block2_header'] + blocks['block2_compressed'])
-
-    # Patch Block 2 header Field1 if file size changed
     if total_size_diff != 0:
         old_field1 = struct.unpack('<I', block2_header_and_data[0:4])[0]
-        new_field1 = old_field1 + total_size_diff
-        block2_header_and_data[0:4] = struct.pack('<I', new_field1)
+        block2_header_and_data[0:4] = struct.pack('<I', old_field1 + total_size_diff)
 
     # Assemble output file
     output = bytearray()
-    output.extend(block1_header_and_data)
+    output.extend(block1_header)
+    output.extend(block1_compressed)
     output.extend(block2_header_and_data)
     output.extend(block3_raw)
-    output.extend(block4_recompressed)
+    output.extend(block4_compressed)
     output.extend(blocks['block5_raw'])
 
     with open(filepath, 'wb') as f:
@@ -488,87 +524,31 @@ def save_pc_sav(filepath: str, blocks: dict, block1_data: bytearray,
 def save_ps3_sav(filepath: str, blocks: dict, block1_data: bytearray,
                  block4_data: bytearray, block1_modified: bool, block4_modified: bool):
     """Save modified PS3 SAV file."""
-    block3_raw = bytearray(blocks['block3_raw'])
-    region4_offset = blocks['region4_offset_in_block3']
+    block1_header, block1_compressed, block4_compressed, block3_raw, total_size_diff = \
+        _recompress_blocks(blocks, block1_data, block4_data, block1_modified, block4_modified, is_ps3=True)
 
-    # Handle Block 1 (recompress if modified)
-    if block1_modified:
-        block1_recompressed = compress(bytes(block1_data))
-        block1_checksum = adler32_zero_seed(block1_recompressed)
-        # PS3 format: fields 0-2 BE, rest LE
-        block1_header = bytearray()
-        block1_header.extend(struct.pack('>I', 0x00000016))  # Field0 BE
-        block1_header.extend(struct.pack('>I', 0x00FEDBAC))  # Field1 BE
-        block1_header.extend(struct.pack('>I', len(block1_recompressed) + 32))  # Field2 BE
-        block1_header.extend(struct.pack('<I', len(block1_data)))  # Field3 LE
-        block1_header.extend(struct.pack('<I', 0x57FBAA33))  # Magic1 LE
-        block1_header.extend(struct.pack('<I', 0x1004FA99))  # Magic2 LE
-        block1_header.extend(struct.pack('<I', 0x00020001))  # Magic3 LE
-        block1_header.extend(struct.pack('<I', 0x01000080))  # Magic4 LE
-        block1_header.extend(struct.pack('<I', len(block1_recompressed)))  # CompSize LE
-        block1_header.extend(struct.pack('<I', len(block1_data)))  # UncompSize LE
-        block1_header.extend(struct.pack('<I', block1_checksum))  # Checksum LE
-    else:
-        block1_header = blocks['block1_header']
-        block1_recompressed = blocks['block1_compressed']
-
-    # Handle Block 4 (recompress if modified)
-    if block4_modified:
-        block4_recompressed = compress(bytes(block4_data))
-
-        # Patch Block 3's Region 4 header
-        old_b4_size = struct.unpack('<I', bytes(block3_raw[region4_offset+1:region4_offset+4]) + b'\x00')[0]
-        new_b4_size = len(block4_recompressed)
-        if old_b4_size != new_b4_size:
-            size_bytes = struct.pack('<I', new_b4_size)[:3]
-            block3_raw[region4_offset+1:region4_offset+4] = size_bytes
-
-        # Update Block 4 checksum
-        old_checksum = struct.unpack('<I', bytes(block3_raw[region4_offset+9:region4_offset+13]))[0]
-        new_checksum = adler32_zero_seed(block4_recompressed)
-        if old_checksum != new_checksum:
-            block3_raw[region4_offset+9:region4_offset+13] = struct.pack('<I', new_checksum)
-    else:
-        block4_recompressed = blocks['block4_compressed']
-
-    # Build Block 2 header+data
+    # Get Block 2 header and patch Field1 if size changed (BE for PS3)
     block2_header = bytearray(blocks['block2_header'])
-    block2_compressed = blocks['block2_compressed']
-
-    # Calculate size difference for Block 2 Field1
-    old_b1_size = len(blocks['block1_compressed'])
-    new_b1_size = len(block1_recompressed)
-    old_b4_size = len(blocks['block4_compressed'])
-    new_b4_size = len(block4_recompressed)
-    total_size_diff = (new_b1_size - old_b1_size) + (new_b4_size - old_b4_size)
-
     if total_size_diff != 0:
-        # Update Block 2 Field1 (BE in PS3)
         old_field1 = struct.unpack('>I', block2_header[0:4])[0]
-        new_field1 = old_field1 + total_size_diff
-        block2_header[0:4] = struct.pack('>I', new_field1)
+        block2_header[0:4] = struct.pack('>I', old_field1 + total_size_diff)
 
     # Assemble SAV payload
     sav_payload = bytearray()
     sav_payload.extend(block1_header)
-    sav_payload.extend(block1_recompressed)
+    sav_payload.extend(block1_compressed)
     sav_payload.extend(block2_header)
-    sav_payload.extend(block2_compressed)
+    sav_payload.extend(blocks['block2_compressed'])
     sav_payload.extend(block3_raw)
-    sav_payload.extend(block4_recompressed)
+    sav_payload.extend(block4_compressed)
     sav_payload.extend(blocks['block5_raw'])
-
-    # Calculate new PS3 prefix
-    new_ps3_size = len(sav_payload)
-    new_ps3_checksum = crc32_ps3(bytes(sav_payload))
 
     # Build final output with PS3 prefix and padding
     output = bytearray()
-    output.extend(struct.pack('>I', new_ps3_size))  # Size BE
-    output.extend(struct.pack('>I', new_ps3_checksum))  # Checksum BE
+    output.extend(struct.pack('>I', len(sav_payload)))
+    output.extend(struct.pack('>I', crc32_ps3(bytes(sav_payload))))
     output.extend(sav_payload)
 
-    # Pad to PS3 file size
     if len(output) < PS3_FILE_SIZE:
         output.extend(b'\x00' * (PS3_FILE_SIZE - len(output)))
 
@@ -614,22 +594,14 @@ def load_unlock_states(items: list, block1_data: bytes, block4_data: bytes):
             item.checked = get_cape_state(block4_data, item.hash_value, item.expected_id)
 
 
-def apply_unlock_states(items: list, block1_data: bytearray, block4_data: bytearray,
-                        new_name: str = None) -> tuple:
-    """Apply states to block data. Returns (block1_modified, block4_modified)."""
-    block1_modified = False
-    block4_modified = False
-
+def apply_unlock_states(items: list, block1_data: bytearray, block4_data: bytearray) -> None:
+    """Apply unlock states to block data."""
     for item in items:
         if item.is_name:
             continue  # Name handled separately
-        else:
-            old_state = get_cape_state(block4_data, item.hash_value, item.expected_id)
-            if old_state != item.checked:
-                set_cape_state(block4_data, item.hash_value, item.expected_id, item.checked)
-                block4_modified = True
-
-    return (block1_modified, block4_modified)
+        old_state = get_cape_state(block4_data, item.hash_value, item.expected_id)
+        if old_state != item.checked:
+            set_cape_state(block4_data, item.hash_value, item.expected_id, item.checked)
 
 
 # =============================================================================
@@ -653,7 +625,6 @@ def run_ui(stdscr, filepath: str, platform: str, blocks: dict,
     selected = 0
     modified = False
     new_name = None
-    editing_name = False
 
     while True:
         stdscr.clear()
@@ -755,7 +726,7 @@ def run_ui(stdscr, filepath: str, platform: str, blocks: dict,
                     if input_str:
                         new_name = input_str
                         modified = True
-                except:
+                except curses.error:
                     pass
                 curses.noecho()
                 curses.curs_set(0)
@@ -853,7 +824,7 @@ def run_text_ui(filepath: str, platform: str, blocks: dict,
                         new_input = input(f"  Enter new name (max {MAX_NAME_LENGTH} chars): ").strip()
                         if new_input:
                             new_name = new_input[:MAX_NAME_LENGTH]
-                    except:
+                    except EOFError:
                         pass
                 else:
                     items[idx].checked = not items[idx].checked

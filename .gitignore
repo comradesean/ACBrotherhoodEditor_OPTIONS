@@ -37,6 +37,3 @@ test_*.bin
 *.tmp
 *.bak
 *.orig
-
-# Claude Code
-.claude/

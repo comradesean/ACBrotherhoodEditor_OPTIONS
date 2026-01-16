@@ -15,6 +15,8 @@ import sys
 import os
 import struct
 
+import lzss
+
 try:
     import curses
     HAS_CURSES = True
@@ -85,386 +87,6 @@ def crc32_ps3(data: bytes) -> int:
     return (crc ^ 0xFFFFFFFF) & 0xFFFFFFFF
 
 
-# =============================================================================
-# LZSS DECOMPRESSOR (exact copy from options_unpack.py)
-# =============================================================================
-
-def decompress_lzss(compressed: bytes) -> bytes:
-    """Decompress LZSS data."""
-    if not compressed:
-        return b''
-
-    output = bytearray()
-    in_ptr = 0
-    flags = 0
-    flag_bits = 0
-
-    while in_ptr < len(compressed):
-        if flag_bits < 1:
-            if in_ptr >= len(compressed):
-                break
-            flags = compressed[in_ptr]
-            in_ptr += 1
-            flag_bits = 8
-
-        flag_bit = flags & 1
-        flags >>= 1
-        flag_bits -= 1
-
-        if flag_bit == 0:
-            if in_ptr >= len(compressed):
-                break
-            output.append(compressed[in_ptr])
-            in_ptr += 1
-        else:
-            if flag_bits < 1:
-                if in_ptr >= len(compressed):
-                    break
-                flags = compressed[in_ptr]
-                in_ptr += 1
-                flag_bits = 8
-
-            flag_bit2 = flags & 1
-            flags >>= 1
-            flag_bits -= 1
-
-            if flag_bit2 == 0:
-                if flag_bits < 2:
-                    if in_ptr >= len(compressed):
-                        break
-                    flags |= compressed[in_ptr] << flag_bits
-                    in_ptr += 1
-                    flag_bits += 8
-
-                length = (flags & 3) + 2
-                flags >>= 2
-                flag_bits -= 2
-
-                if in_ptr >= len(compressed):
-                    break
-                offset_byte = compressed[in_ptr]
-                in_ptr += 1
-
-                distance = offset_byte + 1
-                src_pos = len(output) - distance
-
-                for _ in range(length):
-                    if src_pos < 0:
-                        output.append(0)
-                    else:
-                        output.append(output[src_pos])
-                    src_pos += 1
-            else:
-                if in_ptr + 1 >= len(compressed):
-                    break
-
-                byte1 = compressed[in_ptr]
-                byte2 = compressed[in_ptr + 1]
-                in_ptr += 2
-
-                len_field = byte1 >> 5
-                low_offset = byte1 & 0x1F
-                high_offset = byte2
-                distance = (high_offset << 5) | low_offset
-
-                if distance == 0:
-                    break
-
-                if len_field == 0:
-                    length = 9
-                    while in_ptr < len(compressed) and compressed[in_ptr] == 0:
-                        in_ptr += 1
-                        length += 255
-                    if in_ptr >= len(compressed):
-                        break
-                    length += compressed[in_ptr]
-                    in_ptr += 1
-                else:
-                    length = len_field + 2
-
-                src_pos = len(output) - distance
-
-                for _ in range(length):
-                    if src_pos < 0:
-                        output.append(0)
-                    else:
-                        output.append(output[src_pos])
-                    src_pos += 1
-
-    return bytes(output)
-
-
-# =============================================================================
-# LZSS COMPRESSOR (exact copy from lzss.py)
-# =============================================================================
-
-def add_bit(output, bit_accum, bit_counter, flag_byte_ptr, bit_value):
-    """Add single bit - exact Ghidra implementation"""
-    old_bit_counter = bit_counter
-
-    if bit_counter == 0:
-        flag_byte_ptr = len(output)
-        output.append(0)
-
-    bit_counter += 1
-    bit_accum |= (bit_value & 1) << (old_bit_counter & 0x1f)
-
-    if (bit_counter > 7):
-        output[flag_byte_ptr] = bit_accum & 0xFF
-        bit_accum >>= 8
-        bit_counter -= 8
-        if bit_counter > 0:
-            flag_byte_ptr = len(output)
-            output.append(0)
-
-    return output, bit_accum, bit_counter, flag_byte_ptr
-
-
-def find_best_match(data, pos, max_match_length=2048):
-    """Find best match scanning backward from current position."""
-    if pos < 2:
-        return 0, 0
-
-    best_length = 0
-    best_offset = 0
-    max_length = min(max_match_length, len(data) - pos)
-    max_offset = min(8192, pos)
-    max_offset = min(max_offset, pos - 2)
-
-    for check_pos in range(pos - 1, max(0, pos - max_offset) - 1, -1):
-        offset = pos - check_pos
-
-        if best_length >= 2:
-            if data[check_pos] != data[pos]:
-                continue
-            if check_pos + best_length < len(data) and pos + best_length < len(data):
-                if data[check_pos + best_length] != data[pos + best_length]:
-                    continue
-
-        length = 0
-        while (length < max_length and
-               pos + length < len(data) and
-               data[check_pos + length] == data[pos + length]):
-            length += 1
-
-        if length > best_length and length >= 2:
-            best_length = length
-            best_offset = offset
-            if best_length >= max_length:
-                break
-
-    if best_offset > 0 and best_length >= 2:
-        is_short_match = (2 <= best_length <= 5 and best_offset <= 256)
-        if not is_short_match:
-            if best_offset < 1:
-                return 0, 0
-
-    return best_length, best_offset
-
-
-def calculate_match_cost(length, offset):
-    """Calculate cost in bits for encoding a match"""
-    if 2 <= length <= 5 and offset <= 256:
-        return 12
-    elif length < 10:
-        return 18
-    else:
-        extra_bytes = (length - 9 + 254) // 255
-        return 18 + (extra_bytes * 8)
-
-
-def find_optimal_match_length(buffered_data, pos, match_length, match_offset):
-    """
-    Find optimal length for a match by looking ahead within it.
-
-    NOTE: This optimization was DISABLED because the game compressor does NOT
-    truncate matches based on future opportunities. Keeping matches whole
-    ensures byte-for-byte accuracy with game output.
-
-    The game uses a simple greedy approach - it takes whatever match it finds
-    without looking ahead for potentially better truncation points.
-    """
-    # DISABLED: Always return full match length to match game behavior
-    return match_length
-
-
-def peek_next_decision(buffered_data, pos, curr_length):
-    """Peek ahead to determine what the next encoding decision will be."""
-    next_pos = pos + curr_length
-    if next_pos >= len(buffered_data):
-        return (False, 0, 0)
-
-    next_length, next_offset = find_best_match(buffered_data, next_pos)
-
-    if next_length >= 2 and next_pos + 1 < len(buffered_data):
-        lookahead_length, lookahead_offset = find_best_match(buffered_data, next_pos + 1)
-
-        next_is_short = (2 <= next_length <= 5 and next_offset <= 256)
-        lookahead_is_short = (2 <= lookahead_length <= 5 and lookahead_offset <= 256)
-
-        if next_is_short:
-            adjustment = 2
-        else:
-            adjustment = 1
-
-        if next_is_short and not lookahead_is_short and lookahead_length >= 2:
-            adjustment += 2
-        if lookahead_is_short and not next_is_short:
-            adjustment -= 1
-        if adjustment < 1:
-            adjustment = 1
-        if next_is_short and lookahead_is_short:
-            adjustment = 1
-
-        if lookahead_length >= next_length + adjustment:
-            next_length = 0
-
-    if next_length >= 2:
-        match_cost = calculate_match_cost(next_length, next_offset)
-        literal_cost = 9 * next_length
-        if match_cost >= literal_cost:
-            next_length = 0
-
-    is_match = (next_length >= 2)
-    return (is_match, next_length, next_offset)
-
-
-def compress_lzss(data: bytes) -> bytes:
-    """Compress using lazy matching with Scenario 1 optimization."""
-    buffered_data = bytearray([0x00, 0x00]) + bytearray(data)
-
-    output = bytearray()
-    bit_accum = 0
-    bit_counter = 0
-    flag_byte_ptr = 0
-
-    prev_token_pos = None
-    prev_was_match = False
-
-    pos = 2
-
-    while pos < len(buffered_data):
-        curr_length, curr_offset = find_best_match(buffered_data, pos)
-
-        if pos == 2:
-            curr_length = 0
-
-        if curr_length >= 2 and pos + 1 < len(buffered_data):
-            next_length, next_offset = find_best_match(buffered_data, pos + 1)
-
-            curr_is_short = (2 <= curr_length <= 5 and curr_offset <= 256)
-            next_is_short = (2 <= next_length <= 5 and next_offset <= 256)
-
-            if curr_is_short:
-                adjustment = 2
-            else:
-                adjustment = 1
-
-            if curr_is_short and not next_is_short and next_length >= 2:
-                adjustment += 2
-            if next_is_short and not curr_is_short:
-                adjustment -= 1
-            if adjustment < 1:
-                adjustment = 1
-            if curr_is_short and next_is_short:
-                adjustment = 1
-
-            if next_length >= curr_length + adjustment:
-                curr_length = 0
-
-        if curr_length >= 2:
-            match_cost = calculate_match_cost(curr_length, curr_offset)
-            literal_cost = 9 * curr_length
-            if match_cost >= literal_cost:
-                curr_length = 0
-
-        if curr_length >= 2:
-            curr_length = find_optimal_match_length(buffered_data, pos, curr_length, curr_offset)
-
-        # Scenario 1 optimization
-        if curr_length == 3 and prev_was_match and prev_token_pos is not None:
-            if (output[prev_token_pos] & 0x03) == 0:
-                next_is_match, _, _ = peek_next_decision(buffered_data, pos, curr_length)
-                if next_is_match:
-                    for i in range(3):
-                        byte_val = buffered_data[pos + i]
-                        output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                            output, bit_accum, bit_counter, flag_byte_ptr, 0
-                        )
-                        output.append(byte_val)
-                    prev_was_match = False
-                    pos += 3
-                    continue
-
-        if curr_length >= 2:
-            output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                output, bit_accum, bit_counter, flag_byte_ptr, 1
-            )
-
-            if 2 <= curr_length <= 5 and curr_offset <= 256:
-                output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                    output, bit_accum, bit_counter, flag_byte_ptr, 0
-                )
-
-                len_bits = curr_length - 2
-                for i in range(2):
-                    output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                        output, bit_accum, bit_counter, flag_byte_ptr, (len_bits >> i) & 1
-                    )
-
-                prev_token_pos = len(output)
-                output.append((curr_offset - 1) & 0xFF)
-                prev_was_match = True
-            else:
-                output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                    output, bit_accum, bit_counter, flag_byte_ptr, 1
-                )
-
-                prev_token_pos = len(output)
-
-                if curr_length < 10:
-                    byte1 = ((curr_length - 2) << 5) | (curr_offset & 0x1F)
-                    byte2 = (curr_offset >> 5) & 0xFF
-                    output.append(byte1)
-                    output.append(byte2)
-                else:
-                    byte1 = curr_offset & 0x1F
-                    byte2 = (curr_offset >> 5) & 0xFF
-                    output.append(byte1)
-                    output.append(byte2)
-
-                    remaining = curr_length - 9
-                    while remaining >= 0xFF:
-                        output.append(0)
-                        remaining -= 0xFF
-                    output.append(remaining & 0xFF)
-                prev_was_match = True
-
-            pos += curr_length
-        else:
-            byte_val = buffered_data[pos]
-            output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-                output, bit_accum, bit_counter, flag_byte_ptr, 0
-            )
-            output.append(byte_val)
-            prev_was_match = False
-            pos += 1
-
-    output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-        output, bit_accum, bit_counter, flag_byte_ptr, 1
-    )
-    output, bit_accum, bit_counter, flag_byte_ptr = add_bit(
-        output, bit_accum, bit_counter, flag_byte_ptr, 1
-    )
-
-    output.append(0x20)
-    output.append(0x00)
-
-    if bit_counter > 0:
-        output[flag_byte_ptr] = ((1 << bit_counter) - 1) & bit_accum
-
-    return bytes(output)
-
 
 # =============================================================================
 # FORMAT DETECTION (exact copy from options_unpack.py)
@@ -519,7 +141,7 @@ def find_sections(data: bytes, platform: str) -> list:
 
         data_offset = header_start + 44
         compressed_data = data[data_offset:data_offset + compressed_size]
-        decompressed = decompress_lzss(compressed_data)
+        decompressed = lzss.decompress(compressed_data)
 
         # Parse field2 (section ID) to preserve it
         if platform == 'PS3':
@@ -632,7 +254,7 @@ def save_options_file(filepath: str, sections: list, platform: str, trailing_dat
     section_data = bytearray()
 
     for section_num, section in enumerate(sections, 1):
-        compressed = compress_lzss(bytes(section['decompressed']))
+        compressed = lzss.compress(bytes(section['decompressed']))
         orig_field2 = section.get('field2')
         header = build_section_header(section_num, compressed,
                                       len(section['decompressed']), platform, orig_field2)
@@ -684,8 +306,6 @@ def find_property_value_offset(section_data: bytes, hash_value: int) -> int:
                 return found + 13
 
         pos = found + 1
-
-    return -1
 
 
 def get_bool_unlock_state(section_data: bytes, hash_value: int) -> bool:
@@ -783,8 +403,8 @@ def save_unlock_states(items: list, sections: list):
 # CURSES UI
 # =============================================================================
 
-def run_ui(stdscr, filepath: str, sections: list, platform: str) -> bool:
-    """Run the curses UI. Returns True if user wants to save."""
+def run_with_save(stdscr, filepath: str, sections: list, platform: str) -> bool:
+    """Run UI and return True if user wants to save."""
     curses.curs_set(0)
     curses.use_default_colors()
 
@@ -852,7 +472,7 @@ def run_ui(stdscr, filepath: str, sections: list, platform: str) -> bool:
         # Input
         key = stdscr.getch()
 
-        if key in (ord('q'), ord('Q'), 27):  # Q or Escape
+        if key in (ord('q'), ord('Q'), 27):
             if modified:
                 stdscr.addstr(height - 3, 2, "Discard changes? (y/n) ", curses.A_BOLD)
                 stdscr.refresh()
@@ -862,6 +482,7 @@ def run_ui(stdscr, filepath: str, sections: list, platform: str) -> bool:
             return False
 
         elif key in (ord('s'), ord('S')):
+            save_unlock_states(items, sections)
             return True
 
         elif key in (curses.KEY_UP, ord('k')):
@@ -883,109 +504,6 @@ def run_ui(stdscr, filepath: str, sections: list, platform: str) -> bool:
             for item in items:
                 item.checked = False
             modified = True
-
-    return False
-
-
-def run_with_save(stdscr, filepath: str, sections: list, platform: str) -> tuple:
-    """Run UI and return (should_save, items)."""
-    curses.curs_set(0)
-    curses.use_default_colors()
-
-    if curses.has_colors():
-        curses.init_pair(1, curses.COLOR_CYAN, -1)
-        curses.init_pair(2, curses.COLOR_GREEN, -1)
-        curses.init_pair(3, curses.COLOR_YELLOW, -1)
-
-    items = build_unlock_items()
-    load_unlock_states(items, sections)
-
-    selected = 0
-    modified = False
-
-    while True:
-        stdscr.clear()
-        height, width = stdscr.getmaxyx()
-
-        # Title
-        title = " ACB Brotherhood uPlay Rewards Unlocker "
-        stdscr.addstr(0, max(0, (width - len(title)) // 2), title,
-                      curses.A_BOLD | curses.A_REVERSE)
-
-        # File info
-        filename = os.path.basename(filepath)
-        info = f" File: {filename} ({platform} format) "
-        stdscr.addstr(2, 2, info, curses.color_pair(1) if curses.has_colors() else 0)
-
-        if modified:
-            stdscr.addstr(2, 2 + len(info) + 1, "[MODIFIED]",
-                          curses.color_pair(3) if curses.has_colors() else curses.A_BOLD)
-
-        # Items
-        row = 4
-        current_category = None
-
-        for i, item in enumerate(items):
-            if row >= height - 4:
-                break
-
-            if item.category != current_category:
-                current_category = item.category
-                if row > 4:
-                    row += 1
-                stdscr.addstr(row, 2, current_category,
-                              curses.A_BOLD | (curses.color_pair(2) if curses.has_colors() else 0))
-                row += 1
-
-            checkbox = "[x]" if item.checked else "[ ]"
-            attr = curses.A_REVERSE if i == selected else 0
-
-            stdscr.addstr(row, 4, checkbox, attr)
-            stdscr.addstr(row, 8, item.name, attr)
-            row += 1
-
-        footer_row = height - 2
-        footer = " [Space] Toggle  [A] All On  [N] All Off  [S] Save  [Q] Quit "
-        stdscr.addstr(footer_row, max(0, (width - len(footer)) // 2), footer, curses.A_REVERSE)
-
-        stdscr.refresh()
-
-        key = stdscr.getch()
-
-        if key in (ord('q'), ord('Q'), 27):
-            if modified:
-                stdscr.addstr(height - 3, 2, "Discard changes? (y/n) ", curses.A_BOLD)
-                stdscr.refresh()
-                confirm = stdscr.getch()
-                if confirm not in (ord('y'), ord('Y')):
-                    continue
-            return (False, items)
-
-        elif key in (ord('s'), ord('S')):
-            save_unlock_states(items, sections)
-            return (True, items)
-
-        elif key in (curses.KEY_UP, ord('k')):
-            selected = max(0, selected - 1)
-
-        elif key in (curses.KEY_DOWN, ord('j')):
-            selected = min(len(items) - 1, selected + 1)
-
-        elif key in (ord(' '), curses.KEY_ENTER, 10):
-            items[selected].checked = not items[selected].checked
-            modified = True
-
-        elif key in (ord('a'), ord('A')):
-            for item in items:
-                item.checked = True
-            modified = True
-
-        elif key in (ord('n'), ord('N')):
-            for item in items:
-                item.checked = False
-            modified = True
-
-    return (False, items)
 
 
 # =============================================================================
@@ -1052,14 +570,47 @@ def run_text_ui(filepath: str, sections: list, platform: str) -> bool:
             if 0 <= idx < len(items):
                 items[idx].checked = not items[idx].checked
 
-    return False
-
 
 # =============================================================================
 # MAIN
 # =============================================================================
 
-def main_v2():
+def _load_options_file(filepath: str):
+    """
+    Load and validate OPTIONS file.
+
+    Returns (sections, platform, trailing_data) on success, or None on error.
+    """
+    if not os.path.exists(filepath):
+        print(f"Error: File not found: {filepath}")
+        return None
+
+    print(f"Loading {filepath}...")
+
+    with open(filepath, 'rb') as f:
+        data = f.read()
+
+    platform = detect_format(data)
+    if platform == 'unknown':
+        print("Error: Could not detect file format (PC or PS3)")
+        return None
+
+    print(f"Detected format: {platform}")
+
+    sections = find_sections(data, platform)
+    if len(sections) < 3:
+        print(f"Error: Expected at least 3 sections, found {len(sections)}")
+        return None
+
+    print(f"Found {len(sections)} sections")
+
+    trailing_data = get_trailing_data(data, platform, sections)
+
+    return sections, platform, trailing_data
+
+
+def main():
+    """Main entry point."""
     if len(sys.argv) < 2:
         print("ACB Brotherhood uPlay Rewards Unlocker")
         print()
@@ -1072,90 +623,22 @@ def main_v2():
 
     filepath = sys.argv[1]
 
-    if not os.path.exists(filepath):
-        print(f"Error: File not found: {filepath}")
+    result = _load_options_file(filepath)
+    if result is None:
         return 1
 
-    print(f"Loading {filepath}...")
+    sections, platform, trailing_data = result
 
-    with open(filepath, 'rb') as f:
-        data = f.read()
-
-    platform = detect_format(data)
-    if platform == 'unknown':
-        print("Error: Could not detect file format (PC or PS3)")
-        return 1
-
-    print(f"Detected format: {platform}")
-
-    sections = find_sections(data, platform)
-    if len(sections) < 3:
-        print(f"Error: Expected at least 3 sections, found {len(sections)}")
-        return 1
-
-    print(f"Found {len(sections)} sections")
-
-    # Capture trailing data for PS3
-    trailing_data = get_trailing_data(data, platform, sections)
-
-    try:
-        save, items = curses.wrapper(
-            lambda stdscr: run_with_save(stdscr, filepath, sections, platform))
-    except KeyboardInterrupt:
-        print("\nCancelled.")
-        return 0
-
-    if save:
-        print(f"\nSaving to {filepath}...")
-        save_options_file(filepath, sections, platform, trailing_data)
-        print("Done!")
+    # Run appropriate UI
+    if HAS_CURSES:
+        try:
+            save = curses.wrapper(
+                lambda stdscr: run_with_save(stdscr, filepath, sections, platform))
+        except KeyboardInterrupt:
+            print("\nCancelled.")
+            return 0
     else:
-        print("\nNo changes saved.")
-
-    return 0
-
-
-def main_text():
-    """Main entry point for text UI."""
-    if len(sys.argv) < 2:
-        print("ACB Brotherhood uPlay Rewards Unlocker")
-        print()
-        print("Usage: python acb_uplay_unlocker.py <OPTIONS_FILE>")
-        print()
-        print("Examples:")
-        print("  python acb_uplay_unlocker.py OPTIONS.PC")
-        print("  python acb_uplay_unlocker.py OPTIONS.PS3")
-        return 1
-
-    filepath = sys.argv[1]
-
-    if not os.path.exists(filepath):
-        print(f"Error: File not found: {filepath}")
-        return 1
-
-    print(f"Loading {filepath}...")
-
-    with open(filepath, 'rb') as f:
-        data = f.read()
-
-    platform = detect_format(data)
-    if platform == 'unknown':
-        print("Error: Could not detect file format (PC or PS3)")
-        return 1
-
-    print(f"Detected format: {platform}")
-
-    sections = find_sections(data, platform)
-    if len(sections) < 3:
-        print(f"Error: Expected at least 3 sections, found {len(sections)}")
-        return 1
-
-    print(f"Found {len(sections)} sections")
-
-    # Capture trailing data for PS3
-    trailing_data = get_trailing_data(data, platform, sections)
-
-    save = run_text_ui(filepath, sections, platform)
+        save = run_text_ui(filepath, sections, platform)
 
     if save:
         print(f"\nSaving to {filepath}...")
@@ -1168,7 +651,4 @@ def main_text():
 
 
 if __name__ == "__main__":
-    if HAS_CURSES:
-        sys.exit(main_v2())
-    else:
-        sys.exit(main_text())
+    sys.exit(main())
